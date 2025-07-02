@@ -15,7 +15,13 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         email: true,
-        name: true
+        name: true,
+        devices: {
+          select: {
+            id: true,
+            deviceId: true
+          }
+        }
       }
     });
 
@@ -26,17 +32,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Verificar se tem subscription push ativa
-    const pushSubscription = await prisma.pushSubscription.findFirst({
+    // Verificar se há push ativo em algum dispositivo
+    const activePushSubscriptions = await prisma.pushSubscription.findMany({
       where: {
-        userId: user.id,
+        deviceId: { in: user.devices.map(device => device.deviceId) },
         isActive: true
-      }
+      },
+      select: { id: true }
     });
+
+    const hasActivePush = activePushSubscriptions.length > 0;
 
     return NextResponse.json({
       exists: true,
-      hasPush: !!pushSubscription,
+      hasPush: hasActivePush,
       userName: user.name
     });
 

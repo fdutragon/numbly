@@ -98,6 +98,7 @@ model User {
   // Relação com dispositivos para login via push
   devices        UserDevice[]    @relation("UserDevices")
   subscriptions  UserSubscription[]
+  pushSubscriptions PushSubscription[] @relation("UserPushSubscriptions")
   
   // Blog místico - novas relações
   aiComments      AIComment[]
@@ -202,6 +203,8 @@ model PushSubscription {
   purchaseAmount  Float?
   lastUpdated     DateTime  @updatedAt
   createdAt       DateTime  @default(now())
+  userId          String?   // Relacionamento com User
+  user            User?     @relation(fields: [userId], references: [id])
 }
 
 model MagicToken {
@@ -322,7 +325,6 @@ model CompatibilityMap {
   partnerId       String?
   
   // Tipo de relacionamento
-  relationshipType RelationshipType   @default(FRIEND)
   
   // Status do mapa
   status          CompatibilityStatus @default(WAITING)

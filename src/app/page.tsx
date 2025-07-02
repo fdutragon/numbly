@@ -150,16 +150,25 @@ export default function Home() {
         }
         
         console.log('✅ Subscription criada:', subscription.endpoint);
-        useUserStore.getState().updateUser({ pushEnabled: true });
+        // Atualiza o usuário localmente para pushEnabled: true
+        const currentUser = useUserStore.getState().user;
+        if (currentUser && currentUser.nome && currentUser.dataNascimento) {
+          setUser({
+            ...currentUser,
+            nome: currentUser.nome,
+            dataNascimento: currentUser.dataNascimento,
+            pushEnabled: true
+          });
+        }
       }
       
       setShowNotificationModal(false);
       router.push('/dashboard');
     } catch (error) {
       console.error('❌ Erro ao configurar notificações:', error);
-      
       // Mostrar feedback para o usuário
-      alert(`Erro ao configurar notificações: ${error.message}`);
+      const msg = error instanceof Error ? error.message : String(error);
+      alert(`Erro ao configurar notificações: ${msg}`);
       
       // Mesmo com erro, continua para o dashboard
       setShowNotificationModal(false);
