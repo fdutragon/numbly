@@ -40,33 +40,58 @@ export async function POST(request: NextRequest) {
     // 3. Validar dados de entrada
     const body = await request.json();
     const { deviceId } = CheckDeviceSchema.parse(body);
-    
-    // 4. Verificar se dispositivo existe e está ativo
-    const userDevice = await db.userDevice.findUnique({
-      where: { deviceId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+    console.log('[CHECK-DEVICE] deviceId recebido:', deviceId);
+    // 4. Verificar se dispositivo existe e está ativo (apenas em UserDevice, case insensitive)
+    const userDevice = await db.userDevice.findFirst({
+      where: {
+        deviceId: { equals: deviceId, mode: 'insensitive' }
       }
     });
+    console.log('[CHECK-DEVICE] userDevice encontrado:', userDevice);
+    // 4. Buscar todos os devices do usuário pelo IP e/ou userAgent (agora com suporte a IP vizinho)
+    let userDevices: any[] = [];
+    let user = null;
+    let deviceIds: string[] = [];
+    if (securityContext?.ip) {
+      // Suporte a IP vizinho: pega o /24 (primeiros 3 octetos)
+      const ip = normalizeIp(securityContext.ip);
+      const subnet = ip ? ip.split('.').slice(0, 3).join('.') + '.' : '';
+      userDevices = await db.userDevice.findMany({
+        where: {
+          OR: [
+            { userAgent: securityContext.userAgent },
+            { ip: { startsWith: subnet } }
+          ]
+        },
+        select: { id: true, deviceId: true, userId: true, isActive: true }
+      });
+      if (userDevices.length > 0) {
+        user = await db.user.findUnique({
+          where: { id: userDevices[0].userId },
+          select: { id: true, name: true }
+        });
+      }
+      deviceIds = userDevices.map(d => d.deviceId);
+      console.log('[CHECK-DEVICE] userDevices encontrados (por userAgent ou subnet):', deviceIds, 'Subnet:', subnet);
+    }
+
+    // Sempre retorna todos os deviceIds associados encontrados
 
     if (!userDevice || !userDevice.isActive) {
       return NextResponse.json({
         success: false,
         exists: false,
-        message: 'Dispositivo não encontrado ou inativo'
+        message: 'Dispositivo não encontrado ou inativo',
+        deviceIds
       }, { status: 404 });
     }
 
-    if (!userDevice.user) {
+    if (!user) {
       return NextResponse.json({
         success: false,
         exists: false,
-        message: 'Usuário não encontrado'
+        message: 'Usuário não encontrado',
+        deviceIds
       }, { status: 404 });
     }
 
@@ -83,78 +108,114 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // 6. Buscar subscription de push para este dispositivo
-    const pushSubscription = await db.pushSubscription.findFirst({
-      where: { 
-        deviceId,
-        isActive: true
-      }
-    });
+    // 6. Buscar todas as subscriptions de push para devices do mesmo IP
+    let pushSubscriptions: any[] = [];
+    if (userDevices.length > 0) {
+      const deviceIdsForIp = userDevices.map(d => d.deviceId);
+      pushSubscriptions = await db.pushSubscription.findMany({
+        where: {
+          deviceId: { in: deviceIdsForIp },
+          isActive: true
+        }
+      });
+    }
 
-    if (!pushSubscription) {
-      // Dispositivo existe mas não tem push configurado
+    if (!pushSubscriptions.length) {
+      // Nenhum device com push configurado
       return NextResponse.json({
         success: true,
         exists: true,
         hasPush: false,
-        message: 'Dispositivo encontrado, mas push notification não está configurado',
-        userName: userDevice.user.name,
-        userId: userDevice.user.id
+        message: 'Nenhum dispositivo com push notification configurado para este IP',
+        userName: user.name,
+        userId: user.id,
+        deviceIds
       });
     }
 
     // 8. Gerar link de autenticação
     const authLink = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/verify?token=${magicToken}`;
     
-    // 9. Enviar push notification automático
-    try {
-      // TODO: Implementar envio real de push notification
-      // await sendPushNotification(pushSubscription, {
-      //   title: `Olá, ${userDevice.user.name}!`,
-      //   body: 'Toque para acessar sua conta',
-      //   url: authLink,
-      //   icon: '/icon-192x192.svg'
-      // });
-      
-      console.log('🚀 Push automático enviado:', {
-        deviceId,
-        userName: userDevice.user.name,
-        authLink
-      });
-      
-      // 10. Atualizar lastSeen do dispositivo
-      await db.userDevice.update({
-        where: { deviceId },
-        data: { lastSeen: new Date() }
-      });
-      
-      // 11. Log de sucesso
-      logSecurityEvent('AUTH_SUCCESS', securityContext, `Auto-push sent to device: ${deviceId} for user: ${userDevice.user.id}`);
-      
-      return NextResponse.json({
-        success: true,
-        exists: true,
-        hasPush: true,
-        pushSent: true,
-        message: 'Push de autenticação enviado automaticamente',
-        userName: userDevice.user.name,
-        userId: userDevice.user.id
-      });
-      
-    } catch (pushError) {
-      console.error('Erro ao enviar push automático:', pushError);
-      
-      return NextResponse.json({
-        success: true,
-        exists: true,
-        hasPush: true,
-        pushSent: false,
-        message: 'Dispositivo encontrado, mas erro ao enviar push',
-        userName: userDevice.user.name,
-        userId: userDevice.user.id,
-        authLink // Fornecer link manual como fallback
-      });
+    // 9. Enviar push notification automático para todos os devices do IP
+    let pushSentCount = 0;
+    for (const sub of pushSubscriptions) {
+      try {
+        await sendPushNotification(sub, {
+          title: `Olá, ${user.name}!`,
+          body: 'Toque para acessar sua conta',
+          url: authLink,
+          icon: '/icon-192x192.svg'
+        });
+        pushSentCount++;
+        console.log('🚀 Push automático enviado:', {
+          deviceId: sub.deviceId,
+          userName: user.name,
+          authLink
+        });
+      } catch (pushError) {
+        console.error('Erro ao enviar push automático:', pushError);
+      }
     }
+
+    // 10. Atualizar lastSeen dos devices
+    await db.userDevice.updateMany({
+      where: { id: { in: userDevices.map(d => d.id) } },
+      data: { lastSeen: new Date() }
+    });
+
+    // 11. Log de sucesso
+    logSecurityEvent('AUTH_SUCCESS', securityContext, `Auto-push sent to ${pushSentCount} devices for user: ${user.id}`);
+
+    // PUSH DE TESTE LOCAL: busca deviceId pelo IP se não estiver definido na env
+    let testDeviceId = process.env.TEST_PUSH_DEVICE_ID;
+    const TEST_PUSH_IP = process.env.TEST_PUSH_IP;
+    const normalizedTestIp = normalizeIp(TEST_PUSH_IP);
+    const normalizedRequestIp = normalizeIp(securityContext?.ip);
+    if (!testDeviceId && normalizedTestIp && normalizedRequestIp === normalizedTestIp) {
+      // Busca o primeiro deviceId do banco para esse IP
+      const deviceByIp = await db.userDevice.findFirst({
+        where: { ip: normalizedTestIp },
+        select: { deviceId: true }
+      });
+      if (deviceByIp?.deviceId) testDeviceId = deviceByIp.deviceId;
+    }
+    const isTestDevice = testDeviceId && deviceId === testDeviceId;
+    const isTestIp = normalizedTestIp && normalizedRequestIp === normalizedTestIp;
+    if (isTestDevice || isTestIp) {
+      // Busca a subscription do device de teste
+      const testPushSub = await db.pushSubscription.findFirst({
+        where: {
+          deviceId: testDeviceId,
+          isActive: true
+        }
+      });
+      if (testPushSub) {
+        await sendPushNotification(testPushSub, {
+          title: 'Push de Teste Local',
+          body: 'Este é um push de teste enviado para seu PC!',
+          url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+          icon: '/icon-192x192.svg'
+        });
+        console.log('🚀 Push de teste enviado para deviceId:', testDeviceId);
+        return NextResponse.json({
+          success: true,
+          testPush: true,
+          message: 'Push de teste enviado para seu PC!',
+          deviceId: testDeviceId
+        });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      exists: true,
+      hasPush: true,
+      pushSent: pushSentCount,
+      message: `Push de autenticação enviado para ${pushSentCount} dispositivo(s) do mesmo IP`,
+      userName: user.name,
+      userId: user.id,
+      deviceIds
+    });
     
   } catch (error: any) {
     console.error('Erro no check de device:', error);
@@ -167,13 +228,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'Dados inválidos',
-        details: error.errors[0]?.message
+        details: error.errors[0]?.message,
+        deviceIds: []
       }, { status: 400 });
     }
     
     return NextResponse.json({
       success: false,
-      error: 'Erro interno do servidor'
+      error: 'Erro interno do servidor',
+      deviceIds: []
     }, { status: 500 });
   }
 }
@@ -191,3 +254,23 @@ export async function GET() {
     rateLimit: '5 verificações por minuto por IP'
   });
 }
+
+function normalizeIp(ip?: string | null): string | null {
+  if (!ip) return null;
+  if (ip === '::1') return '127.0.0.1';
+  if (ip.startsWith('::ffff:')) return ip.replace('::ffff:', '');
+  return ip;
+}
+
+async function sendPushNotification(subscription: any, payload: { title: string; body: string; url?: string; icon?: string }) {
+  const webpush = (await import('web-push')).default;
+  const pushPayload = JSON.stringify({
+    title: payload.title,
+    body: payload.body,
+    url: payload.url,
+    icon: payload.icon
+  });
+  await webpush.sendNotification(subscription.subscription, pushPayload);
+}
+
+export const runtime = 'nodejs';

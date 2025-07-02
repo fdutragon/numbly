@@ -8,7 +8,7 @@ CREATE TYPE "FriendshipStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
 CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'CANCELLED', 'EXPIRED', 'PENDING');
 
 -- CreateEnum
-CREATE TYPE "SubscriptionPlan" AS ENUM ('FREE', 'BASIC', 'PREMIUM', 'ENTERPRISE');
+CREATE TYPE "SubscriptionPlan" AS ENUM ('FREE', 'BASIC', 'PREMIUM', 'ENTERPRISE', 'CUSTOM');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -37,6 +37,7 @@ CREATE TABLE "UserDevice" (
     "deviceName" TEXT,
     "platform" TEXT,
     "userAgent" TEXT,
+    "ip" TEXT,
     "lastSeen" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -191,9 +192,6 @@ CREATE TABLE "user_subscriptions" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "UserDevice_deviceId_key" ON "UserDevice"("deviceId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Friendship_senderId_receiverId_key" ON "Friendship"("senderId", "receiverId");
 
 -- CreateIndex
@@ -204,9 +202,6 @@ CREATE UNIQUE INDEX "Report_userId_type_key" ON "Report"("userId", "type");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PushSubscription_endpoint_key" ON "PushSubscription"("endpoint");
-
--- CreateIndex
-CREATE UNIQUE INDEX "PushSubscription_deviceId_key" ON "PushSubscription"("deviceId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MagicToken_token_key" ON "MagicToken"("token");

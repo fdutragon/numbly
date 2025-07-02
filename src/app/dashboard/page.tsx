@@ -332,7 +332,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold mb-1 text-white">
-                    Bem-vindo, {user.nome.split(' ')[0]}!
+                    Bem-vindo, {user?.nome?.split(' ')[0] || 'Usuário'}!
                   </h2>
                   <p className="text-purple-100">
                     Seu número do destino é <span className="font-bold text-2xl text-white">{user.numeroDestino}</span>
@@ -479,7 +479,7 @@ export default function DashboardPage() {
                           {blogData.blogPosts[0].subtitulo}
                         </p>
                         <div className="text-indigo-800 text-sm leading-relaxed mb-3">
-                          {blogData.blogPosts[0].conteudo.split('\n\n')[0]}
+                          {blogData.blogPosts[0]?.conteudo?.split('\n\n')[0] || 'Conteúdo não disponível'}
                         </div>
                         <Button
                           onClick={() => openReport('diario', blogData.blogPosts[0].titulo, '📅', blogData.blogPosts[0].numeroFoco)}
@@ -514,7 +514,7 @@ export default function DashboardPage() {
                           {blogData.blogPosts[1].subtitulo}
                         </p>
                         <div className="text-emerald-800 text-sm leading-relaxed mb-3">
-                          {blogData.blogPosts[1].conteudo.split('\n\n')[0]}
+                          {blogData.blogPosts[1]?.conteudo?.split('\n\n')[0] || 'Conteúdo não disponível'}
                         </div>
                         <Button
                           onClick={() => openReport('sincronia', blogData.blogPosts[1].titulo, '🔮', blogData.numeroSincronia)}
@@ -935,8 +935,8 @@ export default function DashboardPage() {
         reportType={reportModal.reportType}
         reportNumber={reportModal.reportNumber}
         userData={{
-          name: user.nome,
-          firstName: user.nome.split(' ')[0],
+          name: user?.nome || 'Usuário',
+          firstName: user?.nome?.split(' ')[0] || 'Usuário',
           birthDate: user.dataNascimento,
           numerologyData: {
             'Número do Destino': mapa.numeroDestino,

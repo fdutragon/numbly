@@ -21,7 +21,8 @@ self.addEventListener('install', event => {
       return cache.addAll(STATIC_ASSETS);
     }).then(() => {
       console.log('✅ Service Worker: Assets cacheados com sucesso');
-      return self.skipWaiting();
+      // Não usar skipWaiting em desenvolvimento para evitar reloads
+      // return self.skipWaiting();
     })
   );
 });
@@ -47,10 +48,26 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Interceptação de fetch: Cache first, network fallback
+// Interceptação de fetch: Apenas para assets estáticos em desenvolvimento
 self.addEventListener('fetch', event => {
   // Ignorar requests não GET ou que não sejam para nosso domínio
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // Em desenvolvimento, não interceptar APIs e páginas para evitar cache de development
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/api/') || 
+      url.pathname.startsWith('/_next/') ||
+      url.pathname.includes('.js') ||
+      url.pathname.includes('.css') ||
+      url.pathname.includes('hot-reload')) {
+    return;
+  }
+
+  // Apenas cachear assets estáticos (imagens, ícones, manifest)
+  if (!url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|webp|woff|woff2)$/) && 
+      !url.pathname.includes('manifest.json')) {
     return;
   }
 
@@ -68,7 +85,7 @@ self.addEventListener('fetch', event => {
           return networkResponse;
         }
 
-        // Cachear nova resposta
+        // Cachear apenas assets estáticos
         return caches.open(CACHE_NAME).then(cache => {
           cache.put(event.request, networkResponse.clone());
           return networkResponse;

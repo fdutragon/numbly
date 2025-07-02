@@ -1,3 +1,5 @@
+import webpush from 'web-push';
+
 // Configuração do VAPID para push notifications
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
 
@@ -37,6 +39,7 @@ export class PushService {
     }
 
     try {
+      console.log('Tentando registrar Service Worker no caminho:', '/sw.js');
       this.registration = await navigator.serviceWorker.register('/sw.js');
       console.log('Service Worker registrado:', this.registration);
       return this.registration;
@@ -163,3 +166,22 @@ export class PushService {
 }
 
 export const pushService = PushService.getInstance();
+
+interface PushPayload {
+  title: string;
+  body: string;
+  url?: string;
+  icon?: string;
+}
+
+export async function sendPushNotification(subscription: any, payload: PushPayload) {
+  // Importa web-push dinamicamente para evitar erro em ambiente edge/client
+  const webpush = (await import('web-push')).default;
+  const pushPayload = JSON.stringify({
+    title: payload.title,
+    body: payload.body,
+    url: payload.url,
+    icon: payload.icon
+  });
+  await webpush.sendNotification(subscription.subscription, pushPayload);
+}

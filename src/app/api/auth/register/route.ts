@@ -41,6 +41,13 @@ export async function GET() {
   });
 }
 
+function normalizeIp(ip?: string | null): string | null {
+  if (!ip) return null;
+  if (ip === '::1') return '127.0.0.1';
+  if (ip.startsWith('::ffff:')) return ip.replace('::ffff:', '');
+  return ip;
+}
+
 export async function POST(request: NextRequest) {
   let securityContext: SecurityContext | undefined;
   
@@ -78,17 +85,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 4. Validar se device já existe
-    const existingDevice = await db.userDevice.findUnique({
-      where: { deviceId: validatedData.deviceId },
-      include: { user: true }
-    });
-
-    if (existingDevice) {
-      return NextResponse.json({
-        error: 'Device já registrado',
-        userId: existingDevice.userId
-      }, { status: 409 });
-    }
+    // Removido: permitir múltiplos registros por deviceId
 
     // 5. Validar data de nascimento
     const birthDate = new Date(validatedData.dataNascimento);
@@ -124,17 +121,33 @@ export async function POST(request: NextRequest) {
     });
 
     // 8. Criar device associado ao usuário
-    const userDevice = await db.userDevice.create({
-      data: {
-        userId: user.id,
-        deviceId: validatedData.deviceId,
-        deviceName: validatedData.platform || 'Dispositivo desconhecido',
-        platform: validatedData.platform,
-        userAgent: validatedData.userAgent,
-        isActive: true,
-        lastSeen: new Date()
-      }
-    });
+    // Corrigir erro de unique constraint: só criar se não existir, senão faz update do registro existente
+    let userDevice = await db.userDevice.findFirst({ where: { deviceId: validatedData.deviceId } });
+    if (!userDevice) {
+      userDevice = await db.userDevice.create({
+        data: {
+          userId: user.id,
+          deviceId: validatedData.deviceId,
+          deviceName: validatedData.platform || 'Dispositivo desconhecido',
+          platform: validatedData.platform,
+          userAgent: validatedData.userAgent,
+          ip: normalizeIp(securityContext?.ip),
+          isActive: true,
+          lastSeen: new Date()
+        }
+      });
+    } else {
+      // Opcional: atualizar userId e lastSeen se deviceId já existir
+      userDevice = await db.userDevice.update({
+        where: { id: userDevice.id },
+        data: {
+          userId: user.id,
+          lastSeen: new Date(),
+          isActive: true,
+          ip: normalizeIp(securityContext?.ip)
+        }
+      });
+    }
     
     // 9. Criar assinatura gratuita inicial
     await db.userSubscription.create({
@@ -184,13 +197,14 @@ export async function POST(request: NextRequest) {
     
   } catch (error: any) {
     console.error('Erro no registro:', error);
-    
+    if (error?.meta) {
+      console.error('Prisma meta:', error.meta);
+    }
     if (securityContext) {
       logSecurityEvent('SUSPICIOUS', securityContext, `Register error: ${error.message}`);
     }
-    
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor', details: error?.message, prisma: error?.meta },
       { status: 500 }
     );
   }

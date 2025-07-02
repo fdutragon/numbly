@@ -13,14 +13,12 @@ import { calcularNumeroDestino, gerarMapaNumerologicoCompleto } from '@/lib/nume
 import { validateBrazilianDate as validateDate } from '@/lib/date-utils';
 import { pushService } from '@/lib/push';
 import { useRouter } from 'next/navigation';
-import { useAuth, useRedirectIfAuthenticated } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
+import { getOrCreateDeviceId } from '@/lib/device-id';
 
 export default function Home() {
   const router = useRouter();
   const { setUser, setMapa } = useUserStore();
-  
-  // Redireciona usuário autenticado para dashboard
-  useRedirectIfAuthenticated();
   
   // Função para validar data brasileira
   const isValidBrazilianDate = (date: string): boolean => {
@@ -77,39 +75,20 @@ export default function Home() {
 
   const handleSubmit = async () => {
     console.log('🔥 handleSubmit chamado!', { formData });
-    
     if (!validateForm()) {
       console.log('❌ Validação falhou', errors);
       return;
     }
-    
     setLoading(true);
-    
     try {
       console.log('📊 Preparando dados para registro via push...');
-      
-      // 1. Gerar ou recuperar deviceId único
-      const getOrCreateDeviceId = (): string => {
-        if (typeof window === 'undefined') return '';
-        
-        const DEVICE_ID_KEY = 'numbly_device_id';
-        let deviceId = localStorage.getItem(DEVICE_ID_KEY);
-        if (!deviceId) {
-          deviceId = crypto.randomUUID();
-          localStorage.setItem(DEVICE_ID_KEY, deviceId);
-        }
-        return deviceId;
-      };
-      
-      const deviceId = getOrCreateDeviceId();
-      
+      // 1. Gerar ou recuperar deviceId único (redundante e persistente)
+      const deviceId = await getOrCreateDeviceId();
       // 2. Converter data brasileira (DD/MM/YYYY) para formato ISO (YYYY-MM-DD)
       const [day, month, year] = formData.dataNascimento.split('/');
       const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      
       // 3. Calcular número do destino para enviar para API
       const numeroDestino = calcularNumeroDestino(formData.dataNascimento);
-      
       const registerData = {
         nome: formData.nome.trim(),
         dataNascimento: isoDate,
@@ -118,9 +97,7 @@ export default function Home() {
         userAgent: navigator.userAgent,
         platform: navigator.platform
       };
-      
       console.log('🚀 Enviando dados para API de registro...', registerData);
-      
       // 4. Chamar API de registro que salva no banco e gera token
       const response = await fetch('/api/auth/register', {
         method: 'POST',

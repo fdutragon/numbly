@@ -26,26 +26,6 @@ const UnifiedLoginSchema = z.union([
   })
 ]);
 
-// GET - Informações da API de login
-export async function GET() {
-  return NextResponse.json({
-    endpoint: '/api/auth/login',
-    method: 'POST',
-    description: 'Endpoint para autenticação de usuários',
-    loginTypes: {
-      email: {
-        requiredFields: ['email', 'birthDate'],
-        optionalFields: ['deviceId']
-      },
-      device: {
-        requiredFields: ['deviceId'],
-        optionalFields: ['deviceName', 'platform']
-      }
-    },
-    rateLimit: 'Configurado por IP'
-  });
-}
-
 // 🔒 Interfaces TypeScript para type safety
 interface AuthUser {
   id: string;
@@ -194,12 +174,14 @@ async function loginByDevice(deviceId: string, deviceName?: string, platform?: s
  */
 export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse>> {
   let securityContext: SecurityContext | undefined;
-  
   try {
+    console.log('[LOGIN] Início do handler');
     // 1. 🛡️ Validação de segurança inicial
     try {
       securityContext = await authGuard(req, { allowLocalhost: true });
+      console.log('[LOGIN] Segurança OK', securityContext);
     } catch (error: any) {
+      console.error('[LOGIN] Falha na segurança:', error);
       return NextResponse.json<LoginResponse>({
         success: false,
         error: 'Acesso negado',
@@ -211,6 +193,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
     const loginKey = `login_${securityContext.ip}`;
     if (!checkRateLimit(loginKey, LOGIN_RATE_LIMIT.window, LOGIN_RATE_LIMIT.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', securityContext, 'Login attempts exceeded');
+      console.warn('[LOGIN] Rate limit atingido');
       return NextResponse.json({
         success: false,
         error: 'Muitas tentativas de login',
@@ -220,13 +203,15 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
 
     // 3. 📝 Validação e sanitização dos dados de entrada
     const body = await req.json().catch(() => ({}));
-    
+    console.log('[LOGIN] Body recebido:', body);
     let validatedData;
     try {
       validatedData = UnifiedLoginSchema.parse(body);
+      console.log('[LOGIN] Dados validados:', validatedData);
     } catch (error) {
       if (error instanceof z.ZodError) {
         logSecurityEvent('SUSPICIOUS', securityContext, `Invalid login data: ${error.errors[0]?.message}`);
+        console.error('[LOGIN] Dados inválidos:', error.errors);
         return NextResponse.json({
           success: false,
           error: 'Dados inválidos',
@@ -236,47 +221,87 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
       throw error;
     }
 
+    // Adicionar logs detalhados na validação de credenciais
+    console.log('[LOGIN] Validando credenciais...');
+
     // 4. 🔍 Executar login baseado no tipo
     let user: AuthUser | null = null;
-    
     if ('type' in validatedData && validatedData.type === 'device') {
-      // Login via device
       const { deviceId, deviceName, platform } = validatedData;
       user = await loginByDevice(deviceId, deviceName, platform, securityContext.userAgent, securityContext);
-
-      // Se não encontrou o device, criar automaticamente em dev
-      if (!user && process.env.NODE_ENV === 'development' && deviceId.startsWith('device_')) {
-        // Buscar usuário de teste padrão (ajuste conforme necessário)
-        const testUser = await db.user.findFirst();
-        if (testUser) {
-          await db.userDevice.create({
-            data: {
-              userId: testUser.id,
-              deviceId,
-              deviceName: deviceName || 'Dev Device',
-              userAgent: securityContext.userAgent,
-              platform: platform || 'dev',
-              isActive: true,
-              lastSeen: new Date()
+      console.log('[LOGIN] Resultado login device:', user);
+      
+      if (!user) {
+        // Device não encontrado, tentar criar um usuário demo/temporário
+        console.log('[LOGIN] Device não encontrado, criando usuário demo...');
+        try {
+          // Buscar ou criar usuário demo
+          let demoUser = await db.user.findFirst({
+            where: {
+              email: 'demo@numbly.life'
             }
           });
-          user = await loginByDevice(deviceId, deviceName, platform, securityContext.userAgent, securityContext);
-          logSecurityEvent('SUSPICIOUS', securityContext, `Device auto-criado em dev: ${deviceId}`);
+          
+          if (!demoUser) {
+            // Criar usuário demo se não existir
+            demoUser = await db.user.create({
+              data: {
+                name: 'Usuário Demo',
+                email: 'demo@numbly.life',
+                birthDate: new Date('1990-01-01'),
+                isPremium: false,
+                numerologyData: {
+                  numeroDestino: 1,
+                  numeroAlma: 2,
+                  numeroExpressao: 3,
+                  numeroPersonalidadeExterna: 4
+                }
+              }
+            });
+          }
+          
+          // Criar ou atualizar device para este usuário
+          await db.userDevice.upsert({
+            where: { deviceId },
+            update: {
+              lastSeen: new Date(),
+              isActive: true
+            },
+            create: {
+              userId: demoUser.id,
+              deviceId,
+              deviceName: deviceName || 'Unknown Device',
+              userAgent: securityContext.userAgent,
+              platform: platform || 'web',
+              isActive: true
+            }
+          });
+          
+          user = {
+            id: demoUser.id,
+            name: demoUser.name,
+            email: demoUser.email,
+            birthDate: demoUser.birthDate,
+            isPremium: demoUser.isPremium,
+            numerologyData: demoUser.numerologyData,
+            createdAt: demoUser.createdAt
+          };
+          
+          console.log('[LOGIN] Usuário demo criado/associado com sucesso');
+        } catch (error) {
+          console.error('[LOGIN] Erro ao criar usuário demo:', error);
         }
       }
-
+      
       if (user) {
         logSecurityEvent('AUTH_SUCCESS', securityContext, `Device login successful: ${deviceId}`);
       }
     } else {
-      // Login via email e data nascimento
       const { email, birthDate, deviceId } = validatedData;
       user = await loginByEmail(email, birthDate, securityContext);
-      
+      console.log('[LOGIN] Resultado login email:', user);
       if (user) {
         logSecurityEvent('AUTH_SUCCESS', securityContext, `Email login successful: ${email}`);
-        
-        // Se deviceId fornecido, criar/atualizar relação
         if (deviceId) {
           try {
             await db.userDevice.upsert({
@@ -294,14 +319,21 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
                 platform: 'web'
               }
             });
+            console.log('[LOGIN] Device upsert OK');
           } catch (deviceError) {
-            console.log('Warning: Could not create/update device relation:', deviceError);
+            console.log('[LOGIN] Erro no upsert de device:', deviceError);
           }
         }
       }
     }
 
+    // Log detalhado do resultado da busca do usuário
+    console.log('[LOGIN] Resultado da busca no banco de dados:', user);
+
     if (!user) {
+      console.warn('[LOGIN] Usuário não autenticado');
+      // Log detalhado da falha de autenticação
+      console.log('[LOGIN] Credenciais rejeitadas, retornando erro 401');
       return NextResponse.json({
         success: false,
         error: 'Credenciais inválidas',
@@ -309,25 +341,24 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
       }, { status: 401 });
     }
 
-    // 5. 🎫 Gerar token JWT seguro
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      logSecurityEvent('SUSPICIOUS', securityContext, 'JWT_SECRET not configured');
-      return NextResponse.json({
-        success: false,
-        error: 'Configuração inválida',
-        message: 'Erro de configuração do servidor'
-      }, { status: 500 });
+    // Resolução robusta do deviceId para o token JWT
+    let resolvedDeviceId = '';
+    if ('type' in validatedData && validatedData.type === 'device') {
+      resolvedDeviceId = validatedData.deviceId;
+    } else if ('deviceId' in validatedData && validatedData.deviceId) {
+      resolvedDeviceId = validatedData.deviceId;
     }
+    console.log('[LOGIN] DeviceId para token:', resolvedDeviceId);
 
-    // 6. 🔐 Criar token JWT
+    // 5. 🎫 Gerar token JWT seguro
     const token = await createToken({
       userId: user.id,
-      email: user.email || '',
+      deviceId: resolvedDeviceId,
       nome: user.name || ''
     });
+    console.log('[LOGIN] Token gerado:', token);
 
-    // 7. 🍪 Resposta com cookie seguro
+    // 6. 🍪 Resposta com cookie seguro
     const response = NextResponse.json<LoginResponse>({
       success: true,
       message: 'Login realizado com sucesso!',
@@ -343,26 +374,23 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
       }
     });
 
-    // Cookie seguro
     response.cookies.set({
       name: 'auth-token',
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60, // 30 dias
+      maxAge: 7 * 24 * 60 * 60, // 7 dias
       path: '/'
     });
-
+    console.log('[LOGIN] Cookie setado e resposta enviada');
     return response;
 
   } catch (error: any) {
-    console.error('Login error:', error);
-    
+    console.error('[LOGIN] Erro inesperado:', error);
     if (securityContext) {
       logSecurityEvent('SUSPICIOUS', securityContext, `Login error: ${error.message}`);
     }
-    
     return NextResponse.json<LoginResponse>({
       success: false,
       error: 'Erro interno do servidor',

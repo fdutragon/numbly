@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useUserStore, User, MapaNumerologico } from '@/lib/stores/user-store';
+import { getOrCreateDeviceId } from '../device-id';
 
 interface AuthContextType {
   token: string | null;
@@ -16,17 +17,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = 'auth_token';
 const DEVICE_ID_KEY = 'device_id';
+const LAST_LOGIN_ATTEMPT_KEY = 'last_login_attempt';
+const LOGIN_COOLDOWN_MS = 5000; // 5 segundos de cooldown entre tentativas
 
-// Gerar ou recuperar deviceId
-function getOrCreateDeviceId(): string {
-  if (typeof window === 'undefined') return '';
+// Variável global para controlar inicialização única (evita múltiplas execuções no dev mode)
+let globalInitialized = false;
+
+// Rate limiting para evitar muitas requisições
+function canAttemptLogin(): boolean {
+  if (typeof window === 'undefined') return false;
   
-  let deviceId = localStorage.getItem(DEVICE_ID_KEY);
-  if (!deviceId) {
-    deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem(DEVICE_ID_KEY, deviceId);
+  const lastAttempt = localStorage.getItem(LAST_LOGIN_ATTEMPT_KEY);
+  if (!lastAttempt) return true;
+  
+  const timeSinceLastAttempt = Date.now() - parseInt(lastAttempt);
+  return timeSinceLastAttempt > LOGIN_COOLDOWN_MS;
+}
+
+function recordLoginAttempt(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LAST_LOGIN_ATTEMPT_KEY, Date.now().toString());
   }
-  return deviceId;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -124,10 +135,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Auto login
+  // Auto login com rate limiting
   const autoLogin = async (): Promise<void> => {
     try {
-      const deviceId = getOrCreateDeviceId();
+      console.log('[AUTO_LOGIN] Verificando se pode tentar login...');
+      if (!canAttemptLogin()) {
+        console.log('[AUTO_LOGIN] Rate limit ativo, pulando tentativa');
+        setIsLoading(false);
+        return;
+      }
+      console.log('[AUTO_LOGIN] Iniciando auto-login...');
+      recordLoginAttempt();
+      const deviceId = await getOrCreateDeviceId();
+      console.log('[AUTO_LOGIN] DeviceId que será usado para login:', deviceId);
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -144,12 +164,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         if (data.token) {
+          console.log('[AUTO_LOGIN] Token recebido, salvando...');
           saveToken(data.token);
           await loadUserData(data.token);
+          console.log('[AUTO_LOGIN] Auto-login concluído com sucesso');
         }
+      } else {
+        console.warn('[AUTO_LOGIN] Falha no auto-login:', response.status);
       }
     } catch (error) {
-      console.error('Erro no auto-login:', error);
+      console.error('[AUTO_LOGIN] Erro no auto-login:', error);
       clearToken();
     } finally {
       setIsLoading(false);
@@ -157,8 +181,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Login manual
-  const login = async (deviceId: string): Promise<boolean> => {
+  const login = async (deviceId?: string): Promise<boolean> => {
     try {
+      const id = deviceId || await getOrCreateDeviceId();
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -166,7 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({
           type: 'device',
-          deviceId,
+          deviceId: id,
           platform: 'web',
           deviceName: navigator.userAgent,
         }),
@@ -220,26 +245,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Evitar execução no servidor
     if (typeof window === 'undefined') return;
     
-    // Evitar múltiplas inicializações
+    // Evitar múltiplas inicializações globalmente (especialmente importante no dev mode)
+    if (globalInitialized) {
+      console.log('[AUTH_INIT] Já inicializado globalmente, pulando...');
+      setIsLoading(false);
+      return;
+    }
+    
+    // Evitar múltiplas inicializações locais
     if (initialized) return;
     
     const initializeAuth = async () => {
+      globalInitialized = true;
       setInitialized(true);
+      console.log('[AUTH_INIT] Inicializando autenticação...');
       
       const savedToken = localStorage.getItem(TOKEN_KEY);
       if (savedToken) {
+        console.log('[AUTH_INIT] Token encontrado, carregando dados do usuário...');
         setToken(savedToken);
         const success = await loadUserData(savedToken);
-        if (!success) {
-          // Token inválido, fazer auto-login
-          await autoLogin();
-        } else {
+        if (success) {
+          console.log('[AUTH_INIT] Usuário carregado com sucesso, parando inicialização');
           setIsLoading(false);
+          return; // Para aqui se já está autenticado
+        } else {
+          console.log('[AUTH_INIT] Token inválido, limpando...');
+          clearToken();
         }
-      } else {
-        // Sem token salvo, fazer auto-login
-        await autoLogin();
       }
+      
+      // Só fazer auto-login se não há token válido
+      console.log('[AUTH_INIT] Fazendo auto-login...');
+      await autoLogin();
     };
 
     initializeAuth();

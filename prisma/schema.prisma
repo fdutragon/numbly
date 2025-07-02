@@ -38,13 +38,14 @@ enum SubscriptionPlan {
   BASIC
   PREMIUM
   ENTERPRISE
+  CUSTOM // Novo plano para casos específicos
 }
 
 model User {
   id             String          @id @default(uuid())
-  email          String?         @unique // Agora opcional para login via push
+  email          String?         @unique
   name           String?
-  birthDate      DateTime        // Mudado para DateTime
+  birthDate      DateTime        // Mantido como DateTime
   isPremium      Boolean         @default(false)
   credits        Int             @default(5)
   profileImage   String?
@@ -59,8 +60,6 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   hasSeenIntro   Boolean         @default(false)
-  
-  // Relação com dispositivos para login via push
   devices        UserDevice[]    @relation("UserDevices")
   subscriptions  UserSubscription[]
 }
@@ -69,10 +68,11 @@ model UserDevice {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation("UserDevices", fields: [userId], references: [id], onDelete: Cascade)
-  deviceId    String   @unique
+  deviceId    String
   deviceName  String?
   platform    String?
   userAgent   String?
+  ip          String?  // Novo campo para armazenar o IP do device
   lastSeen    DateTime @default(now())
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -143,7 +143,7 @@ model Report {
 model PushSubscription {
   id              String    @id @default(uuid())
   endpoint        String?   @unique // Endpoint da subscription push
-  deviceId        String    @unique
+  deviceId        String
   subscription    String    // JSON da subscription
   installedAt     DateTime  @default(now())
   userAgent       String?
@@ -176,7 +176,7 @@ model SubscriptionPlanDetails {
   description         String?
   price               Float             @default(0)
   currency            String            @default("BRL")
-  billingCycle        String            @default("MONTHLY") // MONTHLY, QUARTERLY, YEARLY
+  billingCycle        String            @default("MONTHLY")
   features            String[]          @default([])
   maxUsers            Int?
   maxAccounts         Int?
