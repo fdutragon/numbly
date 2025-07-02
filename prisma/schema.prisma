@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+  PENDING
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PREMIUM
+  ENTERPRISE
+}
+
+model User {
+  id             String          @id @default(uuid())
+  email          String?         @unique // Agora opcional para login via push
+  name           String?
+  birthDate      DateTime        // Mudado para DateTime
+  isPremium      Boolean         @default(false)
+  credits        Int             @default(5)
+  profileImage   String?
+  bio            String?
+  numerologyData Json
+  role           UserRole        @default(USER)
+  sentFriendRequests     Friendship[]    @relation("SentFriendRequests")
+  receivedFriendRequests Friendship[]    @relation("ReceivedFriendRequests")
+  compatibility  Compatibility[] @relation("UserCompatibility")
+  posts          Post[]
+  comments       Comment[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  hasSeenIntro   Boolean         @default(false)
+  
+  // Relação com dispositivos para login via push
+  devices        UserDevice[]    @relation("UserDevices")
+  subscriptions  UserSubscription[]
+}
+
+model UserDevice {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation("UserDevices", fields: [userId], references: [id], onDelete: Cascade)
+  deviceId    String   @unique
+  deviceName  String?
+  platform    String?
+  userAgent   String?
+  lastSeen    DateTime @default(now())
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Friendship {
+  id         String           @id @default(uuid())
+  sender     User             @relation("SentFriendRequests", fields: [senderId], references: [id])
+  senderId   String
+  receiver   User             @relation("ReceivedFriendRequests", fields: [receiverId], references: [id])
+  receiverId String
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([senderId, receiverId])
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  content   String
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String
+  comments  Comment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Compatibility {
+  id            String   @id @default(uuid())
+  user          User     @relation("UserCompatibility", fields: [userId], references: [id])
+  userId        String
+  target_email  String?
+  target_name   String
+  target_date   String
+  numerologyData Json
+  score         Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, target_name, target_date])
+}
+
+model Report {
+  id         String   @id @default(uuid())
+  userId     String
+  type       String   // Tipo de análise (lifePath, destiny, etc.)
+  number     String   // Número analisado
+  content    String   // Conteúdo do relatório gerado
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, type])
+}
+
+model PushSubscription {
+  id              String    @id @default(uuid())
+  endpoint        String?   @unique // Endpoint da subscription push
+  deviceId        String    @unique
+  subscription    String    // JSON da subscription
+  installedAt     DateTime  @default(now())
+  userAgent       String?
+  platform        String?
+  isActive        Boolean   @default(true)
+  hasPurchased    Boolean   @default(false)
+  pushSent        Boolean   @default(false)
+  pushSentAt      DateTime?
+  purchasedAt     DateTime?
+  purchaseId      String?
+  purchaseAmount  Float?
+  lastUpdated     DateTime  @updatedAt
+  createdAt       DateTime  @default(now())
+}
+
+model MagicToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  email     String
+  used      Boolean   @default(false)
+  expiresAt DateTime? // Agora pode ser null para tokens permanentes
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+}
+
+model SubscriptionPlanDetails {
+  id                  String            @id @default(uuid())
+  plan                SubscriptionPlan  @unique
+  name                String
+  description         String?
+  price               Float             @default(0)
+  currency            String            @default("BRL")
+  billingCycle        String            @default("MONTHLY") // MONTHLY, QUARTERLY, YEARLY
+  features            String[]          @default([])
+  maxUsers            Int?
+  maxAccounts         Int?
+  maxTransactions     Int?
+  maxGoals            Int?
+  hasAdvancedReports  Boolean           @default(false)
+  hasAIInsights       Boolean           @default(false)
+  hasPrioritySupport  Boolean           @default(false)
+  hasMultiCurrency    Boolean           @default(false)
+  isActive            Boolean           @default(true)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("subscription_plan_details")
+}
+
+model UserSubscription {
+  id                String            @id @default(cuid())
+  userId            String
+  plan              SubscriptionPlan   @default(FREE)
+  status            SubscriptionStatus @default(ACTIVE)
+  startDate         DateTime           @default(now())
+  endDate           DateTime?
+  renewalDate       DateTime?
+  isActive          Boolean            @default(true)
+  paymentMethod     String?
+  lastPaymentDate   DateTime?
+  nextPaymentDate   DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_subscriptions")
+}
+
+// npx prisma migrate dev --name nome-da-migracao
