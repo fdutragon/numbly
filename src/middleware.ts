@@ -11,6 +11,7 @@ const publicRoutes = [
   '/api/auth/magic',
   '/api/auth/verify',
   '/api/auth/check-user',
+  '/api/auth/check-device-push',
   '/api/push/subscribe',
   '/api/health',
   '/api/get-ip',
@@ -26,9 +27,8 @@ const authRoutes = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Desabilitar middleware para localhost/desenvolvimento
-  const hostname = request.nextUrl.hostname;
-  if (hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development') {
+  // Para desenvolvimento, só desabilitar se explicitamente configurado
+  if (process.env.DISABLE_AUTH_MIDDLEWARE === 'true') {
     return NextResponse.next();
   }
   
@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get('token')?.value;
+  const token = request.cookies.get('auth-token')?.value;
   
   // Verificar se é uma rota pública
   if (publicRoutes.includes(pathname)) {
@@ -72,15 +72,28 @@ export async function middleware(request: NextRequest) {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     
+    if (!payload.userId) {
+      throw new Error('Token sem userId');
+    }
+    
     // Adicionar dados do usuário ao header da requisição
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-user-id', payload.userId as string);
-    requestHeaders.set('x-device-id', payload.deviceId as string);
+    if (payload.deviceId) {
+      requestHeaders.set('x-device-id', payload.deviceId as string);
+    }
+    if (payload.nome) {
+      requestHeaders.set('x-user-name', payload.nome as string);
+    }
+
+    // Adicionar dados ao request para APIs
+    const enhancedRequest = {
+      ...request,
+      headers: requestHeaders,
+    };
 
     return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
+      request: enhancedRequest,
     });
   } catch (error) {
     console.error('Token inválido:', error);
@@ -90,7 +103,7 @@ export async function middleware(request: NextRequest) {
       ? NextResponse.json({ error: 'Token inválido' }, { status: 401 })
       : NextResponse.redirect(new URL('/', request.url));
     
-    response.cookies.delete('token');
+    response.cookies.delete('auth-token');
     return response;
   }
 }

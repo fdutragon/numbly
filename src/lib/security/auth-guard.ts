@@ -103,11 +103,12 @@ function calculateRiskScore(req: NextRequest, ip: string, userAgent: string): nu
  * 🛡️ Auth Guard principal
  */
 export async function authGuard(req: NextRequest, options: { allowLocalhost?: boolean } = {}): Promise<SecurityContext> {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 
+  let ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 
            req.headers.get('x-real-ip') || 
            req.headers.get('cf-connecting-ip') || 
            'unknown';
-           
+  ip = normalizeIp(ip) || 'unknown';
+
   const userAgent = req.headers.get('user-agent') || '';
   
   // Reduzir score de risco para localhost em desenvolvimento
@@ -373,4 +374,14 @@ export function addSecurityLog(
   }
   
   logSecurityEvent(event, securityContext, message);
+}
+
+/**
+ * 🌐 Normalizar IPs para formato consistente
+ */
+export function normalizeIp(ip?: string | null): string | null {
+  if (!ip) return null;
+  if (ip === '::1') return '127.0.0.1';
+  if (ip.startsWith('::ffff:')) return ip.replace('::ffff:', '');
+  return ip;
 }

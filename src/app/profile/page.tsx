@@ -282,11 +282,11 @@ export default function ProfilePage() {
                 <div className="flex items-center space-x-4">
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-2xl font-bold text-white">
-                      {user.nome.charAt(0).toUpperCase()}
+                      {(user.name?.charAt(0) || '?').toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900">{user.nome}</h1>
+                    <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
                     <p className="text-gray-600 text-sm">
                       Número do Destino: {user.numeroDestino}
                     </p>

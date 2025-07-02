@@ -1,17 +1,18 @@
 import { create } from 'zustand';
+import { User as PrismaUser } from '@prisma/client';
+import type { MapaNumerologico as IMapaNumerologico } from '../types/api-responses';
 
-export interface User {
-  id?: string;
-  nome: string;
-  dataNascimento: string;
-  numeroDestino: number;
-  numeroSorte?: number;
-  plano: 'gratuito' | 'premium';
-  pushEnabled: boolean;
-  created?: string;
+interface UserSubscription {
+  status: 'active' | 'inactive' | 'trial';
+  expiresAt?: Date;
+  plan: 'free' | 'premium';
 }
 
-export interface MapaNumerologico {
+export interface User extends Omit<PrismaUser, 'hashedPassword'> {
+  subscription?: UserSubscription;
+}
+
+export interface MapaNumerologico extends IMapaNumerologico {
   // Números básicos
   numeroDestino: number;
   numeroAlma: number;
@@ -74,7 +75,7 @@ export interface MapaNumerologico {
 
 export interface Compatibilidade {
   pessoa1: User;
-  pessoa2: Pick<User, 'nome' | 'dataNascimento'>;
+  pessoa2: Pick<User, 'name' | 'birthDate'>;
   score: number;
   areas: {
     amor: number;

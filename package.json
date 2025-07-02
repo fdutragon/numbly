@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:push": "node scripts/test-push-local.js",
+    "test:check-device": "node scripts/simulate-check-device.js",
+    "test:setup": "node scripts/setup-test-data.js",
+    "generate:vapid": "node scripts/generate-vapid-keys.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -14,6 +18,7 @@
     "@prisma/extension-accelerate": "^2.0.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.0",
+    "groq-sdk": "^0.26.0",
     "jose": "^6.0.11",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.525.0",

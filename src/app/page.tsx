@@ -138,9 +138,10 @@ export default function Home() {
             console.log('✅ Permissão de push concedida');
             
             // Criar subscription
+            const applicationServerKey = (window as any).NEXT_PUBLIC_VAPID_PUBLIC_KEY || undefined;
             const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
-              applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+              applicationServerKey
             });
             
             // Salvar subscription no banco
@@ -181,21 +182,21 @@ export default function Home() {
     setDeviceMessage('');
     
     try {
-      // 1. Tentar recuperar deviceId do localStorage
-      const deviceId = localStorage.getItem('numbly_device_id');
-      if (!deviceId) {
-        setDeviceMessage('Nenhum dispositivo encontrado. Por favor, faça um novo cadastro.');
-        return;
-      }
+      // 1. Garantir que temos um deviceId (gera se não existir)
+      const deviceId = await getOrCreateDeviceId();
+      console.log('[EXISTING_DEVICE] DeviceId:', deviceId);
       
       // 2. Verificar dispositivo na API
-      const response = await fetch('/api/auth/check-device', {
+      console.log('[EXISTING_DEVICE] Chamando API check-device-push...');
+      const response = await fetch('/api/auth/check-device-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId })
       });
       
+      console.log('[EXISTING_DEVICE] Resposta status:', response.status);
       const result = await response.json();
+      console.log('[EXISTING_DEVICE] Resultado:', result);
       
       if (!result.success) {
         setDeviceMessage(result.message || 'Dispositivo não encontrado. Por favor, faça um novo cadastro.');
@@ -205,7 +206,7 @@ export default function Home() {
       if (result.exists) {
         if (!result.hasPush) {
           setDeviceMessage(`Bem-vindo de volta ${result.userName}! Configure as notificações para continuar.`);
-          // TODO: Mostrar modal de configuração de push
+          setShowNotificationModal(true);
           return;
         }
         
@@ -220,7 +221,7 @@ export default function Home() {
       }
       
     } catch (error) {
-      console.error('Erro ao verificar dispositivo:', error);
+      console.error('[EXISTING_DEVICE] Erro:', error);
       setDeviceMessage('Erro ao verificar dispositivo. Tente novamente.');
     } finally {
       setLoadingDevice(false);
@@ -249,7 +250,7 @@ export default function Home() {
         }
         
         console.log('✅ Subscription criada:', subscription.endpoint);
-        useUserStore.getState().updateUser({ pushEnabled: true });
+        // Não atualiza mais pushEnabled no store, pois não existe no modelo User
       }
       
       setShowNotificationModal(false);

@@ -17,6 +17,7 @@ datasource db {
 enum UserRole {
   USER
   ADMIN
+  MODERATOR
 }
 
 enum FriendshipStatus {
@@ -41,6 +42,12 @@ enum SubscriptionPlan {
   CUSTOM // Novo plano para casos específicos
 }
 
+enum GenerationStatus {
+  PENDING
+  GENERATED
+  FAILED
+}
+
 model User {
   id             String          @id @default(uuid())
   email          String?         @unique
@@ -62,6 +69,8 @@ model User {
   hasSeenIntro   Boolean         @default(false)
   devices        UserDevice[]    @relation("UserDevices")
   subscriptions  UserSubscription[]
+  oraculo        OraculoAIGenerationQueue[]
+  pushSubscriptions PushSubscription[] @relation("UserPushSubscriptions")
 }
 
 model UserDevice {
@@ -157,6 +166,8 @@ model PushSubscription {
   purchaseAmount  Float?
   lastUpdated     DateTime  @updatedAt
   createdAt       DateTime  @default(now())
+  user             User   @relation("UserPushSubscriptions", fields: [userId], references: [id])
+  userId          String
 }
 
 model MagicToken {
@@ -212,5 +223,37 @@ model UserSubscription {
 
   @@map("user_subscriptions")
 }
+
+model OraculoAIGenerationQueue {
+  id          String          @id @default(cuid())
+  userId      String
+  numero      Int
+  status      GenerationStatus @default(PENDING)
+  prompt      String          @db.Text
+  generated   String?         @db.Text
+  charCount   Int?
+  createdAt   DateTime        @default(now())
+  generatedAt DateTime?
+  sent        Boolean         @default(false)
+  sentAt      DateTime?
+  error       String?         @db.Text
+  attempts    Int             @default(0)
+  user        User            @relation(fields: [userId], references: [id])
+
+  @@index([status, sent])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model OraculoCronExecution {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  finishedAt DateTime?
+  processed  Int      @default(0)
+  sent       Int      @default(0)
+  failed     Int      @default(0)
+  skipped    Int      @default(0)
+}
+
 
 // npx prisma migrate dev --name nome-da-migracao

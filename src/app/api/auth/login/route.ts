@@ -125,12 +125,10 @@ async function loginByEmail(email: string, birthDate: string, securityContext: S
   return user;
 }
 
-/**
- * 🔍 Login por device ID
- */
+// Corrige loginByDevice: busca deve ser findFirst (não findUnique) e garantir include: { user }
 async function loginByDevice(deviceId: string, deviceName?: string, platform?: string, userAgent?: string, securityContext?: SecurityContext): Promise<AuthUser | null> {
   // Buscar dispositivo e usuário associado
-  const userDevice = await db.userDevice.findUnique({
+  const userDevice = await db.userDevice.findFirst({
     where: { deviceId },
     include: {
       user: {
@@ -147,7 +145,7 @@ async function loginByDevice(deviceId: string, deviceName?: string, platform?: s
     }
   });
 
-  if (!userDevice || !userDevice.isActive) {
+  if (!userDevice || !userDevice.isActive || !userDevice.user) {
     if (securityContext) {
       logSecurityEvent('SUSPICIOUS', securityContext, `Invalid device login attempt: ${deviceId}`);
     }
@@ -261,21 +259,34 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
           }
           
           // Criar ou atualizar device para este usuário
-          await db.userDevice.upsert({
-            where: { deviceId },
-            update: {
-              lastSeen: new Date(),
-              isActive: true
-            },
-            create: {
-              userId: demoUser.id,
-              deviceId,
-              deviceName: deviceName || 'Unknown Device',
-              userAgent: securityContext.userAgent,
-              platform: platform || 'web',
-              isActive: true
-            }
-          });
+          const safeDeviceName = deviceName || 'Unknown Device';
+          const safeUserAgent = securityContext.userAgent || 'Unknown';
+          const safePlatform = platform || 'web';
+          const existingDevice = await db.userDevice.findFirst({ where: { deviceId } });
+          if (existingDevice) {
+            await db.userDevice.update({
+              where: { id: existingDevice.id },
+              data: {
+                userId: demoUser.id,
+                lastSeen: new Date(),
+                isActive: true,
+                deviceName: safeDeviceName,
+                userAgent: safeUserAgent,
+                platform: safePlatform
+              }
+            });
+          } else {
+            await db.userDevice.create({
+              data: {
+                userId: demoUser.id,
+                deviceId,
+                deviceName: safeDeviceName,
+                userAgent: safeUserAgent,
+                platform: safePlatform,
+                isActive: true
+              }
+            });
+          }
           
           user = {
             id: demoUser.id,
@@ -304,21 +315,36 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
         logSecurityEvent('AUTH_SUCCESS', securityContext, `Email login successful: ${email}`);
         if (deviceId) {
           try {
-            await db.userDevice.upsert({
-              where: { deviceId },
-              update: {
-                userId: user.id,
-                lastSeen: new Date(),
-                isActive: true
-              },
-              create: {
-                userId: user.id,
-                deviceId,
-                deviceName: securityContext.userAgent || 'Unknown Device',
-                userAgent: securityContext.userAgent,
-                platform: 'web'
-              }
-            });
+            // Garantir valores seguros para deviceName, userAgent e platform
+            const safeDeviceName = securityContext.userAgent || 'Unknown Device';
+            const safeUserAgent = securityContext.userAgent || 'Unknown';
+            const safePlatform = 'web';
+            // Buscar device pelo deviceId (findFirst, pois deviceId pode não ser unique)
+            const existingDevice = await db.userDevice.findFirst({ where: { deviceId } });
+            if (existingDevice) {
+              await db.userDevice.update({
+                where: { id: existingDevice.id },
+                data: {
+                  userId: user.id,
+                  lastSeen: new Date(),
+                  isActive: true,
+                  deviceName: safeDeviceName,
+                  userAgent: safeUserAgent,
+                  platform: safePlatform
+                }
+              });
+            } else {
+              await db.userDevice.create({
+                data: {
+                  userId: user.id,
+                  deviceId,
+                  deviceName: safeDeviceName,
+                  userAgent: safeUserAgent,
+                  platform: safePlatform,
+                  isActive: true
+                }
+              });
+            }
             console.log('[LOGIN] Device upsert OK');
           } catch (deviceError) {
             console.log('[LOGIN] Erro no upsert de device:', deviceError);
@@ -359,7 +385,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
     console.log('[LOGIN] Token gerado:', token);
 
     // 6. 🍪 Resposta com cookie seguro
-    const response = NextResponse.json<LoginResponse>({
+    const redirectTo = '/dashboard'; // ou '/profile', conforme desejado
+    const response = NextResponse.json<LoginResponse & { redirectTo: string }>({
       success: true,
       message: 'Login realizado com sucesso!',
       data: {
@@ -371,7 +398,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
           numerologyData: user.numerologyData
         },
         token
-      }
+      },
+      redirectTo
     });
 
     response.cookies.set({

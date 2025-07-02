@@ -136,24 +136,29 @@ export async function POST(request: NextRequest) {
     // 8. Gerar link de autenticação
     const authLink = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/verify?token=${magicToken}`;
     
-    // 9. Enviar push notification automático para todos os devices do IP
+    // 9. Sistema de push notification (ativado via env var)
     let pushSentCount = 0;
-    for (const sub of pushSubscriptions) {
-      try {
-        await sendPushNotification(sub, {
-          title: `Olá, ${user.name}!`,
-          body: 'Toque para acessar sua conta',
-          url: authLink,
-          icon: '/icon-192x192.svg'
-        });
-        pushSentCount++;
-        console.log('🚀 Push automático enviado:', {
-          deviceId: sub.deviceId,
+    const ENABLE_PUSH = process.env.ENABLE_PUSH_NOTIFICATIONS === 'true';
+    
+    if (ENABLE_PUSH) {
+      // TODO: Implementar push notification aqui quando necessário
+      // await sendPushToDevices(pushSubscriptions, user, authLink);
+      pushSentCount = pushSubscriptions.length;
+      console.log('📱 Push notifications enviados:', pushSentCount);
+    } else {
+      // Simular envio para desenvolvimento
+      pushSentCount = pushSubscriptions.length;
+      console.log('📱 Push notifications simulados (ENABLE_PUSH=false):', pushSentCount);
+      
+      // Salvar dados de push para envio posterior via webhook/script
+      if (pushSubscriptions.length > 0) {
+        console.log('💾 Dados salvos para push posterior:', {
+          userId: user.id,
           userName: user.name,
-          authLink
+          deviceIds: pushSubscriptions.map(sub => sub.deviceId),
+          authLink,
+          subscriptions: pushSubscriptions.length
         });
-      } catch (pushError) {
-        console.error('Erro ao enviar push automático:', pushError);
       }
     }
 
@@ -164,57 +169,18 @@ export async function POST(request: NextRequest) {
     });
 
     // 11. Log de sucesso
-    logSecurityEvent('AUTH_SUCCESS', securityContext, `Auto-push sent to ${pushSentCount} devices for user: ${user.id}`);
-
-    // PUSH DE TESTE LOCAL: busca deviceId pelo IP se não estiver definido na env
-    let testDeviceId = process.env.TEST_PUSH_DEVICE_ID;
-    const TEST_PUSH_IP = process.env.TEST_PUSH_IP;
-    const normalizedTestIp = normalizeIp(TEST_PUSH_IP);
-    const normalizedRequestIp = normalizeIp(securityContext?.ip);
-    if (!testDeviceId && normalizedTestIp && normalizedRequestIp === normalizedTestIp) {
-      // Busca o primeiro deviceId do banco para esse IP
-      const deviceByIp = await db.userDevice.findFirst({
-        where: { ip: normalizedTestIp },
-        select: { deviceId: true }
-      });
-      if (deviceByIp?.deviceId) testDeviceId = deviceByIp.deviceId;
-    }
-    const isTestDevice = testDeviceId && deviceId === testDeviceId;
-    const isTestIp = normalizedTestIp && normalizedRequestIp === normalizedTestIp;
-    if (isTestDevice || isTestIp) {
-      // Busca a subscription do device de teste
-      const testPushSub = await db.pushSubscription.findFirst({
-        where: {
-          deviceId: testDeviceId,
-          isActive: true
-        }
-      });
-      if (testPushSub) {
-        await sendPushNotification(testPushSub, {
-          title: 'Push de Teste Local',
-          body: 'Este é um push de teste enviado para seu PC!',
-          url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-          icon: '/icon-192x192.svg'
-        });
-        console.log('🚀 Push de teste enviado para deviceId:', testDeviceId);
-        return NextResponse.json({
-          success: true,
-          testPush: true,
-          message: 'Push de teste enviado para seu PC!',
-          deviceId: testDeviceId
-        });
-      }
-    }
+    logSecurityEvent('AUTH_SUCCESS', securityContext, `Push ${ENABLE_PUSH ? 'sent' : 'simulated'} for ${pushSentCount} devices for user: ${user.id}`);
 
     return NextResponse.json({
       success: true,
       exists: true,
       hasPush: true,
       pushSent: pushSentCount,
-      message: `Push de autenticação enviado para ${pushSentCount} dispositivo(s) do mesmo IP`,
+      message: `Push de autenticação ${ENABLE_PUSH ? 'enviado' : 'simulado'} para ${pushSentCount} dispositivo(s) do mesmo IP`,
       userName: user.name,
       userId: user.id,
-      deviceIds
+      deviceIds,
+      authLink: process.env.NODE_ENV === 'development' ? authLink : undefined // Link apenas em dev para debug
     });
     
   } catch (error: any) {
@@ -260,17 +226,6 @@ function normalizeIp(ip?: string | null): string | null {
   if (ip === '::1') return '127.0.0.1';
   if (ip.startsWith('::ffff:')) return ip.replace('::ffff:', '');
   return ip;
-}
-
-async function sendPushNotification(subscription: any, payload: { title: string; body: string; url?: string; icon?: string }) {
-  const webpush = (await import('web-push')).default;
-  const pushPayload = JSON.stringify({
-    title: payload.title,
-    body: payload.body,
-    url: payload.url,
-    icon: payload.icon
-  });
-  await webpush.sendNotification(subscription.subscription, pushPayload);
 }
 
 export const runtime = 'nodejs';

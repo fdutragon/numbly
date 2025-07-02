@@ -1,6 +1,8 @@
-import webpush from 'web-push';
+// --- ATENÇÃO: Nunca importe webpush no topo deste arquivo! ---
+// Toda lógica de push server deve ser feita em API routes/scripts
+// Este arquivo só pode conter código client-safe (Service Worker, subscribe, etc)
+// ---
 
-// Configuração do VAPID para push notifications
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
 
 export class PushService {
@@ -166,22 +168,3 @@ export class PushService {
 }
 
 export const pushService = PushService.getInstance();
-
-interface PushPayload {
-  title: string;
-  body: string;
-  url?: string;
-  icon?: string;
-}
-
-export async function sendPushNotification(subscription: any, payload: PushPayload) {
-  // Importa web-push dinamicamente para evitar erro em ambiente edge/client
-  const webpush = (await import('web-push')).default;
-  const pushPayload = JSON.stringify({
-    title: payload.title,
-    body: payload.body,
-    url: payload.url,
-    icon: payload.icon
-  });
-  await webpush.sendNotification(subscription.subscription, pushPayload);
-}

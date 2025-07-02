@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN');
+CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN', 'MODERATOR');
 
 -- CreateEnum
 CREATE TYPE "FriendshipStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
@@ -9,6 +9,9 @@ CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'CANCELLED', 'EX
 
 -- CreateEnum
 CREATE TYPE "SubscriptionPlan" AS ENUM ('FREE', 'BASIC', 'PREMIUM', 'ENTERPRISE', 'CUSTOM');
+
+-- CreateEnum
+CREATE TYPE "GenerationStatus" AS ENUM ('PENDING', 'GENERATED', 'FAILED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -127,6 +130,7 @@ CREATE TABLE "PushSubscription" (
     "purchaseAmount" DOUBLE PRECISION,
     "lastUpdated" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "userId" TEXT NOT NULL,
 
     CONSTRAINT "PushSubscription_pkey" PRIMARY KEY ("id")
 );
@@ -188,6 +192,38 @@ CREATE TABLE "user_subscriptions" (
     CONSTRAINT "user_subscriptions_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "OraculoAIGenerationQueue" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "numero" INTEGER NOT NULL,
+    "status" "GenerationStatus" NOT NULL DEFAULT 'PENDING',
+    "prompt" TEXT NOT NULL,
+    "generated" TEXT,
+    "charCount" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "generatedAt" TIMESTAMP(3),
+    "sent" BOOLEAN NOT NULL DEFAULT false,
+    "sentAt" TIMESTAMP(3),
+    "error" TEXT,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "OraculoAIGenerationQueue_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "OraculoCronExecution" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "finishedAt" TIMESTAMP(3),
+    "processed" INTEGER NOT NULL DEFAULT 0,
+    "sent" INTEGER NOT NULL DEFAULT 0,
+    "failed" INTEGER NOT NULL DEFAULT 0,
+    "skipped" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "OraculoCronExecution_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -208,6 +244,15 @@ CREATE UNIQUE INDEX "MagicToken_token_key" ON "MagicToken"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "subscription_plan_details_plan_key" ON "subscription_plan_details"("plan");
+
+-- CreateIndex
+CREATE INDEX "OraculoAIGenerationQueue_status_sent_idx" ON "OraculoAIGenerationQueue"("status", "sent");
+
+-- CreateIndex
+CREATE INDEX "OraculoAIGenerationQueue_userId_idx" ON "OraculoAIGenerationQueue"("userId");
+
+-- CreateIndex
+CREATE INDEX "OraculoAIGenerationQueue_createdAt_idx" ON "OraculoAIGenerationQueue"("createdAt");
 
 -- AddForeignKey
 ALTER TABLE "UserDevice" ADD CONSTRAINT "UserDevice_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -231,4 +276,10 @@ ALTER TABLE "Comment" ADD CONSTRAINT "Comment_postId_fkey" FOREIGN KEY ("postId"
 ALTER TABLE "Compatibility" ADD CONSTRAINT "Compatibility_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "PushSubscription" ADD CONSTRAINT "PushSubscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "user_subscriptions" ADD CONSTRAINT "user_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OraculoAIGenerationQueue" ADD CONSTRAINT "OraculoAIGenerationQueue_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
