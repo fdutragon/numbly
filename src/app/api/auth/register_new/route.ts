@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { gerarMapaNumerologico } from '@/lib/numerologia';
+import { gerarMapaNumerologicoCompleto } from '@/lib/numerologia';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Gerar mapa numerológico
-    const mapa = gerarMapaNumerologico(nome, dataNascimento);
+    const mapa = gerarMapaNumerologicoCompleto(nome, dataNascimento);
 
     // Simular delay da API
     await new Promise(resolve => setTimeout(resolve, 500));

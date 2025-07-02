@@ -223,7 +223,28 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
       // Login via device
       const { deviceId, deviceName, platform } = validatedData;
       user = await loginByDevice(deviceId, deviceName, platform, securityContext.userAgent, securityContext);
-      
+
+      // Se não encontrou o device, criar automaticamente em dev
+      if (!user && process.env.NODE_ENV === 'development' && deviceId.startsWith('device_')) {
+        // Buscar usuário de teste padrão (ajuste conforme necessário)
+        const testUser = await db.user.findFirst();
+        if (testUser) {
+          await db.userDevice.create({
+            data: {
+              userId: testUser.id,
+              deviceId,
+              deviceName: deviceName || 'Dev Device',
+              userAgent: securityContext.userAgent,
+              platform: platform || 'dev',
+              isActive: true,
+              lastSeen: new Date()
+            }
+          });
+          user = await loginByDevice(deviceId, deviceName, platform, securityContext.userAgent, securityContext);
+          logSecurityEvent('SUSPICIOUS', securityContext, `Device auto-criado em dev: ${deviceId}`);
+        }
+      }
+
       if (user) {
         logSecurityEvent('AUTH_SUCCESS', securityContext, `Device login successful: ${deviceId}`);
       }

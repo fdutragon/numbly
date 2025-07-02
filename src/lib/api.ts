@@ -87,20 +87,6 @@ export function useUserApi() {
   const { makeRequest } = useApiRequest();
 
   return {
-    register: async (userData: {
-      nome: string;
-      dataNascimento: string;
-      numeroDestino: number;
-      pushEnabled: boolean;
-    }) => {
-      const response = await makeRequest(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-      if (!response.ok) throw new ApiError(response.status, await response.text());
-      return response.json();
-    },
-
     updateProfile: async (updates: {
       nome?: string;
       pushEnabled?: boolean;

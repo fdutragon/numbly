@@ -25,6 +25,29 @@ enum FriendshipStatus {
   REJECTED
 }
 
+enum InviteStatus {
+  PENDING     // Convite enviado, aguardando cadastro
+  ACCEPTED    // Pessoa se cadastrou via convite
+  EXPIRED     // Convite expirou
+  BLOCKED     // Convite foi bloqueado
+}
+
+enum RelationshipType {
+  FRIEND      // Amigo
+  FAMILY      // Família
+  ROMANTIC    // Parceiro romântico
+  BUSINESS    // Sócio/Negócios
+  CRUSH       // Paquera/Interesse
+  PET         // Pet (sim, vai ter isso!)
+  OTHER       // Outro
+}
+
+enum CompatibilityStatus {
+  WAITING     // Aguardando a outra pessoa aceitar
+  REVEALED    // Mapa revelado para ambos
+  BLOCKED     // Bloqueado por um dos lados
+}
+
 enum SubscriptionStatus {
   ACTIVE
   INACTIVE
@@ -54,6 +77,18 @@ model User {
   sentFriendRequests     Friendship[]    @relation("SentFriendRequests")
   receivedFriendRequests Friendship[]    @relation("ReceivedFriendRequests")
   compatibility  Compatibility[] @relation("UserCompatibility")
+  
+  // Sistema de convites virais
+  sentInvites            Invite[]        @relation("SentInvites")
+  receivedInvites        Invite[]        @relation("ReceivedInvites")
+  
+  // Mapas de compatibilidade
+  initiatedMaps          CompatibilityMap[] @relation("InitiatedMaps")
+  receivedMaps           CompatibilityMap[] @relation("ReceivedMaps")
+  
+  // Sessões do oráculo combinado
+  oracleSessions         OracleSession[] @relation("UserOracleSessions")
+  
   posts          Post[]
   comments       Comment[]
   createdAt      DateTime        @default(now())
@@ -214,3 +249,135 @@ model UserSubscription {
 }
 
 // npx prisma migrate dev --name nome-da-migracao
+
+// ===== SISTEMA DE CONVITES VIRAIS =====
+
+model Invite {
+  id              String           @id @default(uuid())
+  code            String           @unique // Código único do convite (6-8 chars)
+  
+  // Quem enviou o convite
+  sender          User             @relation("SentInvites", fields: [senderId], references: [id])
+  senderId        String
+  
+  // Para quem foi enviado (opcional se enviar por link)
+  receiver        User?            @relation("ReceivedInvites", fields: [receiverId], references: [id])
+  receiverId      String?
+  
+  // Dados da pessoa convidada (antes de se cadastrar)
+  invitedName     String           // Nome da pessoa convidada
+  invitedEmail    String?          // Email (opcional)
+  invitedPhone    String?          // Telefone (opcional)
+  
+  // Tipo de relacionamento pretendido
+  relationshipType RelationshipType @default(FRIEND)
+  
+  // Status e tracking
+  status          InviteStatus     @default(PENDING)
+  clicks          Int              @default(0)
+  lastClickedAt   DateTime?
+  
+  // Mensagem personalizada do convite
+  customMessage   String?
+  
+  // Metadata
+  expiresAt       DateTime?        // Convites podem expirar
+  acceptedAt      DateTime?        // Quando foi aceito
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  // Relação com mapa de compatibilidade
+  compatibilityMap CompatibilityMap?
+  
+  @@index([code])
+  @@index([senderId])
+  @@index([status])
+}
+
+// ===== MAPAS DE COMPATIBILIDADE =====
+
+model CompatibilityMap {
+  id              String              @id @default(uuid())
+  
+  // Relacionamento com convite
+  invite          Invite              @relation(fields: [inviteId], references: [id])
+  inviteId        String              @unique
+  
+  // Usuários envolvidos
+  initiator       User                @relation("InitiatedMaps", fields: [initiatorId], references: [id])
+  initiatorId     String
+  
+  partner         User?               @relation("ReceivedMaps", fields: [partnerId], references: [id])
+  partnerId       String?
+  
+  // Tipo de relacionamento
+  relationshipType RelationshipType   @default(FRIEND)
+  
+  // Status do mapa
+  status          CompatibilityStatus @default(WAITING)
+  
+  // Dados numerológicos dos envolvidos
+  initiatorData   Json                // Mapa numerológico completo do iniciador
+  partnerData     Json?               // Mapa numerológico do parceiro (só após aceite)
+  
+  // Análise de compatibilidade (só revelada após aceite mútuo)
+  compatibilityScore Float?           // Score de 0 a 100
+  compatibilityAnalysis Json?         // Análise detalhada da compatibilidade
+  strengthsAndChallenges Json?        // Pontos fortes e desafios do relacionamento
+  
+  // Relatório personalizado
+  customReport    String?             // Relatório IA gerado para esta dupla específica
+  reportGenerated Boolean             @default(false)
+  
+  // Oráculo combinado
+  oracleUnlocked  Boolean             @default(false)
+  oracleUsed      Boolean             @default(false)
+  oracleSessions  OracleSession[]     // Sessões do oráculo para este mapa
+  
+  // Tracking de engajamento
+  timesViewed     Int                 @default(0)
+  lastViewedAt    DateTime?
+  sharedTimes     Int                 @default(0)
+  
+  // Metadata
+  revealedAt      DateTime?           // Quando o mapa foi revelado
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@index([initiatorId])
+  @@index([partnerId])
+  @@index([status])
+}
+
+// ===== ORÁCULO COMBINADO =====
+
+model OracleSession {
+  id              String           @id @default(uuid())
+  
+  // Mapa de compatibilidade relacionado
+  compatibilityMap CompatibilityMap @relation(fields: [mapId], references: [id])
+  mapId           String
+  
+  // Participantes
+  users           User[]           @relation("UserOracleSessions")
+  
+  // Sessão do oráculo
+  question        String           // Pergunta feita em conjunto
+  answer          String?          // Resposta mística gerada
+  
+  // Condições para ativação
+  bothUsersActive Boolean          @default(false) // Ambos precisam estar online
+  questionAskedAt DateTime?        // Quando a pergunta foi feita
+  answeredAt      DateTime?        // Quando foi respondida
+  
+  // Metadata mística
+  cosmicAlignment String?          // Alinhamento cósmico no momento
+  lunarPhase      String?          // Fase da lua
+  numerologyFocus String?          // Foco numerológico da sessão
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  @@index([mapId])
+}

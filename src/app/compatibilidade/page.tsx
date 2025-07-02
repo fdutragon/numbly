@@ -74,7 +74,7 @@ export default function CompatibilidadePage() {
 
   const handleSubmit = async () => {
     if (!user) {
-      router.push('/register');
+      // Não faz nada, não redireciona
       return;
     }
 

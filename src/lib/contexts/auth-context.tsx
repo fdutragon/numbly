@@ -61,9 +61,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (response.status === 401 && token) {
-      clearToken();
-      setUser({} as User);
-      setMapa({} as MapaNumerologico);
+      if (process.env.NODE_ENV !== 'development' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        clearToken();
+        setUser({} as User);
+        setMapa({} as MapaNumerologico);
+      } else {
+        // Em dev/local, só loga o erro e não faz logout automático
+        console.warn('401 recebido, mas ignorado em ambiente de desenvolvimento/local');
+      }
     }
 
     return response;
@@ -82,8 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         // Só limpa token se for 401 (não autorizado)
         if (response.status === 401) {
-          console.warn('Token inválido durante carregamento de dados');
-          clearToken();
+          if (process.env.NODE_ENV !== 'development' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            console.warn('Token inválido durante carregamento de dados');
+            clearToken();
+          } else {
+            // Em dev/local, só loga o erro e não faz logout automático
+            console.warn('Token 401 ignorado em ambiente de desenvolvimento/local');
+          }
         }
         throw new Error(`Falha ao carregar dados do usuário: ${response.status}`);
       }

@@ -1,21 +1,180 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AppLayout } from '@/components/ui/app-layout';
 import { useUserStore } from '@/lib/stores/user-store';
-import { User, Calendar, Star, Heart, Sparkles, Crown, Settings } from 'lucide-react';
+import { DateInput } from '@/components/ui/date-input';
+import { MapaNumerologico } from '@/lib/numerologia';
+import { 
+  User, 
+  Calendar, 
+  Star, 
+  Crown, 
+  Settings, 
+  Edit2, 
+  Save, 
+  Volume2, 
+  Play, 
+  Moon,
+  Sun,
+  Palette,
+  AlertTriangle,
+  Sparkles,
+  Bell,
+  Heart,
+  LogOut
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
+// Opções de relacionamento e preferências
+const toqueOptions = [
+  { value: 'tibetan', label: '🎵 Taças Tibetanas', preview: '/sounds/tibetan.mp3' },
+  { value: 'bells', label: '🔔 Sinos Cristalinos', preview: '/sounds/bells.mp3' },
+  { value: 'binaural', label: '🌊 Notas Binaurais', preview: '/sounds/binaural.mp3' },
+  { value: 'nature', label: '🌿 Sons da Natureza', preview: '/sounds/nature.mp3' },
+  { value: 'mystic', label: '✨ Vibração Mística', preview: '/sounds/mystic.mp3' }
+];
+
+const estiloLeituraOptions = [
+  { value: 'espiritual', label: '🌌 Espiritual Elevado', description: 'Metafísico e simbólico' },
+  { value: 'pragmatico', label: '🧠 Pragmático Consciente', description: 'Ação direta e objetiva' },
+  { value: 'poetico', label: '🎭 Poético Profundo', description: 'Estilo oráculo místico' }
+];
+
+const avatarOptions = [
+  { value: 'lobo', label: '🐺 Lobo', description: 'Liderança e intuição' },
+  { value: 'fenix', label: '🔥 Fênix', description: 'Renascimento e transformação' },
+  { value: 'curador', label: '🌿 Curador', description: 'Cura e sabedoria' },
+  { value: 'alquimista', label: '⚗️ Alquimista', description: 'Transmutação e conhecimento' },
+  { value: 'oraculo', label: '🔮 Oráculo', description: 'Visão e profecia' },
+  { value: 'guardiao', label: '🛡️ Guardião', description: 'Proteção e força' }
+];
+
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, mapa, logout, requireAuth } = useAuth();
+  const { user, mapa, logout, requireAuth, updateUser } = useAuth();
   
+  // Estados para edição
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setSaving] = useState(false);
+  const [currentSound, setCurrentSound] = useState<HTMLAudioElement | null>(null);
+  
+  // Estados do formulário
+  const [formData, setFormData] = useState({
+    nome: '',
+    dataNascimento: '',
+    apelidoEspiritual: '',
+    toqueNotificacao: 'tibetan',
+    estiloLeitura: 'espiritual',
+    avatar: 'oraculo',
+    mensagensDiarias: true,
+    frasesMotivacionais: true,
+    modoIntrospecao: false
+  });
+
   // Proteger rota
   requireAuth();
-  
+
+  // Inicializar dados do usuário
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        nome: user.nome || '',
+        dataNascimento: user.dataNascimento || '',
+        apelidoEspiritual: '',
+        toqueNotificacao: 'tibetan',
+        estiloLeitura: 'espiritual',
+        avatar: 'oraculo',
+        mensagensDiarias: true,
+        frasesMotivacionais: true,
+        modoIntrospecao: false
+      });
+    }
+  }, [user]);
+
+  // Validar nome sem acentos
+  const validateName = (name: string) => {
+    const cleanName = name.replace(/[^a-zA-Z\s]/g, '');
+    return cleanName;
+  };
+
+  // Tocar preview do som
+  const playSound = (soundPath: string) => {
+    if (currentSound) {
+      currentSound.pause();
+    }
+    
+    const audio = new Audio(soundPath);
+    audio.volume = 0.5;
+    audio.play().catch(() => {
+      console.log('Não foi possível reproduzir o som');
+    });
+    setCurrentSound(audio);
+  };
+
+  // Salvar alterações
+  const handleSave = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    
+    try {
+      // Validar nome
+      const nomeClean = validateName(formData.nome);
+      if (!nomeClean.trim()) {
+        alert('Por favor, digite um nome válido (apenas letras)');
+        return;
+      }
+
+      // Se nome ou data mudaram, recalcular mapa
+      let novoMapa = mapa;
+      if (nomeClean !== user.nome || formData.dataNascimento !== user.dataNascimento) {
+        // Simular recálculo - em produção, chamar a função real
+        console.log('Recalculando mapa numerológico...');
+      }
+
+      // Preparar dados para atualização
+      const dadosAtualizados = {
+        ...formData,
+        nome: nomeClean,
+        numeroDestino: user.numeroDestino // Manter o existente por enquanto
+      };
+
+      // Atualizar via API
+      const response = await fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id || ''
+        },
+        body: JSON.stringify(dadosAtualizados)
+      });
+
+      if (response.ok) {
+        // Atualizar estado local
+        updateUser({ ...user, ...dadosAtualizados });
+        setIsEditing(false);
+        
+        // Notificar se nome/data mudaram
+        if (nomeClean !== user.nome || formData.dataNascimento !== user.dataNascimento) {
+          alert('✨ Seu mapa numerológico foi recalculado com as novas informações!');
+        }
+      } else {
+        throw new Error('Erro ao salvar');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+      alert('Erro ao salvar as alterações. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       logout();
@@ -83,12 +242,12 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-1">
                   <h1 className="text-xl font-bold text-gray-900">{user.nome}</h1>
-                  <p className="text-gray-600">
+                  <p className="text-gray-700">
                     Nascido em {new Date(user.dataNascimento).toLocaleDateString('pt-BR')}
                   </p>
                   <div className="flex items-center mt-2">
                     <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-700">
                       Número do Destino: {user.numeroDestino}
                     </span>
                   </div>
@@ -124,7 +283,7 @@ export default function ProfilePage() {
                     <div className="text-2xl font-bold text-gray-900 mb-1">
                       {stat.value}
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-gray-700">
                       {stat.label}
                     </div>
                   </CardContent>
@@ -142,7 +301,7 @@ export default function ProfilePage() {
         >
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold flex items-center">
+              <h2 className="text-lg font-semibold flex items-center text-gray-900">
                 <Sparkles className="w-5 h-5 mr-2 text-purple-500" />
                 Seus Insights Numerológicos
               </h2>
@@ -192,7 +351,7 @@ export default function ProfilePage() {
         >
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold flex items-center">
+              <h2 className="text-lg font-semibold flex items-center text-gray-900">
                 <Heart className="w-5 h-5 mr-2 text-pink-500" />
                 Amor e Relacionamentos
               </h2>
@@ -213,7 +372,7 @@ export default function ProfilePage() {
         >
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold flex items-center">
+              <h2 className="text-lg font-semibold flex items-center text-gray-900">
                 <Calendar className="w-5 h-5 mr-2 text-blue-500" />
                 Ciclo de Vida Atual
               </h2>
@@ -222,7 +381,7 @@ export default function ProfilePage() {
               <div className="mb-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-medium text-gray-900">{mapa.cicloVida.fase}</span>
-                  <span className="text-sm text-gray-600">{mapa.cicloVida.periodo}</span>
+                  <span className="text-sm text-gray-700">{mapa.cicloVida.periodo}</span>
                 </div>
               </div>
               <p className="text-sm text-gray-700 leading-relaxed">

@@ -33,6 +33,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icon-152x152.svg" />
+        <link rel="apple-touch-icon" sizes="144x144" href="/icon-144x144.svg" />
+        <link rel="apple-touch-icon" sizes="128x128" href="/icon-128x128.svg" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.svg" />
+        <link rel="apple-touch-icon" sizes="384x384" href="/icon-384x384.svg" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.svg" />
+        <meta name="theme-color" content="#7C3AED" />
+      </head>
       <body className={`${inter.className} antialiased bg-gradient-to-br from-purple-50 via-white to-blue-50 min-h-screen`}>
         <div className="relative">
           {/* Background decoration */}

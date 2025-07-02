@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { gerarMapaNumerologico } from '@/lib/numerologia';
+import { gerarMapaNumerologicoCompleto } from '@/lib/numerologia';
 import { authGuard, logSecurityEvent, checkRateLimit } from '@/lib/security/auth-guard';
 import { sendWelcomeEmail, getTestEmail } from '@/lib/email';
 import { db } from '@/lib/db';
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 5. Gerar mapa numerológico
-    const numerologyData = gerarMapaNumerologico(validatedData.nome.trim(), validatedData.dataNascimento);
+    const numerologyData = gerarMapaNumerologicoCompleto(validatedData.nome.trim(), validatedData.dataNascimento);
     
     // 6. Criar usuário no banco
     const user = await db.user.create({

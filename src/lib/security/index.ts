@@ -1,13 +1,11 @@
 // Security Logger
-export { 
-  addSecurityLog, 
-  getSecurityLogs, 
-  clearSecurityLogs, 
-  getSecurityStats, 
-  searchSecurityLogs, 
-  detectSuspiciousActivity,
-  type SecurityLogEntry 
-} from "./security-logger";
+export { addSecurityLog } from "./security-logger";
+export { getSecurityLogs } from "./security-logger";
+export { clearSecurityLogs } from "./security-logger";
+export { getSecurityStats } from "./security-logger";
+export { searchSecurityLogs } from "./security-logger";
+export { detectSuspiciousActivity } from "./security-logger";
+export type { SecurityLogEntry } from "./security-logger";
 
 // Auth Guard
 export { 

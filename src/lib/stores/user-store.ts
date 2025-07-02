@@ -12,17 +12,63 @@ export interface User {
 }
 
 export interface MapaNumerologico {
+  // Números básicos
   numeroDestino: number;
+  numeroAlma: number;
+  numeroExpressao: number;
+  numeroPersonalidadeExterna: number;
   numeroSorte: number;
+  
+  // Números avançados
+  numeroMaturidade: number;
+  desafioPrincipal: number;
+  desejoOculto: number;
+  poderInterior: number;
+  
+  // Números especiais
+  numerosCarmicos: number[];
+  numerosMestres: number[];
+  
+  // Análise temporal
+  anoPessoal: number;
+  mesPessoal: number;
+  
+  // Frequência numérica
+  frequenciaNumerica: { [key: number]: number };
+  numerosDominantes: number[];
+  numerosFaltantes: number[];
+  
+  // Interpretações
   potencial: string;
   bloqueios: string[];
   desafios: string[];
   fortalezas: string[];
   amor: string;
+  carreira: string;
+  espiritualidade: string;
+  
+  // Ciclo de vida
   cicloVida: {
     fase: string;
     descricao: string;
     periodo: string;
+    numeroRegente: number;
+  };
+  
+  // Compatibilidade base
+  numerosCompatíveis: number[];
+  numerosDesafiadores: number[];
+  
+  // Resumo do perfil
+  dominioVibracional: string;
+  palavrasChave: string[];
+  
+  // Detalhes dos cálculos
+  calculosDetalhados: {
+    destinoCalculo: string;
+    almaCalculo: string;
+    expressaoCalculo: string;
+    personalidadeCalculo: string;
   };
 }
 

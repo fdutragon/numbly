@@ -67,7 +67,7 @@ export default function AboutPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Numbly Life
           </h1>
-          <p className="text-gray-600 leading-relaxed">
+          <p className="text-gray-700 leading-relaxed">
             Sua jornada de autoconhecimento através da sabedoria milenar dos números.
           </p>
         </motion.div>
@@ -80,7 +80,7 @@ export default function AboutPage() {
         >
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Nossa Missão</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Nossa Missão</h2>
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 leading-relaxed">
@@ -101,7 +101,7 @@ export default function AboutPage() {
         >
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">O que oferecemos</h2>
+              <h2 className="text-lg font-semibold text-gray-900">O que oferecemos</h2>
             </CardHeader>
             <CardContent className="space-y-4">
               {features.map((feature, index) => (
@@ -117,7 +117,7 @@ export default function AboutPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900 mb-1">{feature.title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{feature.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -133,7 +133,7 @@ export default function AboutPage() {
         >
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Nossos Valores</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Nossos Valores</h2>
             </CardHeader>
             <CardContent className="space-y-4">
               {values.map((value, index) => (
@@ -149,7 +149,7 @@ export default function AboutPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">{value.title}</h3>
-                    <p className="text-sm text-gray-600">{value.description}</p>
+                    <p className="text-sm text-gray-700">{value.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -165,14 +165,14 @@ export default function AboutPage() {
         >
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Entre em Contato</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Entre em Contato</h2>
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 leading-relaxed mb-3">
                 Tem sugestões, dúvidas ou quer compartilhar sua experiência? 
                 Adoraríamos ouvir você!
               </p>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-700">
                 <p>📧 contato@numbly.life</p>
                 <p>🌐 www.numbly.life</p>
               </div>
