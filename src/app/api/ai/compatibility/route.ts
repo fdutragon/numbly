@@ -298,7 +298,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<Compatibility
     // Rate limiting
     const rateLimitKey = `ai_compatibility_${ip}`;
     
-    if (!checkRateLimit(rateLimitKey, COMPATIBILITY_RATE_LIMIT.window, COMPATIBILITY_RATE_LIMIT.max)) {
+    if (!checkRateLimit(rateLimitKey, COMPATIBILITY_RATE_LIMIT.window, COMPATIBILITY_RATE_LIMIT.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', {
         ip,
         userAgent,

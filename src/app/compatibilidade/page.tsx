@@ -38,10 +38,10 @@ interface CompatibilityResult {
 
 export default function CompatibilidadePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, requireAuth } = useAuth();
   
   // Proteger rota
-  useAuth().requireAuth();
+  requireAuth();
   
   const [formData, setFormData] = useState({
     nome: '',

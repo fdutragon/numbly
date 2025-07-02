@@ -3,7 +3,7 @@ import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "@/lib/db";
-import { addSecurityLog } from '@/lib/security/security-logger';
+import { addSecurityLog } from '@/lib/security';
 import { checkRateLimit } from '@/lib/security/auth-guard';
 
 // Schema de validação
@@ -230,7 +230,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ReportRespons
     // Rate limiting específico para relatórios
     const rateLimitKey = `ai_report_${ip}`;
     
-    if (!checkRateLimit(rateLimitKey, REPORT_RATE_LIMIT.window, REPORT_RATE_LIMIT.max)) {
+    if (!checkRateLimit(rateLimitKey, REPORT_RATE_LIMIT.window, REPORT_RATE_LIMIT.max, { allowLocalhost: true })) {
       addSecurityLog('warn', {
         ip,
         userAgent,

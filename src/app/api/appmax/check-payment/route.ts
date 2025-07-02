@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from "@/lib/db";
-import { addSecurityLog } from '@/lib/security/security-logger';
+import { addSecurityLog } from '@/lib/security';
 
 // Schema de validação simplificado
 const CheckPaymentSchema = z.object({

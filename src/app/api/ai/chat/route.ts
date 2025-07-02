@@ -331,10 +331,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<ChatResponse>
   const securityContext = createSecurityContext(req, 'POST');
   
   try {
-    // Rate limiting específico para chat
+    // Rate limiting específico para chat (flexível para localhost)
     const rateLimitKey = `ai_chat_${securityContext.ip}`;
     
-    if (!checkRateLimit(rateLimitKey, CHAT_RATE_LIMIT.window, CHAT_RATE_LIMIT.max)) {
+    if (!checkRateLimit(rateLimitKey, CHAT_RATE_LIMIT.window, CHAT_RATE_LIMIT.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', securityContext, 'Chat rate limit exceeded');
       
       return NextResponse.json<ChatResponse>({

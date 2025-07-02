@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     
     // 2. Rate limiting
     const searchKey = `user_search_${securityContext.ip}`;
-    if (!checkRateLimit(searchKey, USER_SEARCH_RATE_LIMIT.window, USER_SEARCH_RATE_LIMIT.max)) {
+    if (!checkRateLimit(searchKey, USER_SEARCH_RATE_LIMIT.window, USER_SEARCH_RATE_LIMIT.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', securityContext, 'User search rate limit exceeded');
       return NextResponse.json(
         { error: 'Muitas buscas. Tente novamente em 1 minuto.' },

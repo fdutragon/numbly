@@ -12,10 +12,11 @@ export function useAuth() {
   
   const requireAuth = (redirectTo: string = '/register') => {
     useEffect(() => {
-      if (!auth.isAuthenticated || !userStore.user) {
+      // Só redireciona se não estiver carregando E não estiver autenticado
+      if (!auth.isLoading && !auth.isAuthenticated) {
         router.push(redirectTo);
       }
-    }, [auth.isAuthenticated, userStore.user, redirectTo, router]);
+    }, [auth.isAuthenticated, auth.isLoading, redirectTo, router]);
   };
 
   return {

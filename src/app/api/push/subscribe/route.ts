@@ -78,7 +78,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<SubscribeResp
 
     // 2. 🚦 Rate limiting para subscriptions
     const subKey = `push_subscribe_${securityContext.ip}`;
-    if (!checkRateLimit(subKey, SUBSCRIBE_RATE_LIMIT.window, SUBSCRIBE_RATE_LIMIT.max)) {
+    if (!checkRateLimit(subKey, SUBSCRIBE_RATE_LIMIT.window, SUBSCRIBE_RATE_LIMIT.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', securityContext, 'Push subscription rate limit exceeded');
       return NextResponse.json<SubscribeResponse>({
         success: false,

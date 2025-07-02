@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { addSecurityLog } from '@/lib/security/security-logger';
+import { addSecurityLog } from '@/lib/security';
 
 // Schema de validação para consulta de status
 const EmailStatusSchema = z.object({

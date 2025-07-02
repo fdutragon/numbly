@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
-  SecurityUtils, 
-  SECURITY_DEFAULTS, 
-  SecurityLogger,
+  addSecurityLog, 
+  getSecurityLogs, 
+  getSecurityStats,
   createSession,
   generateToken,
-  verifyToken
+  verifyToken,
+  authGuard,
+  logSecurityEvent
 } from '@/lib/security';
 
 /**
@@ -16,18 +18,20 @@ import {
 
 async function handleGET(req: NextRequest) {
   try {
-    const report = SecurityUtils.getFullSecurityReport();
+    const stats = getSecurityStats();
+    const logs = getSecurityLogs();
     
-    SecurityLogger.info('Security report requested');
+    addSecurityLog('info', { endpoint: '/api/test/security' }, 'Security report requested');
     
     return NextResponse.json({
       success: true,
-      report,
+      stats,
+      logs: logs.slice(0, 20), // Últimos 20 logs
       timestamp: new Date().toISOString()
     });
     
   } catch (error: any) {
-    SecurityLogger.error('Error generating security report', error);
+    addSecurityLog('error', { endpoint: '/api/test/security' }, 'Error generating security report');
     return NextResponse.json(
       { error: 'Erro ao gerar relatório de segurança' },
       { status: 500 }
@@ -55,7 +59,7 @@ async function handlePOST(req: NextRequest) {
     // Testar verificação do token
     const verification = verifyToken(session.token);
     
-    SecurityLogger.info('Test session created', { userId, email });
+    addSecurityLog('info', { endpoint: '/api/test/security', userId, email }, 'Test session created');
     
     return NextResponse.json({
       success: true,
@@ -64,12 +68,11 @@ async function handlePOST(req: NextRequest) {
         sessionId: session.sessionId,
         tokenValid: !!verification,
         user: verification
-      },
-      securityDefaults: SECURITY_DEFAULTS
+      }
     });
     
   } catch (error: any) {
-    SecurityLogger.error('Error creating test session', error);
+    addSecurityLog('error', { endpoint: '/api/test/security' }, 'Error creating test session');
     return NextResponse.json(
       { error: 'Erro ao criar sessão de teste' },
       { status: 500 }

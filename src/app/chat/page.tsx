@@ -29,7 +29,7 @@ interface Message {
 
 export default function ChatPage() {
   const router = useRouter();
-  const { user, mapa, perguntasRestantes, addPergunta, decrementPergunta, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, mapa, perguntasRestantes, addPergunta, decrementPergunta, isAuthenticated, isLoading: authLoading, requireAuth } = useAuth();
   const chatApi = useChatApi();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -46,15 +46,12 @@ export default function ChatPage() {
     'Quais são minhas maiores fortalezas espirituais?'
   ];
 
-  // Proteger rota
-  useAuth().requireAuth();
+  // Proteger rota - chamada correta do hook
+  requireAuth();
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/');
-      return;
-    }
-
+    // Remover verificação redundante já que requireAuth já cuida disso
+    
     // Mensagem de boas-vindas
     if (user && messages.length === 0) {
       const welcomeMessage: Message = {
@@ -65,7 +62,7 @@ export default function ChatPage() {
       };
       setMessages([welcomeMessage]);
     }
-  }, [user, router, messages.length, authLoading, isAuthenticated]);
+  }, [user, messages.length]);
 
   useEffect(() => {
     scrollToBottom();

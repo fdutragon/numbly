@@ -106,7 +106,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<PushResponse>
 
     // 3. 🚦 Rate limiting muito restritivo para push
     const pushKey = `push_send_${securityContext.ip}`;
-    if (!checkRateLimit(pushKey, PUSH_RATE_LIMIT.window, PUSH_RATE_LIMIT.max)) {
+    if (!checkRateLimit(pushKey, PUSH_RATE_LIMIT.window, PUSH_RATE_LIMIT.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', securityContext, 'Push notification rate limit exceeded');
       return NextResponse.json<PushResponse>({
         success: false,

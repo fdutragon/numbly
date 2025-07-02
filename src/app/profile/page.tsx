@@ -11,10 +11,10 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, mapa, logout } = useAuth();
+  const { user, mapa, logout, requireAuth } = useAuth();
   
   // Proteger rota
-  useAuth().requireAuth();
+  requireAuth();
   
   const handleLogout = async () => {
     try {

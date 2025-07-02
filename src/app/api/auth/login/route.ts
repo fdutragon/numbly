@@ -187,9 +187,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
       }, { status: 403 });
     }
 
-    // 2. 🚦 Rate limiting específico para login
+    // 2. 🚦 Rate limiting específico para login (flexível para localhost)
     const loginKey = `login_${securityContext.ip}`;
-    if (!checkRateLimit(loginKey, LOGIN_RATE_LIMIT.window, LOGIN_RATE_LIMIT.max)) {
+    if (!checkRateLimit(loginKey, LOGIN_RATE_LIMIT.window, LOGIN_RATE_LIMIT.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', securityContext, 'Login attempts exceeded');
       return NextResponse.json({
         success: false,

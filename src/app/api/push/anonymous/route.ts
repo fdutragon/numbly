@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import webpush, { PushSubscription } from 'web-push';
 import { db } from "@/lib/db";
-import { addSecurityLog } from '@/lib/security/security-logger';
+import { addSecurityLog } from '@/lib/security';
 
 // Schema de validação
 const AnonymousPushSchema = z.object({

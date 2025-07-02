@@ -54,7 +54,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<IpResponse>> {
 
     // 2. 🚦 Rate limiting
     const ipKey = `get_ip_${securityContext.ip}`;
-    if (!checkRateLimit(ipKey, GET_IP_RATE_LIMIT.window, GET_IP_RATE_LIMIT.max)) {
+    if (!checkRateLimit(ipKey, GET_IP_RATE_LIMIT.window, GET_IP_RATE_LIMIT.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', securityContext, 'Get IP rate limit exceeded');
       return NextResponse.json({
         success: false,

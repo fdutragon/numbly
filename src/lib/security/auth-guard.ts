@@ -24,9 +24,18 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 const securityLogs = new Map<string, Array<{ event: string; context: SecurityContext; message: string; timestamp: number }>>();
 
 /**
- * 🛡️ Rate limiting simples em memória
+ * 🛡️ Rate limiting simples em memória (flexível para desenvolvimento)
  */
-export function checkRateLimit(key: string, windowMs: number, maxRequests: number): boolean {
+export function checkRateLimit(key: string, windowMs: number, maxRequests: number, options: { allowLocalhost?: boolean } = {}): boolean {
+  // Em desenvolvimento com localhost, aumentar significativamente os limites
+  if (options.allowLocalhost && process.env.NODE_ENV === 'development') {
+    // Verificar se a chave contém indicadores de localhost
+    if (key.includes('127.0.0.1') || key.includes('localhost') || key.includes('::1') || key.includes('unknown')) {
+      maxRequests = Math.max(maxRequests * 10, 100); // Aumenta pelo menos 10x ou mínimo 100
+      windowMs = Math.max(windowMs, 60000); // Mínimo 1 minuto de janela
+    }
+  }
+
   const now = Date.now();
   const entry = rateLimitStore.get(key);
   
@@ -303,7 +312,7 @@ export function createSecurityMiddleware(options: {
     // Verificar rate limit específico
     if (options.rateLimit) {
       const key = `${context.endpoint}_${context.ip}`;
-      if (!checkRateLimit(key, options.rateLimit.window, options.rateLimit.max)) {
+      if (!checkRateLimit(key, options.rateLimit.window, options.rateLimit.max, { allowLocalhost: true })) {
         throw new Error('Rate limit exceeded');
       }
     }

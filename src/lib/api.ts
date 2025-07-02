@@ -30,8 +30,9 @@ export function useApiRequest() {
         headers,
       });
 
-      // Auto-logout em caso de token inválido
-      if (response.status === 401 && token) {
+      // Auto-logout em caso de token inválido (mas não em rotas de auth)
+      if (response.status === 401 && token && !url.includes('/auth/')) {
+        console.warn('Token inválido detectado, fazendo logout automático');
         logout();
         throw new ApiError(401, 'Sessão expirada');
       }

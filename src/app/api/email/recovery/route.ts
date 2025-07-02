@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Resend } from 'resend';
 import { db } from "@/lib/db";
-import { addSecurityLog } from '@/lib/security/security-logger';
+import { addSecurityLog } from '@/lib/security';
 import { RECOVERY_EMAIL_TEMPLATES } from '../send/route';
 
 const resend = new Resend(process.env.RESEND_API_KEY);

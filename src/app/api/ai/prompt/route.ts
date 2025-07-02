@@ -479,7 +479,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AIResponse>> 
     const rateLimit = RATE_LIMITS[validatedData.type];
     const rateLimitKey = `ai_${validatedData.type}_${securityContext.ip}`;
     
-    if (!checkRateLimit(rateLimitKey, rateLimit.window, rateLimit.max)) {
+    if (!checkRateLimit(rateLimitKey, rateLimit.window, rateLimit.max, { allowLocalhost: true })) {
       logSecurityEvent('RATE_LIMITED', securityContext, `AI ${validatedData.type} rate limit exceeded`);
       return NextResponse.json<AIResponse>({
         success: false,

@@ -51,7 +51,7 @@ export async function withAuth(
       // 2. 🚦 Rate limiting (se configurado)
       if (options.rateLimit && securityContext) {
         const rateLimitKey = `${req.nextUrl.pathname}_${securityContext.ip}`;
-        if (!checkRateLimit(rateLimitKey, options.rateLimit.window, options.rateLimit.max)) {
+        if (!checkRateLimit(rateLimitKey, options.rateLimit.window, options.rateLimit.max, { allowLocalhost: true })) {
           logSecurityEvent('RATE_LIMITED', securityContext, 'API rate limit exceeded');
           return NextResponse.json(
             { error: 'Rate limit exceeded' },

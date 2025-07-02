@@ -80,7 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (!response.ok) {
-        throw new Error('Falha ao carregar dados do usuário');
+        // Só limpa token se for 401 (não autorizado)
+        if (response.status === 401) {
+          console.warn('Token inválido durante carregamento de dados');
+          clearToken();
+        }
+        throw new Error(`Falha ao carregar dados do usuário: ${response.status}`);
       }
       
       const data = await response.json();
@@ -94,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     } catch (error) {
       console.error('Erro ao carregar dados do usuário:', error);
-      clearToken();
+      // Não limpar token aqui, deixar para o caller decidir
       return false;
     }
   };
