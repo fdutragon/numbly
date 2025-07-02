@@ -32,19 +32,24 @@ function getOrCreateDeviceId(): string {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const { setUser, setMapa } = useUserStore();
 
   const isAuthenticated = !!token;
 
   // Funções auxiliares
   const saveToken = (newToken: string) => {
-    setToken(newToken);
-    localStorage.setItem(TOKEN_KEY, newToken);
+    if (typeof window !== 'undefined') {
+      setToken(newToken);
+      localStorage.setItem(TOKEN_KEY, newToken);
+    }
   };
 
   const clearToken = () => {
-    setToken(null);
-    localStorage.removeItem(TOKEN_KEY);
+    if (typeof window !== 'undefined') {
+      setToken(null);
+      localStorage.removeItem(TOKEN_KEY);
+    }
   };
 
   // Fazer requisição autenticada
@@ -61,7 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (response.status === 401 && token) {
-      if (process.env.NODE_ENV !== 'development' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      if (process.env.NODE_ENV !== 'development' && 
+          typeof window !== 'undefined' && 
+          window.location.hostname !== 'localhost' && 
+          window.location.hostname !== '127.0.0.1') {
         clearToken();
         setUser({} as User);
         setMapa({} as MapaNumerologico);
@@ -75,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Carrega dados do usuário
-  const loadUserData = async (userToken: string) => {
+  const loadUserData = async (userToken: string): Promise<boolean> => {
     try {
       const response = await fetch('/api/auth/me', {
         headers: {
@@ -85,9 +93,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (!response.ok) {
-        // Só limpa token se for 401 (não autorizado)
+        // Só limpa token se for 401 (não autorizado) e não estiver em desenvolvimento
         if (response.status === 401) {
-          if (process.env.NODE_ENV !== 'development' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          if (process.env.NODE_ENV !== 'development' && 
+              typeof window !== 'undefined' && 
+              window.location.hostname !== 'localhost' && 
+              window.location.hostname !== '127.0.0.1') {
             console.warn('Token inválido durante carregamento de dados');
             clearToken();
           } else {
@@ -95,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.warn('Token 401 ignorado em ambiente de desenvolvimento/local');
           }
         }
-        throw new Error(`Falha ao carregar dados do usuário: ${response.status}`);
+        return false;
       }
       
       const data = await response.json();
@@ -109,13 +120,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     } catch (error) {
       console.error('Erro ao carregar dados do usuário:', error);
-      // Não limpar token aqui, deixar para o caller decidir
       return false;
     }
   };
 
   // Auto login
-  const autoLogin = async () => {
+  const autoLogin = async (): Promise<void> => {
     try {
       const deviceId = getOrCreateDeviceId();
       const response = await fetch('/api/auth/login', {
@@ -207,22 +217,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Carrega o token salvo ao inicializar
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    // Evitar execução no servidor
+    if (typeof window === 'undefined') return;
+    
+    // Evitar múltiplas inicializações
+    if (initialized) return;
+    
+    const initializeAuth = async () => {
+      setInitialized(true);
+      
       const savedToken = localStorage.getItem(TOKEN_KEY);
       if (savedToken) {
         setToken(savedToken);
-        loadUserData(savedToken).then(success => {
-          if (!success) {
-            autoLogin();
-          } else {
-            setIsLoading(false);
-          }
-        });
+        const success = await loadUserData(savedToken);
+        if (!success) {
+          // Token inválido, fazer auto-login
+          await autoLogin();
+        } else {
+          setIsLoading(false);
+        }
       } else {
-        autoLogin();
+        // Sem token salvo, fazer auto-login
+        await autoLogin();
       }
-    }
-  }, []);
+    };
+
+    initializeAuth();
+  }, []); // Dependências vazias para executar apenas uma vez
 
   const contextValue: AuthContextType = {
     token,

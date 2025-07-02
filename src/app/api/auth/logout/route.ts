@@ -98,3 +98,14 @@ export async function POST(req: NextRequest): Promise<NextResponse<LogoutRespons
     return response;
   }
 }
+
+// GET - Informações da API de logout
+export async function GET() {
+  return NextResponse.json({
+    endpoint: '/api/auth/logout',
+    method: 'POST',
+    description: 'Endpoint para logout de usuários autenticados',
+    authentication: 'Bearer token required',
+    response: 'Limpa cookies e invalida sessão'
+  });
+}

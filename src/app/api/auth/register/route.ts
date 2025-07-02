@@ -26,6 +26,18 @@ const REGISTER_RATE_LIMIT = {
   max: 3 // 3 registros por minuto por IP
 };
 
+// GET - Retorna informações da API de registro
+export async function GET() {
+  return NextResponse.json({
+    endpoint: '/api/auth/register',
+    method: 'POST',
+    description: 'Endpoint para registro de novos usuários',
+    requiredFields: ['nome', 'dataNascimento', 'numeroDestino'],
+    optionalFields: ['pushEnabled'],
+    rateLimit: '3 registros por minuto por IP'
+  });
+}
+
 export async function POST(request: NextRequest) {
   let securityContext: SecurityContext | undefined;
   

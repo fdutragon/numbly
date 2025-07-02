@@ -122,17 +122,45 @@ export default function Home() {
   const handleNotificationSetup = async (enableNotifications: boolean) => {
     try {
       if (enableNotifications) {
-        const hasPermission = await pushService.requestPermission();
-        if (hasPermission) {
-          await pushService.subscribeToPush();
-          useUserStore.getState().updateUser({ pushEnabled: true });
+        console.log('🔔 Iniciando configuração de notificações...');
+        
+        // Primeiro, garantir que o Service Worker está ativo
+        const initialized = await pushService.initialize();
+        if (!initialized) {
+          console.error('❌ Falha ao inicializar Service Worker');
+          throw new Error('Service Worker não pôde ser inicializado');
         }
+        
+        console.log('✅ Service Worker inicializado');
+        
+        // Solicitar permissão
+        const hasPermission = await pushService.requestPermission();
+        if (!hasPermission) {
+          console.warn('⚠️ Permissão para notificações negada');
+          throw new Error('Permissão para notificações foi negada');
+        }
+        
+        console.log('✅ Permissão concedida');
+        
+        // Subscrever ao push
+        const subscription = await pushService.subscribeToPush();
+        if (!subscription) {
+          console.error('❌ Falha ao criar subscription');
+          throw new Error('Não foi possível criar subscription de push');
+        }
+        
+        console.log('✅ Subscription criada:', subscription.endpoint);
+        useUserStore.getState().updateUser({ pushEnabled: true });
       }
       
       setShowNotificationModal(false);
       router.push('/dashboard');
     } catch (error) {
-      console.error('Erro ao configurar notificações:', error);
+      console.error('❌ Erro ao configurar notificações:', error);
+      
+      // Mostrar feedback para o usuário
+      alert(`Erro ao configurar notificações: ${error.message}`);
+      
       // Mesmo com erro, continua para o dashboard
       setShowNotificationModal(false);
       router.push('/dashboard');

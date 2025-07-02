@@ -11,20 +11,31 @@ const urlsToCache = [
   '/icon-512x512.svg'
 ];
 
+console.log('🔧 Service Worker carregado');
+
 // 📦 Instalação do Service Worker
 self.addEventListener('install', event => {
+  console.log('📦 Service Worker instalando...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('🎯 Cache aberto, adicionando recursos...');
         return cache.addAll(urlsToCache);
       })
+      .then(() => {
+        console.log('✅ Service Worker instalado com sucesso');
+      })
+      .catch(error => {
+        console.error('❌ Erro na instalação do Service Worker:', error);
+      })
   );
+  // Forçar ativação imediata
   self.skipWaiting();
 });
 
 // 🔄 Ativação do Service Worker
 self.addEventListener('activate', event => {
+  console.log('🔄 Service Worker ativando...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
@@ -35,8 +46,11 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      console.log('✅ Service Worker ativado com sucesso');
     })
   );
+  // Tomar controle de todas as abas imediatamente
   self.clients.claim();
 });
 

@@ -26,6 +26,26 @@ const UnifiedLoginSchema = z.union([
   })
 ]);
 
+// GET - Informações da API de login
+export async function GET() {
+  return NextResponse.json({
+    endpoint: '/api/auth/login',
+    method: 'POST',
+    description: 'Endpoint para autenticação de usuários',
+    loginTypes: {
+      email: {
+        requiredFields: ['email', 'birthDate'],
+        optionalFields: ['deviceId']
+      },
+      device: {
+        requiredFields: ['deviceId'],
+        optionalFields: ['deviceName', 'platform']
+      }
+    },
+    rateLimit: 'Configurado por IP'
+  });
+}
+
 // 🔒 Interfaces TypeScript para type safety
 interface AuthUser {
   id: string;

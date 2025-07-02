@@ -5,8 +5,10 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'numbly-se
 
 // Rotas que não precisam de autenticação
 const publicRoutes = [
+  '/',
   '/api/auth/register',
   '/api/auth/login',
+  '/api/auth/check-user',
   '/api/health',
   '/api/get-ip',
   '/about'
@@ -21,12 +23,19 @@ const authRoutes = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Permitir arquivos estáticos
+  // Desabilitar middleware para localhost/desenvolvimento
+  const hostname = request.nextUrl.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development') {
+    return NextResponse.next();
+  }
+  
+  // Permitir arquivos estáticos e página inicial
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/health') ||
     pathname.includes('.') ||
-    pathname === '/about'
+    pathname === '/about' ||
+    pathname === '/'
   ) {
     return NextResponse.next();
   }
@@ -53,7 +62,8 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
-    return NextResponse.redirect(new URL('/api/auth/register', request.url));
+    // Redirecionar para página inicial onde usuário pode escolher login/registro
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   try {
@@ -75,7 +85,7 @@ export async function middleware(request: NextRequest) {
     // Remover cookie inválido
     const response = pathname.startsWith('/api/')
       ? NextResponse.json({ error: 'Token inválido' }, { status: 401 })
-      : NextResponse.redirect(new URL('/api/auth/register', request.url));
+      : NextResponse.redirect(new URL('/', request.url));
     
     response.cookies.delete('auth-token');
     return response;
