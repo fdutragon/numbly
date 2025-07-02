@@ -98,6 +98,16 @@ model User {
   // Relação com dispositivos para login via push
   devices        UserDevice[]    @relation("UserDevices")
   subscriptions  UserSubscription[]
+  
+  // Blog místico - novas relações
+  aiComments      AIComment[]
+  journalEntries  JournalEntry[]
+  userChallenges  UserChallenge[]
+  oracleMessages  OracleMessage[]
+  userBadges      UserBadge[]
+  emotionalCycles EmotionalCycle[]
+  futureLetters   FutureLetter[]
+  recommendations RecommendationEngine[]
 }
 
 model UserDevice {
@@ -381,3 +391,349 @@ model OracleSession {
   
   @@index([mapId])
 }
+
+// ===== BLOG MÍSTICO =====
+
+enum BlogPostType {
+  DAILY_MEDITATION   // Meditação diária
+  ARTICLE           // Artigo espiritual
+  ORACLE_MESSAGE    // Mensagem do oráculo
+  RITUAL_GUIDE      // Guia de ritual
+  NUMEROLOGY_INSIGHT // Insight numerológico
+}
+
+enum MoodType {
+  PEACEFUL      // 😌 Tranquilo
+  ANXIOUS       // 😰 Ansioso
+  GRATEFUL      // 🙏 Grato
+  REFLECTIVE    // 🤔 Reflexivo
+  ENERGETIC     // ⚡ Energético
+  MELANCHOLIC   // 😔 Melancólico
+  INSPIRED      // ✨ Inspirado
+  CONFUSED      // 😵 Confuso
+  BALANCED      // ⚖️ Equilibrado
+}
+
+enum ChallengeType {
+  GRATITUDE     // Gratidão diária
+  MEDITATION    // Meditação
+  JOURNALING    // Escrita reflexiva
+  SILENCE       // Momentos de silêncio
+  KINDNESS      // Atos de bondade
+  PRESENCE      // Presença consciente
+  FORGIVENESS   // Perdão
+}
+
+enum BadgeType {
+  GUARDIAN_CONSTANCY    // Guardião da Constância
+  SOUL_SCRIBE          // Escriba da Alma
+  SILENCE_DISCIPLE     // Discípulo do Silêncio
+  ORACLE_SEEKER        // Buscador do Oráculo
+  RITUAL_MASTER        // Mestre dos Rituais
+  CYCLE_READER         // Leitor de Ciclos
+  FUTURE_KEEPER        // Guardião do Futuro
+}
+
+model BlogPost {
+  id              String        @id @default(uuid())
+  title           String
+  content         String        // Conteúdo principal
+  excerpt         String?       // Resumo
+  type            BlogPostType  @default(ARTICLE)
+  
+  // Metadata espiritual
+  personalDay     Int?          // Para qual dia pessoal é mais relevante
+  lunarPhase      String?       // Fase da lua
+  numerologyFocus String?       // Foco numerológico
+  cosmicEvent     String?       // Evento cósmico especial
+  
+  // Meditação guiada (se aplicável)
+  meditationAudio String?       // URL do áudio
+  meditationDuration Int?       // Duração em segundos
+  meditationScript String?      // Script da meditação
+  
+  // Tags e categorias
+  tags            String[]      @default([])
+  category        String?
+  
+  // Engajamento
+  views           Int           @default(0)
+  likes           Int           @default(0)
+  
+  // Comentários IA
+  aiComments      AIComment[]
+  
+  // Entradas do diário relacionadas
+  journalEntries  JournalEntry[]
+  
+  // Publicação
+  isPublished     Boolean       @default(true)
+  publishedAt     DateTime      @default(now())
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([type])
+  @@index([personalDay])
+  @@index([publishedAt])
+}
+
+model AIComment {
+  id          String      @id @default(uuid())
+  
+  // Post relacionado
+  blogPost    BlogPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String
+  
+  // Usuário que fez o comentário
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  
+  // Comentário do usuário
+  userComment String      // "Me senti ansioso hoje"
+  
+  // Resposta da IA
+  aiResponse  String      // Resposta poética e simbólica
+  
+  // Contexto usado pela IA
+  userMood    MoodType?   // Humor detectado
+  personalDay Int?        // Dia pessoal do usuário
+  cosmicContext String?   // Contexto cósmico do momento
+  
+  createdAt   DateTime    @default(now())
+  
+  @@index([postId])
+  @@index([userId])
+}
+
+model JournalEntry {
+  id              String      @id @default(uuid())
+  
+  // Usuário
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  
+  // Conteúdo
+  content         String      // Texto reflexivo
+  mood            MoodType?   // Humor do momento
+  
+  // Contexto
+  personalDay     Int?        // Dia pessoal
+  blogPost        BlogPost?   @relation(fields: [blogPostId], references: [id])
+  blogPostId      String?     // Post que inspirou a entrada
+  
+  // Metadata
+  isPrivate       Boolean     @default(true)
+  
+  // Insights da IA
+  aiInsights      String?     // Padrões detectados pela IA
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([userId])
+  @@index([personalDay])
+  @@index([createdAt])
+}
+
+model WeeklyChallenge {
+  id              String          @id @default(uuid())
+  title           String
+  description     String
+  type            ChallengeType
+  
+  // Duração
+  startDate       DateTime
+  endDate         DateTime
+  
+  // Recompensas
+  badgeReward     BadgeType?
+  creditsReward   Int             @default(0)
+  
+  // Engajamento
+  participants    UserChallenge[]
+  
+  // Tema espiritual
+  spiritualTheme  String?         // Tema da semana (ex: "Gratidão", "Perdão")
+  personalDayFocus Int?           // Foco em dias pessoais específicos
+  
+  isActive        Boolean         @default(true)
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([startDate, endDate])
+  @@index([isActive])
+}
+
+model UserChallenge {
+  id              String          @id @default(uuid())
+  
+  // Relacionamentos
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  challenge       WeeklyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challengeId     String
+  
+  // Progresso
+  progress        Int             @default(0) // Dias completados
+  isCompleted     Boolean         @default(false)
+  completedAt     DateTime?
+  
+  // Tracking diário
+  dailyProgress   Json            @default("{}") // {"day1": true, "day2": false, ...}
+  
+  // Recompensas recebidas
+  badgeEarned     Boolean         @default(false)
+  creditsEarned   Int             @default(0)
+  
+  joinedAt        DateTime        @default(now())
+  
+  @@unique([userId, challengeId])
+  @@index([userId])
+  @@index([challengeId])
+}
+
+model OracleMessage {
+  id              String      @id @default(uuid())
+  
+  // Usuário que recebeu
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  
+  // Contexto da mensagem
+  question        String?     // Pergunta do usuário (opcional)
+  message         String      // Mensagem do oráculo
+  
+  // Contexto espiritual
+  personalDay     Int?        // Dia pessoal
+  mood            MoodType?   // Humor do momento
+  lunarPhase      String?     // Fase da lua
+  cosmicAlignment String?     // Alinhamento cósmico
+  
+  // Tipo de oráculo
+  type            String      @default("CONTEXTUAL") // CONTEXTUAL, DAILY, FUTURE_LETTER
+  
+  // Lida ou não
+  isRead          Boolean     @default(false)
+  readAt          DateTime?
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([userId])
+  @@index([personalDay])
+  @@index([type])
+}
+
+model UserBadge {
+  id          String      @id @default(uuid())
+  
+  // Usuário
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  
+  // Badge
+  badge       BadgeType
+  
+  // Contexto
+  earnedFor   String?     // Descrição de como foi conquistado
+  challenge   String?     // Desafio relacionado
+  
+  earnedAt    DateTime    @default(now())
+  
+  @@unique([userId, badge])
+  @@index([userId])
+}
+
+model EmotionalCycle {
+  id              String      @id @default(uuid())
+  
+  // Usuário
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  
+  // Dados do ciclo
+  personalDay     Int         // Dia pessoal
+  mood            MoodType    // Humor reportado
+  energy          Int         // Nível de energia (1-10)
+  activity        String?     // Atividade realizada
+  
+  // Contexto
+  blogPostRead    String?     // ID do post lido
+  meditationDone  Boolean     @default(false)
+  journalWritten  Boolean     @default(false)
+  
+  // Insights da IA
+  aiPattern       String?     // Padrão detectado
+  aiRecommendation String?    // Recomendação da IA
+  
+  recordedAt      DateTime    @default(now())
+  
+  @@index([userId])
+  @@index([personalDay])
+  @@index([recordedAt])
+}
+
+model FutureLetter {
+  id              String      @id @default(uuid())
+  
+  // Usuário
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  
+  // Conteúdo
+  message         String      // Mensagem simbólica
+  
+  // Contexto de criação
+  createdDuringStreak Int     // Sequência de dias que desbloqueou
+  personalDayContext  Int?    // Dia pessoal do momento
+  
+  // Entrega
+  deliverAt       DateTime    // Quando deve ser entregue
+  isDelivered     Boolean     @default(false)
+  deliveredAt     DateTime?
+  
+  // Engajamento
+  isRead          Boolean     @default(false)
+  readAt          DateTime?
+  isSaved         Boolean     @default(false)
+  isShared        Boolean     @default(false)
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([userId])
+  @@index([deliverAt])
+  @@index([isDelivered])
+}
+
+model RecommendationEngine {
+  id              String      @id @default(uuid())
+  
+  // Usuário
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  
+  // Tipo de recomendação
+  type            String      // "POST_AFTER_MEDITATION", "MEDITATION_AFTER_POST", etc.
+  
+  // Contexto
+  sourceId        String      // ID do post/meditação que gerou a recomendação
+  recommendedId   String      // ID do conteúdo recomendado
+  
+  // Relevância
+  score           Float       // Score de relevância (0-1)
+  personalDayMatch Boolean    @default(false)
+  moodMatch       Boolean     @default(false)
+  
+  // Engajamento
+  wasClicked      Boolean     @default(false)
+  clickedAt       DateTime?
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([userId])
+  @@index([type])
+  @@index([score])
+}
+
+// Relacionamentos adicionais para User já incluídos no modelo User principal acima

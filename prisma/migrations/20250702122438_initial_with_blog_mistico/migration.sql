@@ -19,6 +19,18 @@ CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'CANCELLED', 'EX
 -- CreateEnum
 CREATE TYPE "SubscriptionPlan" AS ENUM ('FREE', 'BASIC', 'PREMIUM', 'ENTERPRISE');
 
+-- CreateEnum
+CREATE TYPE "BlogPostType" AS ENUM ('DAILY_MEDITATION', 'ARTICLE', 'ORACLE_MESSAGE', 'RITUAL_GUIDE', 'NUMEROLOGY_INSIGHT');
+
+-- CreateEnum
+CREATE TYPE "MoodType" AS ENUM ('PEACEFUL', 'ANXIOUS', 'GRATEFUL', 'REFLECTIVE', 'ENERGETIC', 'MELANCHOLIC', 'INSPIRED', 'CONFUSED', 'BALANCED');
+
+-- CreateEnum
+CREATE TYPE "ChallengeType" AS ENUM ('GRATITUDE', 'MEDITATION', 'JOURNALING', 'SILENCE', 'KINDNESS', 'PRESENCE', 'FORGIVENESS');
+
+-- CreateEnum
+CREATE TYPE "BadgeType" AS ENUM ('GUARDIAN_CONSTANCY', 'SOUL_SCRIBE', 'SILENCE_DISCIPLE', 'ORACLE_SEEKER', 'RITUAL_MASTER', 'CYCLE_READER', 'FUTURE_KEEPER');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -264,6 +276,182 @@ CREATE TABLE "OracleSession" (
 );
 
 -- CreateTable
+CREATE TABLE "BlogPost" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "excerpt" TEXT,
+    "type" "BlogPostType" NOT NULL DEFAULT 'ARTICLE',
+    "personalDay" INTEGER,
+    "lunarPhase" TEXT,
+    "numerologyFocus" TEXT,
+    "cosmicEvent" TEXT,
+    "meditationAudio" TEXT,
+    "meditationDuration" INTEGER,
+    "meditationScript" TEXT,
+    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "category" TEXT,
+    "views" INTEGER NOT NULL DEFAULT 0,
+    "likes" INTEGER NOT NULL DEFAULT 0,
+    "isPublished" BOOLEAN NOT NULL DEFAULT true,
+    "publishedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "BlogPost_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AIComment" (
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "userComment" TEXT NOT NULL,
+    "aiResponse" TEXT NOT NULL,
+    "userMood" "MoodType",
+    "personalDay" INTEGER,
+    "cosmicContext" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AIComment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "JournalEntry" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "mood" "MoodType",
+    "personalDay" INTEGER,
+    "blogPostId" TEXT,
+    "isPrivate" BOOLEAN NOT NULL DEFAULT true,
+    "aiInsights" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "JournalEntry_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WeeklyChallenge" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "type" "ChallengeType" NOT NULL,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "badgeReward" "BadgeType",
+    "creditsReward" INTEGER NOT NULL DEFAULT 0,
+    "spiritualTheme" TEXT,
+    "personalDayFocus" INTEGER,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "WeeklyChallenge_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserChallenge" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "challengeId" TEXT NOT NULL,
+    "progress" INTEGER NOT NULL DEFAULT 0,
+    "isCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "completedAt" TIMESTAMP(3),
+    "dailyProgress" JSONB NOT NULL DEFAULT '{}',
+    "badgeEarned" BOOLEAN NOT NULL DEFAULT false,
+    "creditsEarned" INTEGER NOT NULL DEFAULT 0,
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UserChallenge_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "OracleMessage" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "question" TEXT,
+    "message" TEXT NOT NULL,
+    "personalDay" INTEGER,
+    "mood" "MoodType",
+    "lunarPhase" TEXT,
+    "cosmicAlignment" TEXT,
+    "type" TEXT NOT NULL DEFAULT 'CONTEXTUAL',
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "readAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "OracleMessage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserBadge" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "badge" "BadgeType" NOT NULL,
+    "earnedFor" TEXT,
+    "challenge" TEXT,
+    "earnedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UserBadge_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "EmotionalCycle" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "personalDay" INTEGER NOT NULL,
+    "mood" "MoodType" NOT NULL,
+    "energy" INTEGER NOT NULL,
+    "activity" TEXT,
+    "blogPostRead" TEXT,
+    "meditationDone" BOOLEAN NOT NULL DEFAULT false,
+    "journalWritten" BOOLEAN NOT NULL DEFAULT false,
+    "aiPattern" TEXT,
+    "aiRecommendation" TEXT,
+    "recordedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "EmotionalCycle_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "FutureLetter" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "createdDuringStreak" INTEGER NOT NULL,
+    "personalDayContext" INTEGER,
+    "deliverAt" TIMESTAMP(3) NOT NULL,
+    "isDelivered" BOOLEAN NOT NULL DEFAULT false,
+    "deliveredAt" TIMESTAMP(3),
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "readAt" TIMESTAMP(3),
+    "isSaved" BOOLEAN NOT NULL DEFAULT false,
+    "isShared" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "FutureLetter_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "RecommendationEngine" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "sourceId" TEXT NOT NULL,
+    "recommendedId" TEXT NOT NULL,
+    "score" DOUBLE PRECISION NOT NULL,
+    "personalDayMatch" BOOLEAN NOT NULL DEFAULT false,
+    "moodMatch" BOOLEAN NOT NULL DEFAULT false,
+    "wasClicked" BOOLEAN NOT NULL DEFAULT false,
+    "clickedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "RecommendationEngine_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_UserOracleSessions" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
@@ -326,6 +514,87 @@ CREATE INDEX "CompatibilityMap_status_idx" ON "CompatibilityMap"("status");
 CREATE INDEX "OracleSession_mapId_idx" ON "OracleSession"("mapId");
 
 -- CreateIndex
+CREATE INDEX "BlogPost_type_idx" ON "BlogPost"("type");
+
+-- CreateIndex
+CREATE INDEX "BlogPost_personalDay_idx" ON "BlogPost"("personalDay");
+
+-- CreateIndex
+CREATE INDEX "BlogPost_publishedAt_idx" ON "BlogPost"("publishedAt");
+
+-- CreateIndex
+CREATE INDEX "AIComment_postId_idx" ON "AIComment"("postId");
+
+-- CreateIndex
+CREATE INDEX "AIComment_userId_idx" ON "AIComment"("userId");
+
+-- CreateIndex
+CREATE INDEX "JournalEntry_userId_idx" ON "JournalEntry"("userId");
+
+-- CreateIndex
+CREATE INDEX "JournalEntry_personalDay_idx" ON "JournalEntry"("personalDay");
+
+-- CreateIndex
+CREATE INDEX "JournalEntry_createdAt_idx" ON "JournalEntry"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "WeeklyChallenge_startDate_endDate_idx" ON "WeeklyChallenge"("startDate", "endDate");
+
+-- CreateIndex
+CREATE INDEX "WeeklyChallenge_isActive_idx" ON "WeeklyChallenge"("isActive");
+
+-- CreateIndex
+CREATE INDEX "UserChallenge_userId_idx" ON "UserChallenge"("userId");
+
+-- CreateIndex
+CREATE INDEX "UserChallenge_challengeId_idx" ON "UserChallenge"("challengeId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserChallenge_userId_challengeId_key" ON "UserChallenge"("userId", "challengeId");
+
+-- CreateIndex
+CREATE INDEX "OracleMessage_userId_idx" ON "OracleMessage"("userId");
+
+-- CreateIndex
+CREATE INDEX "OracleMessage_personalDay_idx" ON "OracleMessage"("personalDay");
+
+-- CreateIndex
+CREATE INDEX "OracleMessage_type_idx" ON "OracleMessage"("type");
+
+-- CreateIndex
+CREATE INDEX "UserBadge_userId_idx" ON "UserBadge"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserBadge_userId_badge_key" ON "UserBadge"("userId", "badge");
+
+-- CreateIndex
+CREATE INDEX "EmotionalCycle_userId_idx" ON "EmotionalCycle"("userId");
+
+-- CreateIndex
+CREATE INDEX "EmotionalCycle_personalDay_idx" ON "EmotionalCycle"("personalDay");
+
+-- CreateIndex
+CREATE INDEX "EmotionalCycle_recordedAt_idx" ON "EmotionalCycle"("recordedAt");
+
+-- CreateIndex
+CREATE INDEX "FutureLetter_userId_idx" ON "FutureLetter"("userId");
+
+-- CreateIndex
+CREATE INDEX "FutureLetter_deliverAt_idx" ON "FutureLetter"("deliverAt");
+
+-- CreateIndex
+CREATE INDEX "FutureLetter_isDelivered_idx" ON "FutureLetter"("isDelivered");
+
+-- CreateIndex
+CREATE INDEX "RecommendationEngine_userId_idx" ON "RecommendationEngine"("userId");
+
+-- CreateIndex
+CREATE INDEX "RecommendationEngine_type_idx" ON "RecommendationEngine"("type");
+
+-- CreateIndex
+CREATE INDEX "RecommendationEngine_score_idx" ON "RecommendationEngine"("score");
+
+-- CreateIndex
 CREATE INDEX "_UserOracleSessions_B_index" ON "_UserOracleSessions"("B");
 
 -- AddForeignKey
@@ -369,6 +638,39 @@ ALTER TABLE "CompatibilityMap" ADD CONSTRAINT "CompatibilityMap_partnerId_fkey" 
 
 -- AddForeignKey
 ALTER TABLE "OracleSession" ADD CONSTRAINT "OracleSession_mapId_fkey" FOREIGN KEY ("mapId") REFERENCES "CompatibilityMap"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AIComment" ADD CONSTRAINT "AIComment_postId_fkey" FOREIGN KEY ("postId") REFERENCES "BlogPost"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AIComment" ADD CONSTRAINT "AIComment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JournalEntry" ADD CONSTRAINT "JournalEntry_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JournalEntry" ADD CONSTRAINT "JournalEntry_blogPostId_fkey" FOREIGN KEY ("blogPostId") REFERENCES "BlogPost"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserChallenge" ADD CONSTRAINT "UserChallenge_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserChallenge" ADD CONSTRAINT "UserChallenge_challengeId_fkey" FOREIGN KEY ("challengeId") REFERENCES "WeeklyChallenge"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OracleMessage" ADD CONSTRAINT "OracleMessage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserBadge" ADD CONSTRAINT "UserBadge_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "EmotionalCycle" ADD CONSTRAINT "EmotionalCycle_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FutureLetter" ADD CONSTRAINT "FutureLetter_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RecommendationEngine" ADD CONSTRAINT "RecommendationEngine_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_UserOracleSessions" ADD CONSTRAINT "_UserOracleSessions_A_fkey" FOREIGN KEY ("A") REFERENCES "OracleSession"("id") ON DELETE CASCADE ON UPDATE CASCADE;

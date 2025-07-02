@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Heart, Users, Clock, Sparkles, UserPlus, AlertCircle } from 'lucide-react';
-import { calcularMapaNumerologicoCompleto } from '@/lib/numerologia';
+import { gerarMapaNumerologicoCompleto } from '@/lib/numerologia';
 
 interface InviteData {
   code: string;
@@ -84,7 +84,7 @@ export default function ConvitePage() {
 
     try {
       // Calcular mapa numerológico
-      const numerologyData = calcularMapaNumerologicoCompleto(nome, dataNascimento);
+      const numerologyData = gerarMapaNumerologicoCompleto(nome, dataNascimento);
 
       const response = await fetch('/api/friends/accept', {
         method: 'POST',
@@ -198,7 +198,7 @@ export default function ConvitePage() {
                 <Input
                   type="text"
                   value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  onChange={setNome}
                   placeholder="Digite seu nome completo"
                   required
                   className="w-full"
@@ -224,7 +224,7 @@ export default function ConvitePage() {
                 <Input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={setEmail}
                   placeholder="seu@email.com"
                   className="w-full"
                 />

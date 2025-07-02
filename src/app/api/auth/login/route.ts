@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authGuard, handleSecurityError, logSecurityEvent, checkRateLimit } from "@/lib/security/auth-guard";
 import type { SecurityContext } from "@/lib/security/auth-guard";
 import { z } from "zod";
-import jwt from "jsonwebtoken";
+import { createToken } from "@/lib/auth";
 
 // 🔒 Schema de validação unificado para login
 const UnifiedLoginSchema = z.union([
@@ -300,21 +300,14 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
       }, { status: 500 });
     }
 
-    const token = jwt.sign(
-      { 
-        userId: user.id,
-        email: user.email,
-        role: 'USER'
-      },
-      jwtSecret,
-      { 
-        expiresIn: '7d',
-        issuer: 'numbly.life',
-        audience: 'numbly-users'
-      }
-    );
+    // 6. 🔐 Criar token JWT
+    const token = await createToken({
+      userId: user.id,
+      email: user.email || '',
+      nome: user.name || ''
+    });
 
-    // 6. 🍪 Resposta com cookie seguro
+    // 7. 🍪 Resposta com cookie seguro
     const response = NextResponse.json<LoginResponse>({
       success: true,
       message: 'Login realizado com sucesso!',
@@ -337,7 +330,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60, // 7 dias
+      maxAge: 30 * 24 * 60 * 60, // 30 dias
       path: '/'
     });
 

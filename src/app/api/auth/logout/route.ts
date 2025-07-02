@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authGuard, logSecurityEvent } from "@/lib/security/auth-guard";
 import type { SecurityContext } from "@/lib/security/auth-guard";
-import jwt from "jsonwebtoken";
+import { verifyToken } from "@/lib/auth";
 
 interface LogoutResponse {
   success: boolean;
@@ -34,17 +34,15 @@ export async function POST(req: NextRequest): Promise<NextResponse<LogoutRespons
   }
   
   try {
-
-    // 2. 🍪 Obter token do cookie ou header
-    const token = req.cookies.get('token')?.value || 
-                 req.headers.get('authorization')?.replace('Bearer ', '');
+    // 2. 🍪 Obter token do cookie
+    const token = req.cookies.get('auth-token')?.value;
 
     if (token) {
       try {
-        // 3. 🔍 Decodificar token para log de auditoria
-        const decoded = jwt.decode(token) as any;
-        if (decoded?.userId) {
-          logSecurityEvent('AUTH_SUCCESS', securityContext, `User logged out: ${decoded.userId}`);
+        // 3. 🔍 Verificar token para log de auditoria
+        const payload = await verifyToken(token);
+        if (payload?.userId) {
+          logSecurityEvent('AUTH_SUCCESS', securityContext, `User logged out: ${payload.userId}`);
         }
       } catch (error) {
         // Token inválido, mas vamos continuar o logout mesmo assim
@@ -58,26 +56,15 @@ export async function POST(req: NextRequest): Promise<NextResponse<LogoutRespons
       message: "Logout realizado com sucesso"
     });
 
-    // 5. 🧹 Limpar cookies de autenticação
+    // 5. 🧹 Limpar cookie de autenticação
     response.cookies.set({
-      name: "token",
+      name: "auth-token",
       value: "",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "strict",
       path: "/",
       maxAge: 0, // Expira imediatamente
-    });
-
-    // Limpar outros cookies de sessão se existirem
-    response.cookies.set({
-      name: "session",
-      value: "",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
     });
 
     return response;
@@ -99,11 +86,11 @@ export async function POST(req: NextRequest): Promise<NextResponse<LogoutRespons
     );
 
     response.cookies.set({
-      name: "token",
+      name: "auth-token",
       value: "",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "strict",
       path: "/",
       maxAge: 0,
     });
