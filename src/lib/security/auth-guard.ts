@@ -93,14 +93,21 @@ function calculateRiskScore(req: NextRequest, ip: string, userAgent: string): nu
 /**
  * 🛡️ Auth Guard principal
  */
-export async function authGuard(req: NextRequest): Promise<SecurityContext> {
+export async function authGuard(req: NextRequest, options: { allowLocalhost?: boolean } = {}): Promise<SecurityContext> {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 
            req.headers.get('x-real-ip') || 
            req.headers.get('cf-connecting-ip') || 
            'unknown';
            
   const userAgent = req.headers.get('user-agent') || '';
-  const riskScore = calculateRiskScore(req, ip, userAgent);
+  
+  // Reduzir score de risco para localhost em desenvolvimento
+  let riskScore = calculateRiskScore(req, ip, userAgent);
+  if (options.allowLocalhost && process.env.NODE_ENV === 'development') {
+    if (ip.includes('127.0.0.1') || ip.includes('localhost') || ip.includes('::1')) {
+      riskScore = Math.max(0, riskScore - 50); // Reduz score significativamente
+    }
+  }
   
   const context: SecurityContext = {
     ip: ip.trim(),
@@ -111,8 +118,11 @@ export async function authGuard(req: NextRequest): Promise<SecurityContext> {
     method: req.method
   };
   
+  // Flexibilizar bloqueio para localhost em desenvolvimento
+  const blockThreshold = (options.allowLocalhost && process.env.NODE_ENV === 'development') ? 95 : 80;
+  
   // Bloquear IPs com score muito alto
-  if (riskScore >= 80) {
+  if (riskScore >= blockThreshold) {
     logSecurityEvent('HIGH_RISK_BLOCKED', context, `High risk score: ${riskScore}`);
     throw new Error('Access denied due to security policy');
   }

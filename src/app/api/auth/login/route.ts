@@ -178,7 +178,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
   try {
     // 1. 🛡️ Validação de segurança inicial
     try {
-      securityContext = await authGuard(req);
+      securityContext = await authGuard(req, { allowLocalhost: true });
     } catch (error: any) {
       return NextResponse.json<LoginResponse>({
         success: false,

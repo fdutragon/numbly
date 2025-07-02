@@ -11,12 +11,15 @@ import { useUserStore } from '@/lib/stores/user-store';
 import { calcularNumeroDestino, gerarMapaNumerologico } from '@/lib/numerologia';
 import { validateDate } from '@/lib/utils';
 import { pushService } from '@/lib/push';
-import { authApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { useAuth, useRedirectIfAuthenticated } from '@/hooks/useAuth';
 
 export default function Home() {
   const router = useRouter();
   const { setUser, setMapa } = useUserStore();
+  
+  // Redireciona usuário autenticado para dashboard
+  useRedirectIfAuthenticated();
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -88,15 +91,6 @@ export default function Home() {
           await pushService.subscribeToPush();
           useUserStore.getState().updateUser({ pushEnabled: true });
         }
-      }
-      
-      // Registrar no backend
-      const user = useUserStore.getState().user;
-      if (user) {
-        await authApi.register({
-          ...user,
-          pushEnabled: enableNotifications,
-        });
       }
       
       setShowNotificationModal(false);

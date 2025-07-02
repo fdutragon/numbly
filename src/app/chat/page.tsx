@@ -16,7 +16,8 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useUserStore } from '@/lib/stores/user-store';
-import { useAuth, useApiRequest } from '@/lib/contexts/auth-context';
+import { useChatApi } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
 interface Message {
@@ -28,9 +29,8 @@ interface Message {
 
 export default function ChatPage() {
   const router = useRouter();
-  const { user, mapa, perguntasRestantes, addPergunta, decrementPergunta } = useUserStore();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { makeRequest } = useApiRequest();
+  const { user, mapa, perguntasRestantes, addPergunta, decrementPergunta, isAuthenticated, isLoading: authLoading } = useAuth();
+  const chatApi = useChatApi();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +45,9 @@ export default function ChatPage() {
     'Como posso usar meu número da sorte a meu favor?',
     'Quais são minhas maiores fortalezas espirituais?'
   ];
+
+  // Proteger rota
+  useAuth().requireAuth();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -93,30 +96,26 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const response = await makeRequest('/api/ai/chat', {
-        method: 'POST',
-        body: JSON.stringify({
-          prompt: currentInput,
-          numerologyContext: {
-            userData: {
-              name: user.nome,
-              firstName: user.nome.split(' ')[0],
-              birthDate: user.dataNascimento,
-              numerologyData: {
-                numeroDestino: user.numeroDestino.toString(),
-                numeroSorte: mapa?.numeroSorte?.toString() || "0",
-                potencial: mapa?.potencial || "",
-                fortalezas: Array.isArray(mapa?.fortalezas) ? mapa.fortalezas.join(", ") : "",
-                desafios: Array.isArray(mapa?.desafios) ? mapa.desafios.join(", ") : "",
-                amor: mapa?.amor || "",
-                cicloVida: mapa?.cicloVida?.fase || ""
-              }
+      const context = {
+        numerologyContext: {
+          userData: {
+            name: user.nome,
+            firstName: user.nome.split(' ')[0],
+            birthDate: user.dataNascimento,
+            numerologyData: {
+              numeroDestino: user.numeroDestino.toString(),
+              numeroSorte: mapa?.numeroSorte?.toString() || "0",
+              potencial: mapa?.potencial || "",
+              fortalezas: Array.isArray(mapa?.fortalezas) ? mapa.fortalezas.join(", ") : "",
+              desafios: Array.isArray(mapa?.desafios) ? mapa.desafios.join(", ") : "",
+              amor: mapa?.amor || "",
+              cicloVida: mapa?.cicloVida?.fase || ""
             }
           }
-        }),
-      });
-
-      const data = await response.json();
+        }
+      };
+      
+      const data = await chatApi.sendMessage(currentInput, context);
 
       if (data.success && data.data) {
         const oracleMessage: Message = {

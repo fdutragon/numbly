@@ -1,0 +1,20 @@
+<svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="triangleGrad_72" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" />
+      <stop offset="50%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fundo escuro -->
+  <rect width="72" height="72" rx="9" fill="#0f172a"/>
+  
+  <!-- Triângulo -->
+  <polygon 
+    points="36,23.529600000000002 21.6,48.4704 50.4,48.4704" 
+    fill="url(#triangleGrad_72)" 
+    stroke="rgba(255,255,255,0.2)" 
+    stroke-width="1"
+  />
+</svg>

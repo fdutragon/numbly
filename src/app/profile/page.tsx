@@ -6,9 +6,24 @@ import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/ui/app-layout';
 import { useUserStore } from '@/lib/stores/user-store';
 import { User, Calendar, Star, Heart, Sparkles, Crown, Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProfilePage() {
-  const { user, mapa } = useUserStore();
+  const router = useRouter();
+  const { user, mapa, logout } = useAuth();
+  
+  // Proteger rota
+  useAuth().requireAuth();
+  
+  const handleLogout = async () => {
+    try {
+      logout();
+      router.push('/');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
 
   if (!user || !mapa) {
     return (
@@ -78,8 +93,9 @@ export default function ProfilePage() {
                     </span>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <Settings className="w-4 h-4" />
+                  Logout
                 </Button>
               </div>
             </CardContent>

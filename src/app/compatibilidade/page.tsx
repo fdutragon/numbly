@@ -19,10 +19,10 @@ import {
   Send
 } from 'lucide-react';
 import Link from 'next/link';
-import { useUserStore } from '@/lib/stores/user-store';
 import { calcularCompatibilidade } from '@/lib/numerologia';
 import { validateDate } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CompatibilityResult {
   score: number;
@@ -38,7 +38,11 @@ interface CompatibilityResult {
 
 export default function CompatibilidadePage() {
   const router = useRouter();
-  const { user } = useUserStore();
+  const { user } = useAuth();
+  
+  // Proteger rota
+  useAuth().requireAuth();
+  
   const [formData, setFormData] = useState({
     nome: '',
     dataNascimento: '',

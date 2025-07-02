@@ -1,41 +1,37 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useUserStore } from '@/lib/stores/user-store';
 import { useRouter } from 'next/navigation';
+import { useAuth as useAuthContext } from '@/lib/contexts/auth-context';
+import { useUserStore } from '@/lib/stores/user-store';
 
 export function useAuth() {
   const router = useRouter();
-  const { user, clearUser } = useUserStore();
-  
-  const logout = () => {
-    clearUser();
-    router.push('/');
-  };
+  const userStore = useUserStore();
+  const auth = useAuthContext();
   
   const requireAuth = (redirectTo: string = '/register') => {
     useEffect(() => {
-      if (!user) {
+      if (!auth.isAuthenticated || !userStore.user) {
         router.push(redirectTo);
       }
-    }, [user, redirectTo, router]);
+    }, [auth.isAuthenticated, userStore.user, redirectTo, router]);
   };
 
   return {
-    user,
-    isAuthenticated: !!user,
-    logout,
-    requireAuth
+    ...auth,
+    ...userStore, // Inclui todos os dados do user store
+    requireAuth,
   };
 }
 
 export function useRedirectIfAuthenticated(redirectTo: string = '/dashboard') {
   const router = useRouter();
-  const { user } = useUserStore();
+  const { isAuthenticated } = useAuthContext();
   
   useEffect(() => {
-    if (user) {
+    if (isAuthenticated) {
       router.push(redirectTo);
     }
-  }, [user, redirectTo, router]);
+  }, [isAuthenticated, redirectTo, router]);
 }

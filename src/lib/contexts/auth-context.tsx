@@ -36,136 +36,180 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = !!token;
 
-  // Carrega o token salvo ao inicializar
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedToken = localStorage.getItem(TOKEN_KEY);
-      if (savedToken) {
-        setToken(savedToken);
-        // Tenta carregar os dados do usuário com o token salvo
-        loadUserData(savedToken);
-      } else {
-        // Se não há token, tenta fazer login automático com deviceId
-        autoLogin();
-      }
-    }
-  }, []);
+  // Funções auxiliares
+  const saveToken = (newToken: string) => {
+    setToken(newToken);
+    localStorage.setItem(TOKEN_KEY, newToken);
+  };
 
-  const autoLogin = async () => {
+  const clearToken = () => {
+    setToken(null);
+    localStorage.removeItem(TOKEN_KEY);
+  };
+
+  // Fazer requisição autenticada
+  const makeAuthRequest = async (url: string, options: RequestInit = {}) => {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    if (response.status === 401 && token) {
+      clearToken();
+      setUser({} as User);
+      setMapa({} as MapaNumerologico);
+    }
+
+    return response;
+  };
+
+  // Carrega dados do usuário
+  const loadUserData = async (userToken: string) => {
     try {
-      const deviceId = getOrCreateDeviceId();
-      if (deviceId) {
-        await login(deviceId);
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userToken}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Falha ao carregar dados do usuário');
       }
+      
+      const data = await response.json();
+      if (data.user) {
+        setUser(data.user);
+        if (data.mapa) {
+          setMapa(data.mapa);
+        }
+        return true;
+      }
+      return false;
     } catch (error) {
-      console.error('Erro no auto-login:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('Erro ao carregar dados do usuário:', error);
+      clearToken();
+      return false;
     }
   };
 
-  const login = async (deviceId: string): Promise<boolean> => {
+  // Auto login
+  const autoLogin = async () => {
     try {
-      setIsLoading(true);
-      
+      const deviceId = getOrCreateDeviceId();
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ deviceId }),
+        body: JSON.stringify({
+          type: 'device',
+          deviceId,
+          platform: 'web',
+          deviceName: navigator.userAgent,
+        }),
       });
-
-      const data = await response.json();
-
-      if (data.success && data.token) {
-        const newToken = data.token;
-        setToken(newToken);
-        localStorage.setItem(TOKEN_KEY, newToken);
-        
-        // Carrega os dados do usuário após o login
-        await loadUserData(newToken);
-        return true;
-      } else {
-        console.error('Erro no login:', data.error);
-        return false;
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          saveToken(data.token);
+          await loadUserData(data.token);
+        }
       }
     } catch (error) {
-      console.error('Erro na requisição de login:', error);
-      return false;
+      console.error('Erro no auto-login:', error);
+      clearToken();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadUserData = async (authToken: string) => {
+  // Login manual
+  const login = async (deviceId: string): Promise<boolean> => {
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          type: 'device',
+          deviceId,
+          platform: 'web',
+          deviceName: navigator.userAgent,
+        }),
       });
-
-      const data = await response.json();
-
-      if (data.success && data.user) {
-        const userData = data.user;
-        
-        // Converte os dados da API para o formato esperado pelo store
-        const formattedUser: User = {
-          id: userData.id,
-          nome: userData.name,
-          dataNascimento: userData.birthDate,
-          numeroDestino: userData.numerologyData?.numeroDestino || 0,
-          numeroSorte: userData.numerologyData?.numeroSorte || 0,
-          plano: 'gratuito' as const,
-          pushEnabled: false,
-          created: userData.createdAt,
-        };
-
-        setUser(formattedUser);
-
-        // Se há dados numerológicos, configura o mapa
-        if (userData.numerologyData) {
-          const mapaData: MapaNumerologico = {
-            numeroDestino: userData.numerologyData.numeroDestino || 0,
-            numeroSorte: userData.numerologyData.numeroSorte || 0,
-            potencial: userData.numerologyData.potencial || '',
-            bloqueios: userData.numerologyData.bloqueios || [],
-            fortalezas: userData.numerologyData.fortalezas || [],
-            desafios: userData.numerologyData.desafios || [],
-            amor: userData.numerologyData.amor || '',
-            cicloVida: {
-              fase: userData.numerologyData.cicloVida || 'Juventude',
-              descricao: 'Fase de descobertas e crescimento',
-              periodo: '2024-2025'
-            }
-          };
-          setMapa(mapaData);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          saveToken(data.token);
+          return await loadUserData(data.token);
         }
-      } else {
-        console.error('Erro ao carregar dados do usuário:', data.error);
       }
+      return false;
     } catch (error) {
-      console.error('Erro na requisição de dados do usuário:', error);
+      console.error('Erro no login:', error);
+      clearToken();
+      return false;
     }
   };
 
+  // Logout
+  const logout = async () => {
+    try {
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      clearToken();
+      setUser({} as User);
+      setMapa({} as MapaNumerologico);
+    }
+  };
+
+  // Refresh dados do usuário
   const refreshUserData = async () => {
     if (token) {
       await loadUserData(token);
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    localStorage.removeItem(TOKEN_KEY);
-    const { clearUser } = useUserStore.getState();
-    clearUser();
-  };
+  // Carrega o token salvo ao inicializar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedToken = localStorage.getItem(TOKEN_KEY);
+      if (savedToken) {
+        setToken(savedToken);
+        loadUserData(savedToken).then(success => {
+          if (!success) {
+            autoLogin();
+          } else {
+            setIsLoading(false);
+          }
+        });
+      } else {
+        autoLogin();
+      }
+    }
+  }, []);
 
-  const value: AuthContextType = {
+  const contextValue: AuthContextType = {
     token,
     isAuthenticated,
     isLoading,
@@ -175,39 +219,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
-
-// Hook para adicionar automaticamente o token nas requisições
-export function useApiRequest() {
-  const { token } = useAuth();
-
-  const makeRequest = async (url: string, options: RequestInit = {}) => {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    return fetch(url, {
-      ...options,
-      headers,
-    });
-  };
-
-  return { makeRequest };
-}
+};
