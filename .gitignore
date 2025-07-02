@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Arquivos específicos que não devem voltar
+src/app/RootLayoutClient.tsx
+src/hooks/useServiceWorker.ts
+src/site/

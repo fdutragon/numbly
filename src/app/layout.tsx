@@ -13,29 +13,59 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   useEffect(() => {
-    console.log('[SW] Iniciando registro do Service Worker...');
-    
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => {
-          console.log('[SW] ✅ Service Worker registrado com sucesso:', registration);
-          
-          // Força update se houver uma versão esperando
-          if (registration.waiting) {
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          }
-          
-          // Event listeners para atualizações
-          registration.addEventListener('updatefound', () => {
-            console.log('[SW] Nova versão do Service Worker encontrada');
-          });
-        })
-        .catch(error => {
-          console.error('[SW] ❌ Erro ao registrar Service Worker:', error);
+    const registerSW = async () => {
+      try {
+        console.log('[SW] Iniciando registro do Service Worker...');
+        
+        if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+          console.warn('[SW] Service Worker não suportado neste navegador');
+          return;
+        }
+
+        // Limpa registros antigos se houver
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+
+        // Registra o novo SW
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/'
         });
-    } else {
-      console.warn('[SW] Service Worker não suportado neste navegador');
-    }
+        
+        console.log('[SW] ✅ Service Worker registrado com sucesso:', registration);
+
+        // Atualiza imediatamente se houver uma nova versão
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        // Monitora atualizações
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          console.log('[SW] Nova versão do Service Worker encontrada');
+
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed') {
+                console.log('[SW] Nova versão instalada, pronta para ativação');
+              }
+            });
+          }
+        });
+
+        // Recarrega a página quando o SW for atualizado
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('[SW] Service Worker atualizado, recarregando...');
+          window.location.reload();
+        });
+
+      } catch (error) {
+        console.error('[SW] ❌ Erro ao registrar Service Worker:', error);
+      }
+    };
+
+    registerSW();
   }, []);
 
   return (
