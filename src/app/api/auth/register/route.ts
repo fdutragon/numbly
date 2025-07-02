@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { gerarMapaNumerologicoCompleto } from '@/lib/numerologia';
 import { authGuard, logSecurityEvent, checkRateLimit } from '@/lib/security/auth-guard';
-import { sendWelcomeEmail, getTestEmail } from '@/lib/email';
+import { createToken } from '@/lib/auth';
 import { db } from '@/lib/db';
 import type { SecurityContext } from '@/lib/security/auth-guard';
+import { randomUUID } from 'crypto';
 
 // Schema de validação para registro
 const RegisterSchema = z.object({
@@ -17,7 +18,9 @@ const RegisterSchema = z.object({
   numeroDestino: z.number()
     .min(1, 'Número do destino deve ser entre 1 e 9')
     .max(9, 'Número do destino deve ser entre 1 e 9'),
-  pushEnabled: z.boolean().optional().default(false)
+  deviceId: z.string().uuid('Device ID deve ser um UUID válido'),
+  userAgent: z.string().optional(),
+  platform: z.string().optional()
 });
 
 // Rate limiting para registro
@@ -74,7 +77,20 @@ export async function POST(request: NextRequest) {
       throw error;
     }
     
-    // 4. Validar data de nascimento
+    // 4. Validar se device já existe
+    const existingDevice = await db.userDevice.findUnique({
+      where: { deviceId: validatedData.deviceId },
+      include: { user: true }
+    });
+
+    if (existingDevice) {
+      return NextResponse.json({
+        error: 'Device já registrado',
+        userId: existingDevice.userId
+      }, { status: 409 });
+    }
+
+    // 5. Validar data de nascimento
     const birthDate = new Date(validatedData.dataNascimento);
     const now = new Date();
     
@@ -92,10 +108,10 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // 5. Gerar mapa numerológico
+    // 6. Gerar mapa numerológico
     const numerologyData = gerarMapaNumerologicoCompleto(validatedData.nome.trim(), validatedData.dataNascimento);
     
-    // 6. Criar usuário no banco
+    // 7. Criar usuário no banco
     const user = await db.user.create({
       data: {
         name: validatedData.nome.trim(),
@@ -106,8 +122,21 @@ export async function POST(request: NextRequest) {
         hasSeenIntro: false
       }
     });
+
+    // 8. Criar device associado ao usuário
+    const userDevice = await db.userDevice.create({
+      data: {
+        userId: user.id,
+        deviceId: validatedData.deviceId,
+        deviceName: validatedData.platform || 'Dispositivo desconhecido',
+        platform: validatedData.platform,
+        userAgent: validatedData.userAgent,
+        isActive: true,
+        lastSeen: new Date()
+      }
+    });
     
-    // 7. Criar assinatura gratuita inicial
+    // 9. Criar assinatura gratuita inicial
     await db.userSubscription.create({
       data: {
         userId: user.id,
@@ -115,35 +144,43 @@ export async function POST(request: NextRequest) {
         status: 'ACTIVE'
       }
     });
+
+    // 10. Gerar JWT token
+    const token = await createToken({
+      userId: user.id,
+      deviceId: validatedData.deviceId,
+      nome: user.name || ''
+    });
+
+    // 11. Log de sucesso
+    logSecurityEvent('AUTH_SUCCESS', securityContext, `User registered via push: ${user.name} (${user.id})`);
     
-    // 8. Enviar email de boas-vindas (opcional)
-    try {
-      const firstName = user.name?.split(' ')[0] || 'Amigo(a)';
-      const testEmail = getTestEmail('user@example.com'); // Em produção, usar email real se fornecido
-      
-      if (process.env.RESEND_API_KEY) {
-        await sendWelcomeEmail(testEmail, firstName);
-      }
-    } catch (emailError) {
-      console.error('Erro ao enviar email de boas-vindas:', emailError);
-      // Não falhar o registro por causa do email
-    }
-    
-    // 9. Log de sucesso
-    logSecurityEvent('AUTH_SUCCESS', securityContext, `User registered: ${user.name} (${user.id})`);
-    
-    return NextResponse.json({
+    // 12. Criar response com cookie
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
         name: user.name,
-        birthDate: user.birthDate.toISOString().split('T')[0],
+        birthDate: user.birthDate ? user.birthDate.toISOString().split('T')[0] : null,
         numerologyData: user.numerologyData,
         isPremium: user.isPremium,
         credits: user.credits
       },
+      token,
+      deviceId: userDevice.deviceId,
       message: 'Usuário registrado com sucesso!'
     });
+
+    // 13. Setar cookie do token
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
+      path: '/'
+    });
+
+    return response;
     
   } catch (error: any) {
     console.error('Erro no registro:', error);

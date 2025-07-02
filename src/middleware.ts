@@ -8,7 +8,10 @@ const publicRoutes = [
   '/',
   '/api/auth/register',
   '/api/auth/login',
+  '/api/auth/magic',
+  '/api/auth/verify',
   '/api/auth/check-user',
+  '/api/push/subscribe',
   '/api/health',
   '/api/get-ip',
   '/about'
@@ -40,7 +43,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get('auth-token')?.value;
+  const token = request.cookies.get('token')?.value;
   
   // Verificar se é uma rota pública
   if (publicRoutes.includes(pathname)) {
@@ -72,7 +75,7 @@ export async function middleware(request: NextRequest) {
     // Adicionar dados do usuário ao header da requisição
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-user-id', payload.userId as string);
-    requestHeaders.set('x-user-email', payload.email as string);
+    requestHeaders.set('x-device-id', payload.deviceId as string);
 
     return NextResponse.next({
       request: {
@@ -87,7 +90,7 @@ export async function middleware(request: NextRequest) {
       ? NextResponse.json({ error: 'Token inválido' }, { status: 401 })
       : NextResponse.redirect(new URL('/', request.url));
     
-    response.cookies.delete('auth-token');
+    response.cookies.delete('token');
     return response;
   }
 }

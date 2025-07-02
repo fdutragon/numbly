@@ -4,7 +4,7 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'numbly-se
 
 export interface UserPayload extends JWTPayload {
   userId: string;
-  email: string;
+  deviceId: string;
   nome: string;
 }
 
