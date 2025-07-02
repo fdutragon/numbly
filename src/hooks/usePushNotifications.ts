@@ -38,14 +38,6 @@ export function usePushNotifications() {
     
     setLoading(true);
     try {
-      // Garantir que o PushService está inicializado
-      const initialized = await pushService.initialize();
-      if (!initialized) {
-        console.error('Falha ao inicializar PushService');
-        setLoading(false);
-        return false;
-      }
-
       const subscription = await pushService.subscribeToPush();
       setIsSubscribed(!!subscription);
       setLoading(false);

@@ -78,7 +78,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<SubscribeResp
 
     // 2. 🚦 Rate limiting para subscriptions
     const subKey = `push_subscribe_${securityContext.ip}`;
-    if (!checkRateLimit(subKey, SUBSCRIBE_RATE_LIMIT.window, SUBSCRIBE_RATE_LIMIT.max, { allowLocalhost: true })) {
+    if (!checkRateLimit(subKey, SUBSCRIBE_RATE_LIMIT.window, SUBSCRIBE_RATE_LIMIT.max)) {
       logSecurityEvent('RATE_LIMITED', securityContext, 'Push subscription rate limit exceeded');
       return NextResponse.json<SubscribeResponse>({
         success: false,
@@ -150,79 +150,51 @@ export async function POST(req: NextRequest): Promise<NextResponse<SubscribeResp
     const { endpoint, keys } = subscription;
     const { p256dh, auth } = keys;
 
-    // Garantir deviceId válido
-    const safeDeviceId = deviceId && deviceId.trim() ? deviceId : `device_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-
     // 7. 🔍 Verificar se já existe
-    let existingSubscription = null;
-    try {
-      existingSubscription = await db.pushSubscription.findFirst({
-        where: {
-          OR: [
-            { endpoint },
-            { deviceId: safeDeviceId }
-          ]
-        }
-      });
-    } catch (dbFindError) {
-      logWithTimestamp(`[${transactionId}] ❌ Erro ao buscar subscription existente:`, dbFindError);
-    }
+    const existingSubscription = await db.pushSubscription.findFirst({
+      where: {
+        OR: [
+          { endpoint },
+          ...(deviceId ? [{ deviceId }] : [])
+        ]
+      }
+    });
 
     let subscriptionRecord;
     let isNew = false;
 
-    try {
-      if (existingSubscription) {
-        // 8a. 🔄 Atualizar subscription existente
-        logWithTimestamp(`[${transactionId}] 🔄 Atualizando subscription existente:`, {
-          id: existingSubscription.id,
-          wasActive: existingSubscription.isActive
-        });
+    if (existingSubscription) {
+      // 8a. 🔄 Atualizar subscription existente
+      logWithTimestamp(`[${transactionId}] 🔄 Atualizando subscription existente:`, {
+        id: existingSubscription.id,
+        wasActive: existingSubscription.isActive
+      });
 
-        subscriptionRecord = await db.pushSubscription.update({
-          where: { id: existingSubscription.id },
-          data: {
-            endpoint,
-            subscription: JSON.stringify(subscription),
-            deviceId: safeDeviceId,
-            userAgent: securityContext.userAgent || existingSubscription.userAgent,
-            isActive: true
-          }
-        });
-      } else {
-        // 8b. 🆕 Criar nova subscription
-        logWithTimestamp(`[${transactionId}] 🆕 Criando nova subscription`);
-        isNew = true;
+      subscriptionRecord = await db.pushSubscription.update({
+        where: { id: existingSubscription.id },
+        data: {
+          endpoint,
+          subscription: JSON.stringify(subscription),
+          deviceId: deviceId || existingSubscription.deviceId,
+          userAgent: securityContext.userAgent || existingSubscription.userAgent,
+          isActive: true
+        }
+      });
+    } else {
+      // 8b. 🆕 Criar nova subscription
+      logWithTimestamp(`[${transactionId}] 🆕 Criando nova subscription`);
+      isNew = true;
 
-        subscriptionRecord = await db.pushSubscription.create({
-          data: {
-            endpoint,
-            subscription: JSON.stringify(subscription),
-            deviceId: safeDeviceId,
-            userAgent: securityContext.userAgent,
-            isActive: true,
-            installedAt: new Date()
-          }
-        });
-      }
-    } catch (prismaError: any) {
-      // Tratar erro de unique constraint
-      if (prismaError.code === 'P2002') {
-        logWithTimestamp(`[${transactionId}] ⚠️ Conflito de unique: endpoint ou deviceId já registrados`, prismaError);
-        return NextResponse.json<SubscribeResponse>({
-          success: false,
-          error: 'Subscription já existe',
-          message: 'Já existe uma subscription ativa para este dispositivo ou navegador.',
-          transactionId
-        }, { status: 409 });
-      }
-      logWithTimestamp(`[${transactionId}] ❌ Erro ao criar/atualizar subscription:`, prismaError);
-      return NextResponse.json<SubscribeResponse>({
-        success: false,
-        error: 'Erro ao salvar subscription',
-        message: prismaError.message || 'Erro desconhecido',
-        transactionId
-      }, { status: 500 });
+      subscriptionRecord = await db.pushSubscription.create({
+        data: {
+          endpoint,
+          subscription: JSON.stringify(subscription),
+          deviceId: deviceId || `device_${Date.now()}`,
+          userAgent: securityContext.userAgent,
+          isActive: true,
+          installedAt: new Date()
+        }
+      });
     }
 
     // 9. ✅ Log de sucesso

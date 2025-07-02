@@ -12,23 +12,6 @@ export class PushService {
     return PushService.instance;
   }
 
-  async initialize(): Promise<boolean> {
-    try {
-      // Primeiro verificar suporte
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('Push notifications não suportadas neste browser');
-        return false;
-      }
-
-      // Registrar Service Worker
-      this.registration = await this.registerServiceWorker();
-      return !!this.registration;
-    } catch (error) {
-      console.error('Erro ao inicializar PushService:', error);
-      return false;
-    }
-  }
-
   async requestPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
       console.warn('Este browser não suporta notificações');
@@ -54,72 +37,8 @@ export class PushService {
     }
 
     try {
-      // Primeiro verificar se já existe um SW registrado
-      const existingRegistration = await navigator.serviceWorker.getRegistration('/sw.js');
-      
-      if (existingRegistration) {
-        console.log('Service Worker já registrado:', existingRegistration);
-        this.registration = existingRegistration;
-        
-        // Aguardar que esteja ativo
-        if (existingRegistration.active) {
-          return existingRegistration;
-        }
-        
-        // Se estiver instalando ou ativando, aguardar
-        if (existingRegistration.installing || existingRegistration.waiting) {
-          await new Promise<void>((resolve) => {
-            const worker = existingRegistration.installing || existingRegistration.waiting;
-            if (worker) {
-              worker.addEventListener('statechange', () => {
-                if (worker.state === 'activated') {
-                  resolve();
-                }
-              });
-            } else {
-              resolve();
-            }
-          });
-        }
-        
-        return existingRegistration;
-      }
-
-      // Se não existe, registrar novo
-      this.registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
-      });
-      
+      this.registration = await navigator.serviceWorker.register('/sw.js');
       console.log('Service Worker registrado:', this.registration);
-      
-      // Aguardar que esteja ativo
-      await new Promise<void>((resolve, reject) => {
-        if (this.registration!.active) {
-          resolve();
-          return;
-        }
-
-        const worker = this.registration!.installing || this.registration!.waiting;
-        if (worker) {
-          worker.addEventListener('statechange', () => {
-            if (worker.state === 'activated') {
-              resolve();
-            } else if (worker.state === 'redundant') {
-              reject(new Error('Service Worker ficou redundante'));
-            }
-          });
-        } else {
-          // Aguardar um pouco e verificar novamente
-          setTimeout(() => {
-            if (this.registration!.active) {
-              resolve();
-            } else {
-              reject(new Error('Service Worker não ficou ativo'));
-            }
-          }, 1000);
-        }
-      });
-      
       return this.registration;
     } catch (error) {
       console.error('Erro ao registrar Service Worker:', error);
@@ -128,37 +47,19 @@ export class PushService {
   }
 
   async subscribeToPush(): Promise<PushSubscription | null> {
+    if (!this.registration) {
+      await this.registerServiceWorker();
+    }
+
+    if (!this.registration) {
+      return null;
+    }
+
     try {
-      // Garantir que o Service Worker esteja registrado e ativo
-      if (!this.registration) {
-        this.registration = await this.registerServiceWorker();
-      }
-
-      if (!this.registration) {
-        console.error('Não foi possível registrar o Service Worker');
-        return null;
-      }
-
-      // Verificar se o Service Worker está ativo
-      if (!this.registration.active) {
-        console.error('Service Worker não está ativo');
-        return null;
-      }
-
-      // Verificar se já existe uma subscription
-      const existingSubscription = await this.registration.pushManager.getSubscription();
-      if (existingSubscription) {
-        console.log('Subscription já existe:', existingSubscription);
-        return existingSubscription;
-      }
-
-      // Criar nova subscription
       const subscription = await this.registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
-
-      console.log('Nova subscription criada:', subscription);
 
       // Enviar subscription para o servidor
       const subscriptionData = {
@@ -174,17 +75,13 @@ export class PushService {
         platform: navigator.platform
       };
 
-      const response = await fetch('/api/push/subscribe', {
+      await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(subscriptionData),
       });
-
-      if (!response.ok) {
-        console.error('Erro ao enviar subscription para o servidor:', response.status);
-      }
 
       return subscription;
     } catch (error) {
@@ -266,8 +163,3 @@ export class PushService {
 }
 
 export const pushService = PushService.getInstance();
-
-// Inicializar automaticamente quando o módulo for carregado no browser
-if (typeof window !== 'undefined') {
-  pushService.initialize().catch(console.error);
-}
