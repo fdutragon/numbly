@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Block, BlockType } from './types';
+import React, { useState, useRef, useEffect } from 'react';
+import { Block, BlockType, TextBlock, HeadingBlock, ListBlock, CodeBlock, ImageBlock } from './types';
 import { BlockControls } from './BlockControls';
+import { cn } from '@/lib/utils';
 
 interface BlockRendererProps {
   block: Block;
@@ -11,13 +12,65 @@ interface BlockRendererProps {
   autoFocus?: boolean;
 }
 
-export function BlockRenderer({ block, onUpdate, onDelete, onDuplicate, onChangeType, autoFocus }: BlockRendererProps) {
+export function BlockRenderer({ 
+  block, 
+  onUpdate, 
+  onDelete, 
+  onDuplicate, 
+  onChangeType, 
+  autoFocus 
+}: BlockRendererProps) {
   const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Escape HTML para evitar XSS
-  const escapeHtml = (unsafe: string) => unsafe.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  useEffect(() => {
+    if (autoFocus && !editing) {
+      setEditing(true);
+    }
+  }, [autoFocus]);
 
-  if (block.type === 'text') {
+  useEffect(() => {
+    if (editing) {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+      }
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.select();
+      }
+    }
+  }, [editing]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      setEditing(false);
+    }
+    if (e.key === 'Escape') {
+      setEditing(false);
+    }
+  };
+
+  const handleUpdate = (updates: Partial<Block>) => {
+    onUpdate({ ...block, ...updates });
+  };
+
+  // Type guards para verificação de tipo
+  const isTextBlock = (block: Block): block is TextBlock => block.type === 'text';
+  const isHeadingBlock = (block: Block): block is HeadingBlock => block.type === 'heading';
+  const isListBlock = (block: Block): block is ListBlock => block.type === 'list';
+  const isCodeBlock = (block: Block): block is CodeBlock => block.type === 'code';
+  const isImageBlock = (block: Block): block is ImageBlock => block.type === 'image';
+
+  // Base classes para consistência visual
+  const baseBlockClass = "group relative py-3 px-4 -mx-4 rounded-xl transition-all duration-200 hover:bg-muted/30";
+  const baseInputClass = "w-full bg-transparent border-0 outline-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none";
+  const baseTextClass = "text-foreground cursor-text min-h-[1.75rem] leading-relaxed";
+  const controlsClass = "absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+
+  if (isTextBlock(block)) {
     return (
       <div className="group flex items-start gap-2 py-1">
         <div className="flex-1 min-w-0">
