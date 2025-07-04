@@ -27,22 +27,20 @@ export function ServiceWorkerProvider() {
           return;
         }
 
-        // Verifica se já existe um SW registrado
+        // Força desregistro e novo registro em desenvolvimento
         const existingRegistration = await navigator.serviceWorker.getRegistration('/');
-        let registration = existingRegistration;
-        if (!registration) {
-          // Registra o SW pela primeira vez
-          registration = await navigator.serviceWorker.register('/sw.js', {
-            scope: '/',
-            updateViaCache: process.env.NODE_ENV === 'development' ? 'all' : 'none',
-          });
-          console.log('[SW] ✅ Service Worker registrado com sucesso:', registration);
-          swRegistered = true;
-        } else {
-          console.log('[SW] Service Worker já existe, forçando update');
-          swRegistered = true;
-          await registration.update();
+        if (existingRegistration && process.env.NODE_ENV === 'development') {
+          console.log('[SW] Desregistrando SW existente para forçar atualização...');
+          await existingRegistration.unregister();
         }
+        
+        // Registra o SW (nova versão)
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+          updateViaCache: 'none', // Força recarregamento
+        });
+        console.log('[SW] ✅ Service Worker registrado com sucesso:', registration);
+        swRegistered = true;
 
         // Aguarda SW estar pronto
         await navigator.serviceWorker.ready;

@@ -1,5 +1,5 @@
-// Service Worker para Push Notifications e Cache
-const CACHE_VERSION = 'v1';
+// Service Worker para Push Notifications e Cache - Updated 2025-01-04T15:00:00 - FORCE UPDATE
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `numbly-${CACHE_VERSION}`;
 
 // Arquivos para cache offline
@@ -21,8 +21,8 @@ self.addEventListener('install', event => {
       return cache.addAll(STATIC_ASSETS);
     }).then(() => {
       console.log('✅ Service Worker: Assets cacheados com sucesso');
-      // Não usar skipWaiting em desenvolvimento para evitar reloads
-      // return self.skipWaiting();
+      // Forçar update imediato
+      return self.skipWaiting();
     })
   );
 });
@@ -33,17 +33,19 @@ self.addEventListener('activate', event => {
   
   event.waitUntil(
     caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames
+      return Promise.all([
+        // Remove caches antigos
+        ...cacheNames
           .filter(name => name.startsWith('numbly-') && name !== CACHE_NAME)
           .map(name => {
             console.log(`🗑️ Service Worker: Removendo cache antigo ${name}`);
             return caches.delete(name);
-          })
-      );
+          }),
+        // Força o controle imediato
+        self.clients.claim()
+      ]);
     }).then(() => {
       console.log('✨ Service Worker: Ativo e controlando');
-      return self.clients.claim();
     })
   );
 });
@@ -104,13 +106,17 @@ self.addEventListener('push', event => {
   try {
     const data = event.data.json();
     
-    // Se há JWT no payload, armazena localmente para uso posterior
+    // Se há JWT no payload, comunica com todos os clientes ativos
     if (data.jwt) {
-      console.log('🔑 Service Worker: JWT recebido, armazenando...');
-      // Usar IndexedDB ou postMessage para comunicar com a app
-      self.postMessage({
-        type: 'AUTH_JWT_RECEIVED',
-        jwt: data.jwt
+      console.log('🔑 Service Worker: JWT recebido, enviando para clientes...');
+      // Enviar JWT para todos os clientes conectados
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'AUTH_JWT_LOGIN',
+            jwt: data.jwt
+          });
+        });
       });
     }
     

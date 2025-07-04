@@ -25,6 +25,7 @@ function normalizeIp(ip?: string | null): string | null {
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  console.log('[CHECK_DEVICE] ✨ Nova requisição de check device recebida');
   let securityContext: any;
   try {
     const body = await req.json();
@@ -89,7 +90,8 @@ export async function POST(req: NextRequest) {
     let pushSentCount = 0;
     for (const sub of pushSubscriptions) {
       try {
-        await sendPush({
+        console.log('[CHECK_DEVICE] Tentando enviar push para subscription:', sub.id);
+        const pushResult = await sendPush({
           subscription: typeof sub.subscription === 'string' ? JSON.parse(sub.subscription) : sub.subscription,
           payload: JSON.stringify({
             title: userName ? `Olá, ${userName}! Acesse o Numbly!` : `Acesse o Numbly!`,
@@ -99,9 +101,15 @@ export async function POST(req: NextRequest) {
             jwt,
           }),
         });
-        pushSentCount++;
+        
+        if (pushResult) {
+          pushSentCount++;
+          console.log('[CHECK_DEVICE] Push enviado com sucesso para subscription:', sub.id);
+        } else {
+          console.error('[CHECK_DEVICE] Falha ao enviar push para subscription:', sub.id);
+        }
       } catch (pushError) {
-        console.error('Erro ao enviar push automático:', pushError);
+        console.error('[CHECK_DEVICE] Erro ao enviar push automático:', pushError);
       }
     }
     await db.userDevice.updateMany({
