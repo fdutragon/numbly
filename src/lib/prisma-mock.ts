@@ -14,19 +14,21 @@ export const prisma = {
     },
     create: async (data: unknown) => {
       console.log('[Prisma Mock] user.create:', data);
+      const typedData = data as any;
       return {
         id: 'mock-user-id',
-        email: (data as any).data.email,
-        nome: (data as any).data.nome,
+        email: typedData.data.email,
+        nome: typedData.data.nome,
         createdAt: new Date(),
-        ...data.data
+        ...typedData.data
       };
     },
-    update: async (query: any) => {
+    update: async (query: unknown) => {
       console.log('[Prisma Mock] user.update:', query);
+      const typedQuery = query as any;
       return {
-        id: query.where.id || 'mock-user-id',
-        ...query.data
+        id: typedQuery.where.id || 'mock-user-id',
+        ...typedQuery.data
       };
     },
     findMany: async (query: any) => {

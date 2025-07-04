@@ -421,7 +421,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
       }
     };
-  }, [loginWithJWT]);
+  }, [loginWithJWT, loadUserData, checkPushPermissions, logout, loadUserDataFromServer]);
 
   return (
     <AuthContext.Provider value={{
