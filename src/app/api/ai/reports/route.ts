@@ -501,19 +501,21 @@ export async function DELETE(req: NextRequest) {
       success: true,
       message: 'Relatório excluído com sucesso'
     });
-
   } catch (error: any) {
     console.error('Erro ao excluir relatório:', error);
-    
     addSecurityLog('warn', {
       ip,
       userAgent,
       endpoint: '/api/ai/reports',
       method: 'DELETE'
     }, `Report deletion error: ${error.message}`);
-
     return NextResponse.json({
       error: 'Erro ao excluir relatório'
     }, { status: 500 });
   }
+}
+
+// Métodos não suportados (para garantir resposta JSON em qualquer situação)
+export async function PUT() {
+  return NextResponse.json({ error: 'Método não suportado' }, { status: 405 });
 }

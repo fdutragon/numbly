@@ -150,6 +150,24 @@ export async function POST(req: NextRequest): Promise<NextResponse<SubscribeResp
     const { endpoint, keys } = subscription;
     const { p256dh, auth } = keys;
 
+    // 6.1 Buscar userId pelo deviceId (obrigatório para criar pushSubscription)
+    let userId: string | undefined;
+    if (deviceId) {
+      const userDevice = await db.userDevice.findFirst({ where: { deviceId } });
+      if (userDevice) {
+        userId = userDevice.userId;
+      }
+    }
+    if (!userId) {
+      logWithTimestamp(`[${transactionId}] ❌ Não foi possível associar userId ao deviceId informado`);
+      return NextResponse.json<SubscribeResponse>({
+        success: false,
+        error: 'Dispositivo não encontrado',
+        message: 'É necessário cadastrar o dispositivo antes de ativar notificações',
+        transactionId
+      }, { status: 400 });
+    }
+
     // 7. 🔍 Verificar se já existe
     const existingSubscription = await db.pushSubscription.findFirst({
       where: {
@@ -177,7 +195,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<SubscribeResp
           subscription: JSON.stringify(subscription),
           deviceId: deviceId || existingSubscription.deviceId,
           userAgent: securityContext.userAgent || existingSubscription.userAgent,
-          isActive: true
+          isActive: true,
+          userId
         }
       });
     } else {
@@ -192,7 +211,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<SubscribeResp
           deviceId: deviceId || `device_${Date.now()}`,
           userAgent: securityContext.userAgent,
           isActive: true,
-          installedAt: new Date()
+          installedAt: new Date(),
+          userId
         }
       });
     }

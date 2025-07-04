@@ -48,9 +48,6 @@ export function ServiceWorkerProvider() {
         await navigator.serviceWorker.ready;
         console.log('[SW] Service Worker ativo e controlando');
 
-        // Setup push notifications
-        await setupPushNotifications();
-
         // Monitora atualizações futuras (sem reload automático em desenvolvimento)
         if (process.env.NODE_ENV === 'production' && registration) {
           registration.addEventListener('updatefound', () => {
@@ -82,52 +79,6 @@ export function ServiceWorkerProvider() {
         outputArray[i] = rawData.charCodeAt(i);
       }
       return outputArray;
-    }
-
-    async function setupPushNotifications() {
-      // Solicitar permissão para notificações
-      if ('Notification' in window) {
-        const permission = await Notification.requestPermission();
-        console.log('[SW] Permissão de notificação:', permission);
-        
-        if (permission === 'granted') {
-          // Criar subscription para push notifications
-          const activeRegistration = await navigator.serviceWorker.getRegistration('/');
-          if (activeRegistration && 'PushManager' in window) {
-            try {
-              const applicationServerKey = urlBase64ToUint8Array('BHfjZzoQtHUaLX-jTWO9UgBIRNH6tsmN-axYcDozi_J1yyjQnoOaxhL-6EUm8g6HeZ8eCrQ4haDjI_p9MborGmI');
-              const subscription = await activeRegistration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey
-              });
-              
-              console.log('[SW] ✅ Push subscription criada:', subscription);
-              
-              // Enviar subscription para o servidor
-              const p256dhKey = subscription.getKey('p256dh');
-              const authKey = subscription.getKey('auth');
-              
-              await fetch('/api/push/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  subscription: {
-                    endpoint: subscription.endpoint,
-                    keys: {
-                      p256dh: p256dhKey ? btoa(String.fromCharCode(...new Uint8Array(p256dhKey))) : '',
-                      auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
-                    }
-                  }
-                })
-              });
-              
-              console.log('[SW] Subscription enviada para o servidor');
-            } catch (error) {
-              console.error('[SW] Erro ao criar push subscription:', error);
-            }
-          }
-        }
-      }
     }
 
     registerSW();

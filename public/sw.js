@@ -7,8 +7,8 @@ const STATIC_ASSETS = [
   '/',
   '/icon-192x192.svg',
   '/icon-512x512.svg',
-  '/manifest.json',
-  '/favicon.ico'
+  '/manifest.json'
+  // '/favicon.ico' removido pois não existe
 ];
 
 // Instalação: Cache dos assets estáticos
@@ -104,14 +104,24 @@ self.addEventListener('push', event => {
   try {
     const data = event.data.json();
     
+    // Se há JWT no payload, armazena localmente para uso posterior
+    if (data.jwt) {
+      console.log('🔑 Service Worker: JWT recebido, armazenando...');
+      // Usar IndexedDB ou postMessage para comunicar com a app
+      self.postMessage({
+        type: 'AUTH_JWT_RECEIVED',
+        jwt: data.jwt
+      });
+    }
+    
     const options = {
       body: data.body || 'Nova mensagem do Numbly!',
       icon: data.icon || '/icon-192x192.svg',
       badge: '/icon-96x96.svg',
       vibrate: [100, 50, 100],
       data: {
-        url: data.url || '/',
-        actionUrl: data.actionUrl
+        url: '/dashboard', // Sempre vai para dashboard
+        jwt: data.jwt // Inclui JWT nos dados da notificação
       },
       actions: data.actions || [
         {
@@ -142,30 +152,38 @@ self.addEventListener('notificationclick', event => {
   
   event.notification.close();
 
-  // URL padrão ou específica da notificação
-  const url = event.notification.data?.url || '/';
-  const actionUrl = event.notification.data?.actionUrl;
+  const notificationData = event.notification.data;
+  const jwt = notificationData?.jwt;
 
-  // Se clicou em uma action específica
-  if (event.action === 'action' && actionUrl) {
-    event.waitUntil(
-      self.clients.openWindow(actionUrl)
-    );
-    return;
+  // Se há JWT, armazena para autenticação automática
+  if (jwt) {
+    console.log('🔑 Service Worker: JWT encontrado no clique, preparando autenticação...');
+    // Armazena JWT temporariamente para uso da app
+    self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then(clients => {
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'AUTH_JWT_LOGIN',
+          jwt: jwt
+        });
+      });
+    });
   }
 
   // Comportamento padrão: abrir/focar janela existente
   event.waitUntil(
     self.clients.matchAll({ type: 'window' }).then(clientList => {
-      // Se já tem uma aba aberta, focar nela
+      const targetUrl = '/dashboard';
+      
+      // Se já tem uma aba aberta para o dashboard, focar nela
       for (const client of clientList) {
-        if (client.url === url && 'focus' in client) {
+        if (client.url.includes('/dashboard') && 'focus' in client) {
           return client.focus();
         }
       }
-      // Se não, abrir nova aba
+      
+      // Se não, abrir nova aba no dashboard
       if (self.clients.openWindow) {
-        return self.clients.openWindow(url);
+        return self.clients.openWindow(targetUrl);
       }
     })
   );

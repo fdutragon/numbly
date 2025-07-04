@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from '@/lib/contexts/auth-context';
 import { ServiceWorkerProvider } from '@/components/ServiceWorkerProvider';
+import { AuthProvider } from '@/lib/contexts/auth-context';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +24,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#1E1E2E', // Alterado para cor base escura
+  themeColor: '#1E1E2E',
 };
 
 export default function RootLayout({
@@ -35,7 +35,6 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
-        {/* Favicon padrão removido para evitar fallback do Next.js */}
         <link rel="icon" href="/icon-192x192.svg" type="image/svg+xml" sizes="any" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" sizes="128x128" href="/icon-128x128.svg" />

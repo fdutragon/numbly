@@ -12,8 +12,9 @@ import { Sparkles, Heart, MessageCircle, TrendingUp, Calendar, Star, ChevronLeft
 import Link from 'next/link';
 
 export default function DashboardPage() {
+  // Agora usa apenas o sistema robusto de sessões via AuthProvider
   const { user, mapa } = useUserStore();
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, isAuthenticated } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [reportModal, setReportModal] = useState<{
     isOpen: boolean;
@@ -29,7 +30,7 @@ export default function DashboardPage() {
   });
 
   // Calcular dia pessoal atual
-  const diaPessoalAtual = mapa ? (mapa.mesPessoal + new Date().getDate()) % 9 === 0 ? 9 : (mapa.mesPessoal + new Date().getDate()) % 9 : new Date().getDate() % 9 + 1;
+  const diaPessoalAtual = mapa ? (mapa.mesPessoal + new Date().getDate()) % 9 === 0 ? 9 : (mapa.mesPessoal + new Date().getDate()) % 9 : (new Date().getDate() % 9) + 1;
   
   // Estado para o blog diário
   const [blogData, setBlogData] = useState<{
@@ -98,7 +99,7 @@ export default function DashboardPage() {
           numeroDestino: mapa.numeroDestino,
           mesPessoal: mapa.mesPessoal,
           anoPessoal: mapa.anoPessoal,
-          nomeUsuario: user.nome,
+          nomeUsuario: user.name,
           palavrasChave: mapa.palavrasChave
         })
       });
@@ -332,10 +333,10 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold mb-1 text-white">
-                    Bem-vindo, {user?.nome?.split(' ')[0] || 'Usuário'}!
+                    Bem-vindo, {user?.name?.split(' ')[0] || 'Usuário'}!
                   </h2>
                   <p className="text-purple-100">
-                    Seu número do destino é <span className="font-bold text-2xl text-white">{user.numeroDestino}</span>
+                    Seu número do destino é <span className="font-bold text-2xl text-white">{mapa?.numeroDestino || '?'}</span>
                   </p>
                 </div>
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
@@ -696,7 +697,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-3">
                 <p className="text-gray-700 leading-relaxed">
-                  Com seu <strong>Domínio Vibracional {mapa.dominioVibracional}</strong> e número do destino <strong>{user.numeroDestino}</strong>, 
+                  Com seu <strong>Domínio Vibracional {mapa.dominioVibracional}</strong> e número do destino <strong>{mapa?.numeroDestino || '?'}</strong>, 
                   hoje é um dia especial para você!
                 </p>
                 
@@ -935,9 +936,9 @@ export default function DashboardPage() {
         reportType={reportModal.reportType}
         reportNumber={reportModal.reportNumber}
         userData={{
-          name: user?.nome || 'Usuário',
-          firstName: user?.nome?.split(' ')[0] || 'Usuário',
-          birthDate: user.dataNascimento,
+          name: user?.name || 'Usuário',
+          firstName: user?.name?.split(' ')[0] || 'Usuário',
+          birthDate: user.birthDate,
           numerologyData: {
             'Número do Destino': mapa.numeroDestino,
             'Número da Alma': mapa.numeroAlma,

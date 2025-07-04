@@ -1,116 +1,90 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
+import { authGuard, logSecurityEvent } from '@/lib/security/auth-guard';
+import type { SecurityContext } from '@/lib/security/auth-guard';
+import { NextRequest } from 'next/server';
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
+  let securityContext: SecurityContext | undefined;
+
   try {
-    // Pegar dados do usuário do middleware
-    const userId = req.headers.get('x-user-id');
+    // Validação de segurança
+    securityContext = await authGuard(request);
 
-    if (!userId) {
-      return NextResponse.json({
+    // Verificar se há cookie de sessão
+    const cookieHeader = request.headers.get('cookie') || '';
+    const sessionMatch = cookieHeader.match(/numbly_session=([^;]+)/);
+    if (!sessionMatch) {
+      return new Response(JSON.stringify({
         success: false,
-        error: 'Usuário não autenticado'
-      }, { status: 401 });
+        error: 'Não autenticado'
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
+    const userId = sessionMatch[1];
 
-    // Buscar dados completos do usuário no banco
-    const user = await prisma.user.findUnique({
+    // Buscar usuário no banco
+    const user = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
-        name: true,
         email: true,
+        name: true,
         birthDate: true,
-        numerologyData: true,
         isPremium: true,
+        credits: true,
+        role: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        numerologyData: true
       }
     });
 
     if (!user) {
-      return NextResponse.json({
+      // Limpar cookie inválido
+      return new Response(JSON.stringify({
         success: false,
-        error: 'Usuário não encontrado'
-      }, { status: 404 });
+        error: 'Sessão inválida'
+      }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': 'numbly_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'
+        }
+      });
     }
 
-    return NextResponse.json({
+    // Extrair dados numerológicos
+    let mapa = null;
+    if (user.numerologyData && typeof user.numerologyData === 'object') {
+      mapa = user.numerologyData;
+    }
+
+    // Log de acesso bem-sucedido
+    logSecurityEvent('AUTH_SUCCESS', securityContext, `Session validation successful for user: ${user.id}`);
+
+    // Retornar dados do usuário
+    return new Response(JSON.stringify({
       success: true,
       user: {
         id: user.id,
-        nome: user.name || '',
-        email: user.email || '',
-        dataNascimento: user.birthDate.toISOString().split('T')[0],
-        numerologyData: user.numerologyData,
+        email: user.email,
+        name: user.name,
+        birthDate: user.birthDate,
         isPremium: user.isPremium,
+        credits: user.credits,
+        role: user.role,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
-      }
-    });
-
-  } catch (error) {
-    console.error('Erro ao buscar usuário:', error);
-    
-    return NextResponse.json({
+      },
+      mapa: mapa || undefined
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (error: any) {
+    console.error('Erro no endpoint /me:', error);
+    if (securityContext) {
+      logSecurityEvent('SUSPICIOUS', securityContext, `Session validation error: ${error.message}`);
+    }
+    return new Response(JSON.stringify({
       success: false,
       error: 'Erro interno do servidor'
-    }, { status: 500 });
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const userId = request.headers.get('x-user-id');
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Usuário não autenticado' },
-        { status: 401 }
-      );
-    }
-
-    const body = await request.json();
-    const { name, birthDate } = body;
-
-    // Validar dados
-    if (!name || !birthDate) {
-      return NextResponse.json(
-        { error: 'Nome e data de nascimento são obrigatórios' },
-        { status: 400 }
-      );
-    }
-
-    // Atualizar usuário
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: name.trim(),
-        birthDate: new Date(birthDate),
-        updatedAt: new Date(),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        birthDate: true,
-        numerologyData: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      user: updatedUser,
-      message: 'Perfil atualizado com sucesso',
-    });
-
-  } catch (error) {
-    console.error('Erro ao atualizar perfil:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }

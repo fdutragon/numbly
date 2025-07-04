@@ -138,7 +138,21 @@ export default function Home() {
             console.log('✅ Permissão de push concedida');
             
             // Criar subscription
-            const applicationServerKey = (window as any).NEXT_PUBLIC_VAPID_PUBLIC_KEY || undefined;
+            // Corrigir: garantir que applicationServerKey seja passado como Uint8Array
+            function urlBase64ToUint8Array(base64String: string): Uint8Array {
+              const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+              const base64 = (base64String + padding)
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+              const rawData = window.atob(base64);
+              const outputArray = new Uint8Array(rawData.length);
+              for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+              }
+              return outputArray;
+            }
+            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || (window as any).NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            const applicationServerKey = vapidKey ? urlBase64ToUint8Array(vapidKey) : undefined;
             const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey
@@ -165,8 +179,8 @@ export default function Home() {
       }
       
       // 7. Redirecionar para dashboard
-      console.log('🎯 Redirecionando para dashboard...');
-      router.push('/dashboard');
+      // console.log('🎯 Redirecionando para dashboard...');
+      // router.push('/dashboard');
       
     } catch (error) {
       console.error('💥 Erro no registro:', error);
@@ -254,7 +268,7 @@ export default function Home() {
       }
       
       setShowNotificationModal(false);
-      router.push('/dashboard');
+      // router.push('/dashboard');
     } catch (error) {
       console.error('❌ Erro ao configurar notificações:', error);
       
@@ -264,7 +278,7 @@ export default function Home() {
       
       // Mesmo com erro, continua para o dashboard
       setShowNotificationModal(false);
-      router.push('/dashboard');
+      // router.push('/dashboard');
     }
   };
 

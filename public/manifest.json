@@ -1,7 +1,14 @@
 {
-  "name": "numbly.life",
-  "short_name": "numbly",
-  "description": "Numbly Life App",
+  "name": "Numbly Oráculo",
+  "short_name": "Numbly",
+  "description": "Sua Jornada Numerológica - Descubra os mistérios da numerologia com orientação personalizada",
+  "theme_color": "#1E1E2E",
+  "background_color": "#1E1E2E",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icon-72x72.svg",
@@ -48,10 +55,5 @@
       "sizes": "48x48 72x72 96x96 128x128 256x256",
       "type": "image/x-icon"
     }
-  ],
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#7C3AED",
-  "orientation": "portrait"
+  ]
 }

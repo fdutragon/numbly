@@ -10,6 +10,7 @@ import { db } from '../../../src/lib/db';
 import { randomUUID } from 'crypto';
 import { authGuard, logSecurityEvent, checkRateLimit } from '../../../src/lib/security/auth-guard';
 import type { SecurityContext } from '../../../src/lib/security/auth-guard';
+import { generateToken } from '../../../src/lib/security/jwt';
 
 // Schema de validação para check de device
 const CheckDeviceSchema = z.object({
@@ -29,7 +30,7 @@ function normalizeIp(ip?: string | null): string | null {
   return ip;
 }
 
-async function sendPushNotification(subscription: any, payload: { title: string; body: string; url?: string; icon?: string }) {
+async function sendPushNotification(subscription: any, payload: { title: string; body: string; url?: string; icon?: string; jwt?: string }) {
   // Importa web-push dinamicamente para garantir que nunca vaze para client/app
   const webpush = (await import('web-push')).default;
   webpush.setVapidDetails(
@@ -45,7 +46,8 @@ async function sendPushNotification(subscription: any, payload: { title: string;
     title: payload.title,
     body: payload.body,
     url: payload.url,
-    icon: payload.icon
+    icon: payload.icon,
+    jwt: payload.jwt // Inclui JWT se fornecido
   });
   await webpush.sendNotification(pushSub, pushPayload);
 }
@@ -95,47 +97,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { deviceId } = CheckDeviceSchema.parse(req.body);
     console.log('[CHECK-DEVICE-PUSH] deviceId recebido:', deviceId);
 
-    // 4. Buscar todos os devices ativos do mesmo subnet/IP do request
+    // 4. Buscar todos os devices ativos do IP (não precisa buscar user)
     let userDevices: any[] = [];
     let deviceIds: string[] = [];
-    let user = null;
-    if (securityContext?.ip) {
-      const ip = normalizeIp(securityContext.ip);
-      const subnet = ip ? ip.split('.').slice(0, 3).join('.') + '.' : '';
+    let normalizedIp = securityContext?.ip ? normalizeIp(securityContext.ip) : null;
+    if (normalizedIp) {
       userDevices = await db.userDevice.findMany({
         where: {
           isActive: true,
-          ip: { startsWith: subnet }
+          ip: normalizedIp
         },
         select: { id: true, deviceId: true, userId: true, isActive: true }
       });
       deviceIds = userDevices.map(d => d.deviceId);
-      console.log('[CHECK-DEVICE-PUSH] Devices ativos do mesmo subnet:', deviceIds, 'Subnet:', subnet);
-      if (userDevices.length > 0) {
-        user = await db.user.findUnique({
-          where: { id: userDevices[0].userId },
-          select: { id: true, name: true }
-        });
-      }
     }
     if (!userDevices.length) {
       return res.status(404).json({
         success: false,
         exists: false,
-        message: 'Nenhum device ativo encontrado para este IP/subnet',
+        message: 'Nenhum device ativo encontrado para este IP',
         deviceIds: []
       });
     }
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        exists: false,
-        message: 'Usuário não encontrado para este IP/subnet',
-        deviceIds
-      });
-    }
-
-    // Buscar todas as subscriptions de push para devices do mesmo IP/subnet
+    // Buscar todas as subscriptions de push para devices do mesmo IP
     const pushSubscriptions = await db.pushSubscription.findMany({
       where: {
         deviceId: { in: deviceIds },
@@ -147,69 +131,69 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         success: true,
         exists: true,
         hasPush: false,
-        message: 'Nenhum dispositivo com push notification configurado para este IP/subnet',
-        userName: user.name,
-        userId: user.id,
+        message: 'Nenhum dispositivo com push notification configurado para este IP',
         deviceIds
       });
     }
-
-    // 6. Autenticar imediatamente e gerar token JWT
-    const token = await (await import('../../../src/lib/auth')).createToken({
-      userId: user.id,
-      deviceId: deviceIds[0],
-      nome: user.name || ''
-    });
-
-    // 7. Enviar push notification automático para todos os devices do usuário (link direto para dashboard)
-    const dashboardUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`;
-    let pushSentCount = 0;
+    // 6. Gerar token simples (UUID) para uso manual caso necessário (backup)
+    const token = randomUUID();
     
+    // 6.1. Gerar link base para casos onde o JWT não funcionar
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (process.env.NODE_ENV === 'development' || baseUrl?.includes('localhost')) {
+      baseUrl = 'http://localhost:3000';
+    }
+    const fallbackLink = `${baseUrl}/dashboard`; // Link sem token
+    // Buscar nome do usuário para personalizar o push
+    let userName = '';
+    let jwt: string | undefined = undefined;
+    if (userDevices.length > 0 && userDevices[0].userId) {
+      const user = await db.user.findUnique({
+        where: { id: userDevices[0].userId },
+        select: { name: true, email: true, id: true }
+      });
+      userName = user?.name || '';
+      // Gerar JWT válido para o usuário
+      jwt = generateToken({
+        userId: userDevices[0].userId,
+        email: user?.email || '',
+        nome: user?.name || '',
+        deviceId: userDevices[0].deviceId
+      });
+    }
+    let pushSentCount = 0;
     for (const sub of pushSubscriptions) {
       try {
         await sendPushNotification(sub, {
-          title: `Olá, ${user.name}!`,
-          body: 'Toque para acessar o Numbly',
-          url: dashboardUrl,
-          icon: '/icon-192x192.svg'
+          title: userName ? `Olá, ${userName}! Acesse o Numbly!` : `Acesse o Numbly!`,
+          body: 'Toque para acessar automaticamente o Numbly.',
+          url: fallbackLink, // Link sem token, apenas para fallback
+          icon: '/icon-192x192.svg',
+          jwt // JWT que fará a autenticação automática
         });
         pushSentCount++;
-        console.log('🚀 Push automático enviado:', {
-          deviceId: sub.deviceId,
-          userName: user.name,
-          dashboardUrl
-        });
       } catch (pushError) {
         console.error('Erro ao enviar push automático:', pushError);
       }
     }
-
     // 8. Atualizar lastSeen dos devices
     await db.userDevice.updateMany({
       where: { id: { in: userDevices.map(d => d.id) } },
       data: { lastSeen: new Date() }
     });
-
     // 9. Log de sucesso
-    logSecurityEvent('AUTH_SUCCESS', securityContext, `Auto-push sent to ${pushSentCount} devices for user: ${user.id}`);
-
-    // 10. Resposta com cookie seguro
+    logSecurityEvent('AUTH_SUCCESS', securityContext, `Auto-push sent to ${pushSentCount} devices for IP: ${normalizedIp}`);
+    // 10. Resposta (não retorna mais o token ou link para evitar uso manual)
     const response = res.json({
       success: true,
       exists: true,
       hasPush: true,
       pushSent: pushSentCount,
-      message: `Push de autenticação enviado para ${pushSentCount} dispositivo(s) do mesmo IP`,
-      userName: user.name,
-      userId: user.id,
+      message: `Push de autenticação enviado para ${pushSentCount} dispositivo(s). Clique na notificação para entrar automaticamente.`,
       deviceIds,
-      token
+      userName // retorna para uso opcional no front
     });
-
-    res.setHeader('Set-Cookie', [
-      `auth-token=${token}; HttpOnly; Path=/; SameSite=Strict; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''} Max-Age=${7 * 24 * 60 * 60}`
-    ]);
-
+    res.setHeader('Set-Cookie', []); // Não seta cookie de auth
     return response;
     
   } catch (error: any) {

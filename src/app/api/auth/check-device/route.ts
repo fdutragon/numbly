@@ -48,20 +48,16 @@ export async function POST(request: NextRequest) {
       }
     });
     console.log('[CHECK-DEVICE] userDevice encontrado:', userDevice);
-    // 4. Buscar todos os devices do usuário pelo IP e/ou userAgent (agora com suporte a IP vizinho)
+    // 4. Buscar todos os devices ativos pelo IP normalizado (ignora deviceId, foca só no IP)
     let userDevices: any[] = [];
     let user = null;
     let deviceIds: string[] = [];
     if (securityContext?.ip) {
-      // Suporte a IP vizinho: pega o /24 (primeiros 3 octetos)
       const ip = normalizeIp(securityContext.ip);
-      const subnet = ip ? ip.split('.').slice(0, 3).join('.') + '.' : '';
       userDevices = await db.userDevice.findMany({
         where: {
-          OR: [
-            { userAgent: securityContext.userAgent },
-            { ip: { startsWith: subnet } }
-          ]
+          isActive: true,
+          ip: ip
         },
         select: { id: true, deviceId: true, userId: true, isActive: true }
       });
@@ -72,7 +68,7 @@ export async function POST(request: NextRequest) {
         });
       }
       deviceIds = userDevices.map(d => d.deviceId);
-      console.log('[CHECK-DEVICE] userDevices encontrados (por userAgent ou subnet):', deviceIds, 'Subnet:', subnet);
+      console.log('[CHECK-DEVICE] userDevices encontrados por IP:', deviceIds, 'IP:', ip);
     }
 
     // Sempre retorna todos os deviceIds associados encontrados
@@ -111,10 +107,9 @@ export async function POST(request: NextRequest) {
     // 6. Buscar todas as subscriptions de push para devices do mesmo IP
     let pushSubscriptions: any[] = [];
     if (userDevices.length > 0) {
-      const deviceIdsForIp = userDevices.map(d => d.deviceId);
       pushSubscriptions = await db.pushSubscription.findMany({
         where: {
-          deviceId: { in: deviceIdsForIp },
+          deviceId: { in: deviceIds },
           isActive: true
         }
       });
