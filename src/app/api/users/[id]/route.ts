@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   let securityContext: SecurityContext | undefined;
   
@@ -19,6 +19,7 @@ export async function GET(
     // 1. Validação de segurança
     securityContext = await authGuard(req);
     
+    const { params } = context;
     const { id } = params;
     
     if (!id) {
