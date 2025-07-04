@@ -310,7 +310,7 @@ export default function Home() {
           className="text-center mb-8"
         >
           <img src="/icon-128x128.svg" alt="Numbly Oráculo" className="w-12 h-12 mx-auto mb-4 rounded-lg border border-neutral-200" />
-          <h1 className="text-3xl font-bold text-neutral-900 mb-1 tracking-tight">Numbly Oráculo</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 mb-1 tracking-tight">Numbly Oráculo!</h1>
           <h2 className="text-base font-medium text-neutral-500 mb-2">Sua Jornada Numerológica</h2>
           <p className="text-neutral-500 text-sm font-normal max-w-md mx-auto mb-1">
             Descubra o poder dos números na sua vida. Cadastre-se e receba um mapa numerológico personalizado, dicas e insights exclusivos.
