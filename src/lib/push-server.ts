@@ -1,43 +1,40 @@
 // --- ATENÇÃO: Este arquivo só deve ser importado em API routes ou scripts server-side ---
 import webpush from 'web-push';
+import type { PushSubscription } from 'web-push';
 
-// Configuração do VAPID para Web Push
-if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
-  console.warn('Web Push não configurado. Configure VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY');
+let vapidConfigured = false;
+
+function ensureVapidConfigured() {
+  if (vapidConfigured) return;
+  
+  const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+  const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+  const VAPID_SUBJECT = process.env.PUSH_NOTIFICATION_EMAIL || 'mailto:contato@numbly.life';
+
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    throw new Error('VAPID keys are not set in environment variables');
+  }
+
+  webpush.setVapidDetails(
+    VAPID_SUBJECT,
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+  
+  vapidConfigured = true;
 }
 
-webpush.setVapidDetails(
-  'mailto:' + (process.env.VAPID_EMAIL || 'test@example.com'),
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
-  process.env.VAPID_PRIVATE_KEY || ''
-);
-
-interface PushOptions {
-  subscription: any;
-  title: string;
-  body: string;
-  url?: string;
-  icon?: string;
-  tag?: string;
+export interface SendPushOptions {
+  subscription: PushSubscription;
+  payload: string;
 }
 
-export async function sendPush({ subscription, title, body, url, icon, tag }: PushOptions) {
+export async function sendPush({ subscription, payload }: SendPushOptions): Promise<boolean> {
   try {
-    // Garante que subscription é um objeto, não string
-    const pushSub = typeof subscription === 'string' ? JSON.parse(subscription) : subscription;
-
-    const payload = JSON.stringify({
-      title,
-      body,
-      url: url || '/',
-      icon: icon || '/icon-192x192.svg',
-      tag: tag || 'default'
-    });
-
-    await webpush.sendNotification(pushSub, payload);
+    ensureVapidConfigured();
+    await webpush.sendNotification(subscription, payload);
     return true;
   } catch (error) {
-    console.error('Erro ao enviar push:', error);
     return false;
   }
 }

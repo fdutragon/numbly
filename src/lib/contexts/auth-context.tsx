@@ -17,6 +17,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Adiciona tipagem global para evitar erro TS na flag de redirect
+declare global {
+  interface Window {
+    __numblyRedirecting?: boolean;
+  }
+}
+
 // Constantes para gestão de sessão
 const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
 const SESSION_STORAGE_KEY = 'numbly_session';
@@ -143,66 +150,67 @@ function recordLoginAttempt(): void {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const { setUser, setMapa, clearUser } = useUserStore();
   const router = useRouter();
   const sessionManager = SessionManager.getInstance();
 
   // Função para verificar autenticação
   const checkAuth = useCallback(async () => {
+    // Evita ciclo: não faz nada se já está na home pública
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      return false;
+    }
     try {
       const response = await fetch('/api/auth/me');
-      
-      // Se não conseguir fazer parse do JSON, provavelmente é HTML (redirecionamento)
       let data;
       try {
         data = await response.json();
       } catch (parseError) {
-        console.log('Erro ao fazer parse do JSON, redirecionando para /');
         setIsAuthenticated(false);
         clearUser();
         setIsLoading(false);
-        if (window.location.pathname !== '/') {
+        if (typeof window !== 'undefined' && window.location.pathname !== '/' && !window.__numblyRedirecting) {
+          window.__numblyRedirecting = true;
           router.replace('/');
         }
         return false;
       }
-
       if (!response.ok || !data.success) {
-        console.log('Resposta não OK ou não success, redirecionando...');
         setIsAuthenticated(false);
         clearUser();
         setIsLoading(false);
-        
-        // Sempre redireciona para / se não estiver autenticado
-        if (window.location.pathname !== '/') {
+        if (typeof window !== 'undefined' && window.location.pathname !== '/' && !window.__numblyRedirecting) {
+          window.__numblyRedirecting = true;
           const redirectUrl = data.redirect || '/';
-          console.log('Redirecionando para:', redirectUrl, 'de:', window.location.pathname);
           router.replace(redirectUrl);
         }
         return false;
       }
-
       if (data.success && data.user) {
         setUser(data.user);
         if (data.mapa) setMapa(data.mapa);
         setIsAuthenticated(true);
         setIsLoading(false);
+        if (typeof window !== 'undefined') window.__numblyRedirecting = false;
         return true;
       }
-
       setIsAuthenticated(false);
       clearUser();
       setIsLoading(false);
-      if (window.location.pathname !== '/') {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/' && !window.__numblyRedirecting) {
+        window.__numblyRedirecting = true;
         router.replace('/');
       }
       return false;
     } catch (error) {
-      console.error('Erro ao verificar autenticação:', error);
       setIsAuthenticated(false);
       clearUser();
       setIsLoading(false);
-      if (window.location.pathname !== '/') {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/' && !window.__numblyRedirecting) {
+        window.__numblyRedirecting = true;
         router.replace('/');
       }
       return false;
@@ -216,6 +224,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Carrega dados da sessão (local primeiro, depois servidor)
   const loadUserData = useCallback(async (): Promise<boolean> => {
+    // Evita carregar dados na home pública
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      return false;
+    }
+
     // Primeiro tenta carregar da sessão local
     const storedSession = sessionManager.getStoredSession();
     if (storedSession?.user) {
@@ -236,7 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Se não há sessão local, tenta carregar do servidor
     return await loadUserDataFromServer();
-  }, [setUser, setMapa, sessionManager]);
+  }, [setUser, setMapa, sessionManager, loadUserDataFromServer]);
 
   // Verifica permissões de push
   const checkPushPermissions = useCallback(async (): Promise<boolean> => {
@@ -356,9 +371,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Efeito de inicialização: carrega sessão e inicia monitoramento
   useEffect(() => {
+    // Evita múltiplas inicializações
+    if (initialized) return;
+    
     const init = async () => {
       try {
         console.log('[AUTH] Inicializando autenticação...');
+        
+        // Se estamos na home pública, não faz autenticação automática
+        if (typeof window !== 'undefined' && window.location.pathname === '/') {
+          console.log('[AUTH] Na home pública, pulando autenticação automática');
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          setInitialized(true);
+          return;
+        }
+        
         const success = await loadUserData();
         
         if (success) {
@@ -386,6 +414,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         setIsAuthenticated(success);
+        setInitialized(true);
       } finally {
         setIsLoading(false);
       }
@@ -421,7 +450,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
       }
     };
-  }, [loginWithJWT, loadUserData, checkPushPermissions, logout, loadUserDataFromServer]);
+  }, []); // Dependências removidas para evitar re-runs
 
   return (
     <AuthContext.Provider value={{

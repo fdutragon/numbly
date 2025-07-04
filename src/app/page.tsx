@@ -11,14 +11,49 @@ import { Bell, Gift, Shield, Zap } from 'lucide-react';
 import { useUserStore } from '@/lib/stores/user-store';
 import { calcularNumeroDestino, gerarMapaNumerologicoCompleto } from '@/lib/numerologia';
 import { validateBrazilianDate as validateDate } from '@/lib/date-utils';
-import { pushService } from '@/lib/push';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
 import { getOrCreateDeviceId } from '@/lib/device-id';
+import { pushService } from '@/lib/push';
+import { useEffect } from 'react';
+
+// Utilitário seguro para obter a VAPID key em qualquer ambiente
+function getVapidKey() {
+  if (typeof window !== 'undefined') {
+    // Vercel: variável de ambiente exposta no client
+    // Local: fallback para window.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || (window as any).NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  }
+  return undefined;
+}
 
 export default function Home() {
   const router = useRouter();
   const { setUser, setMapa } = useUserStore();
+  
+  // Verificação simples de redirecionamento sem disparar autenticação
+  useEffect(() => {
+    const checkExistingSession = () => {
+      // Verifica se há uma sessão armazenada localmente
+      if (typeof window !== 'undefined') {
+        const storedSession = localStorage.getItem('numbly_session');
+        if (storedSession) {
+          try {
+            const sessionData = JSON.parse(storedSession);
+            if (sessionData?.user && sessionData.timestamp && Date.now() - sessionData.timestamp < 24 * 60 * 60 * 1000) {
+              // Sessão ainda válida (menos de 24h), redirecionar
+              router.replace('/dashboard');
+              return;
+            }
+          } catch (error) {
+            // Sessão inválida, limpar
+            localStorage.removeItem('numbly_session');
+          }
+        }
+      }
+    };
+    
+    checkExistingSession();
+  }, [router]);
   
   // Função para validar data brasileira
   const isValidBrazilianDate = (date: string): boolean => {
@@ -151,7 +186,7 @@ export default function Home() {
               }
               return outputArray;
             }
-            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || (window as any).NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            const vapidKey = getVapidKey();
             const applicationServerKey = vapidKey ? urlBase64ToUint8Array(vapidKey) : undefined;
             const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
@@ -264,11 +299,9 @@ export default function Home() {
         }
         
         console.log('✅ Subscription criada:', subscription.endpoint);
-        // Não atualiza mais pushEnabled no store, pois não existe no modelo User
       }
       
       setShowNotificationModal(false);
-      // router.push('/dashboard');
     } catch (error) {
       console.error('❌ Erro ao configurar notificações:', error);
       

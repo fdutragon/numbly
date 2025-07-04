@@ -168,4 +168,3 @@ export class PushService {
 }
 
 export const pushService = PushService.getInstance();
-export { sendPush } from './push-server';
