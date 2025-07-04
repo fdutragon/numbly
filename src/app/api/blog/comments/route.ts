@@ -33,15 +33,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    // Buscar post para contexto
-    const post = await prisma.blogPost.findUnique({
+    // TODO: Implementar busca de post quando modelo blogPost estiver disponível
+    // Por enquanto, verificamos se existe um post genérico com esse ID
+    const post = await prisma.post.findUnique({
       where: { id: postId },
       select: {
-        type: true,
-        personalDay: true,
-        lunarPhase: true,
-        numerologyFocus: true,
-        content: true
+        content: true,
+        authorId: true
       }
     });
 
@@ -64,15 +62,11 @@ export async function POST(request: NextRequest) {
     });
 
     // Salvar comentário
-    const comment = await prisma.aIComment.create({
+    const comment = await prisma.comment.create({
       data: {
         postId,
-        userId,
-        userComment,
-        aiResponse,
-        userMood,
-        personalDay,
-        cosmicContext: getCurrentCosmicContext()
+        authorId: userId,
+        content: `${userComment}\n\nResposta IA: ${aiResponse}`
       }
     });
 
@@ -93,10 +87,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'postId e userId são obrigatórios' }, { status: 400 });
     }
 
-    const comments = await prisma.aIComment.findMany({
+    const comments = await prisma.comment.findMany({
       where: {
         postId,
-        userId
+        authorId: userId
       },
       orderBy: {
         createdAt: 'desc'

@@ -37,11 +37,30 @@ interface ChatMessage {
   content: string;
 }
 
+interface NumerologyData {
+  'Caminho da Vida'?: number;
+  'Destino'?: number;
+  'Impulso da Alma'?: number;
+  'Personalidade'?: number;
+  'Expressão'?: number;
+  'Número do Aniversário'?: number;
+  'Atitude'?: number;
+  'Número da Sorte'?: number;
+  'Número do Desafio'?: number;
+  'Número da Maturidade'?: number;
+  [key: string]: number | undefined;
+}
+
+interface FriendData {
+  name: string;
+  numerologyData?: NumerologyData;
+}
+
 interface ConversationThread {
   id: string;
   messages: ChatMessage[];
   lastActivity: number;
-  userData?: any;
+  userData?: Record<string, unknown>;
 }
 
 interface GroqModel {
@@ -108,7 +127,7 @@ function cleanExpiredThreads(): void {
 }
 
 // Obter ou criar thread de conversa
-function getConversationThread(threadId?: string, userData?: any): ConversationThread {
+function getConversationThread(threadId?: string, userData?: Record<string, unknown>): ConversationThread {
   if (!threadId) {
     threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
@@ -191,16 +210,19 @@ function addMessageToThread(thread: ConversationThread, role: 'user' | 'assistan
 }
 
 // Preparar contexto numerológico
-function prepareNumerologyContext(numerologyContext: any, userMessage: string): string {
+function prepareNumerologyContext(
+  numerologyContext: { userData?: { numerologyData?: NumerologyData }; selectedFriend?: FriendData },
+  userMessage: string
+): string {
   const userData = numerologyContext?.userData;
   const selectedFriend = numerologyContext?.selectedFriend;
-  
+
   let contextInfo = "";
-  
+
   if (userData?.numerologyData) {
     const nums = userData.numerologyData;
     const numerologyInfo: string[] = [];
-    
+
     // Ordenar os números por prioridade
     const priorityOrder = [
       { key: 'Caminho da Vida', value: nums['Caminho da Vida'] },
@@ -216,7 +238,8 @@ function prepareNumerologyContext(numerologyContext: any, userMessage: string): 
     ];
     
     priorityOrder.forEach(({ key, value }) => {
-      if (value !== undefined && value !== null && value !== '') {
+      // Exemplo de uso correto para checagem de valor numérico
+      if (value !== undefined && value !== null) {
         numerologyInfo.push(`${key}: ${value}`);
       }
     });
@@ -239,7 +262,7 @@ function prepareNumerologyContext(numerologyContext: any, userMessage: string): 
     ];
     
     priorityOrder.forEach(({ key, value }) => {
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null) {
         friendNumerologyInfo.push(`${key}: ${value}`);
       }
     });
@@ -369,7 +392,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<ChatResponse>
 
     // Processar chat
     const thread = getConversationThread(validatedData.threadId, validatedData.numerologyContext?.userData);
-    const contextInfo = prepareNumerologyContext(validatedData.numerologyContext, validatedData.prompt);
+    // Chamada de prepareNumerologyContext adaptada para garantir compatibilidade de tipos
+    const numerologyContext = validatedData.numerologyContext
+      ? {
+          userData: {
+            numerologyData: validatedData.numerologyContext.userData?.numerologyData as NumerologyData,
+          },
+          selectedFriend: validatedData.numerologyContext.selectedFriend as FriendData,
+        }
+      : undefined;
+    const contextInfo = numerologyContext
+      ? prepareNumerologyContext(numerologyContext, validatedData.prompt)
+      : '';
     
     // Adicionar mensagem do usuário
     addMessageToThread(thread, 'user', validatedData.prompt);
@@ -401,10 +435,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<ChatResponse>
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     const processingTime = Date.now() - startTime;
     
-    logSecurityEvent('SUSPICIOUS', securityContext, `Chat error: ${error.message}`);
+    logSecurityEvent('SUSPICIOUS', securityContext, `Chat error: ${error instanceof Error ? error.message : String(error)}`);
     
     console.error('Erro no chat:', error);
     
@@ -453,8 +487,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
     });
     
-  } catch (error: any) {
-    logSecurityEvent('SUSPICIOUS', securityContext, `Chat thread retrieval error: ${error.message}`);
+  } catch (error: unknown) {
+    logSecurityEvent('SUSPICIOUS', securityContext, `Chat thread retrieval error: ${error instanceof Error ? error.message : String(error)}`);
     
     return NextResponse.json({
       success: false,
@@ -488,8 +522,8 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       data: { threadId, existed }
     });
     
-  } catch (error: any) {
-    logSecurityEvent('SUSPICIOUS', securityContext, `Chat thread deletion error: ${error.message}`);
+  } catch (error: unknown) {
+    logSecurityEvent('SUSPICIOUS', securityContext, `Chat thread deletion error: ${error instanceof Error ? error.message : String(error)}`);
     
     return NextResponse.json({
       success: false,
