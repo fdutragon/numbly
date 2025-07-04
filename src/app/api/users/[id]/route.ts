@@ -69,7 +69,7 @@ export async function GET(
       logSecurityEvent('SUSPICIOUS', securityContext, `User not found: ${id}`);
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
-        { status: 404 }
+        { status: 4024 }
       );
     }
     
