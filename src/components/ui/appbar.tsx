@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useUserStore } from '@/lib/stores/user-store';
+import React from "react";
+import { useUserStore } from "@/lib/stores/user-store";
 
 interface AppBarProps {
   title: string;
@@ -25,7 +25,7 @@ export function AppBar({ title, backHref }: AppBarProps) {
         <div className="flex items-center space-x-3">
           {user?.nome && (
             <span className="text-sm text-gray-600">
-              Olá, {user.nome.split(' ')[0]}
+              Olá, {user.nome.split(" ")[0]}
             </span>
           )}
         </div>

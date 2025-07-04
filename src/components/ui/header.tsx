@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, Info, Bot, Users, User, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Home, Info, Bot, Users, User, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const navItems = [
-  { name: '', href: '/dashboard', icon: Home },
-  { name: '', href: '/about', icon: Info },
-  { name: 'Oráculo', href: '/chat', icon: Bot, highlight: true },
-  { name: '', href: '/friends', icon: Users },
-  { name: '', href: '/profile', icon: User },
+  { name: "", href: "/dashboard", icon: Home },
+  { name: "", href: "/about", icon: Info },
+  { name: "Oráculo", href: "/chat", icon: Bot, highlight: true },
+  { name: "", href: "/friends", icon: Users },
+  { name: "", href: "/profile", icon: User },
 ];
 
 export function AppHeader() {
@@ -29,20 +29,22 @@ export function AppHeader() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center flex-1 px-1 py-0.5 rounded-xl transition-all duration-150 group',
-                isCenter
-                  ? 'relative z-10'
-                  : '',
+                "flex flex-col items-center flex-1 px-1 py-0.5 rounded-xl transition-all duration-150 group",
+                isCenter ? "relative z-10" : "",
                 isActive
-                  ? 'text-purple-400 bg-purple-900/40 shadow-md scale-105'
-                  : 'text-gray-400 hover:text-purple-300 hover:bg-gray-800/60'
+                  ? "text-purple-400 bg-purple-900/40 shadow-md scale-105"
+                  : "text-gray-400 hover:text-purple-300 hover:bg-gray-800/60",
               )}
               style={isCenter ? { minWidth: 72 } : { minWidth: 48 }}
             >
-              <span className={cn(
-                'relative flex items-center justify-center',
-                isCenter ? 'rounded-full bg-gradient-to-br from-purple-700 via-blue-700 to-purple-900 shadow-xl border-4 border-gray-950 -mb-6 mt-0.5 w-14 h-14 scale-110 animate-float' : 'mb-0.5 w-6 h-6'
-              )}>
+              <span
+                className={cn(
+                  "relative flex items-center justify-center",
+                  isCenter
+                    ? "rounded-full bg-gradient-to-br from-purple-700 via-blue-700 to-purple-900 shadow-xl border-4 border-gray-950 -mb-6 mt-0.5 w-14 h-14 scale-110 animate-float"
+                    : "mb-0.5 w-6 h-6",
+                )}
+              >
                 {isCenter ? (
                   <>
                     <Icon className="w-8 h-8 text-white drop-shadow-[0_2px_8px_rgba(168,85,247,0.5)]" />
@@ -53,10 +55,12 @@ export function AppHeader() {
                 )}
               </span>
               {item.name && (
-                <span className={cn(
-                  'text-[10px] font-semibold tracking-tight leading-none mt-0.5',
-                  isCenter ? 'text-purple-200' : ''
-                )}>
+                <span
+                  className={cn(
+                    "text-[10px] font-semibold tracking-tight leading-none mt-0.5",
+                    isCenter ? "text-purple-200" : "",
+                  )}
+                >
                   {item.name}
                 </span>
               )}

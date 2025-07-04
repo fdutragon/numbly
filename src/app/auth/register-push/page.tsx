@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DateInput } from '@/components/ui/date-input';
-import { usePushNotifications } from '@/hooks/usePushAuth';
-import { 
-  Sparkles, 
-  Bell, 
-  Shield, 
-  Zap, 
-  Heart, 
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
+import { usePushNotifications } from "@/hooks/usePushAuth";
+import {
+  Sparkles,
+  Bell,
+  Shield,
+  Zap,
+  Heart,
   Star,
   CheckCircle,
   XCircle,
   AlertTriangle,
   ArrowRight,
   Smartphone,
-  Lock
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
+  Lock,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface RegistrationStep {
   id: string;
@@ -32,20 +32,20 @@ interface RegistrationStep {
 
 export default function PushAuthRegisterPage() {
   const router = useRouter();
-  
+
   // Estados do formulário
   const [formData, setFormData] = useState({
-    nome: '',
-    dataNascimento: ''
+    nome: "",
+    dataNascimento: "",
   });
-  
+
   // Estados do fluxo
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [showPushRequest, setShowPushRequest] = useState(false);
   const [showSecondAttempt, setShowSecondAttempt] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
-  
+
   // Hook de push notifications
   const {
     isSupported,
@@ -53,29 +53,29 @@ export default function PushAuthRegisterPage() {
     permission,
     subscribe,
     error: pushError,
-    requestPermission
+    requestPermission,
   } = usePushNotifications();
 
   // Passos do registro
   const steps: RegistrationStep[] = [
     {
-      id: 'info',
-      title: 'Informações Básicas',
-      description: 'Nome e data de nascimento',
-      completed: currentStep > 1
+      id: "info",
+      title: "Informações Básicas",
+      description: "Nome e data de nascimento",
+      completed: currentStep > 1,
     },
     {
-      id: 'push',
-      title: 'Ativação Mística',
-      description: 'Conectar com o oráculo',
-      completed: isSubscribed
+      id: "push",
+      title: "Ativação Mística",
+      description: "Conectar com o oráculo",
+      completed: isSubscribed,
     },
     {
-      id: 'complete',
-      title: 'Jornada Iniciada',
-      description: 'Bem-vindo ao Numbly Life',
-      completed: registrationComplete
-    }
+      id: "complete",
+      title: "Jornada Iniciada",
+      description: "Bem-vindo ao Numbly Life",
+      completed: registrationComplete,
+    },
   ];
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function PushAuthRegisterPage() {
 
   const handleBasicInfoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.nome.trim() || !formData.dataNascimento) {
       return;
     }
@@ -97,10 +97,10 @@ export default function PushAuthRegisterPage() {
 
   const handlePushActivation = async () => {
     setIsLoading(true);
-    
+
     try {
       const success = await subscribe();
-      
+
       if (success) {
         // Registrar usuário no backend
         await registerUser();
@@ -108,7 +108,7 @@ export default function PushAuthRegisterPage() {
         setShowSecondAttempt(true);
       }
     } catch (error) {
-      console.error('Erro na ativação:', error);
+      console.error("Erro na ativação:", error);
       setShowSecondAttempt(true);
     } finally {
       setIsLoading(false);
@@ -117,39 +117,39 @@ export default function PushAuthRegisterPage() {
 
   const registerUser = async () => {
     try {
-      const response = await fetch('/api/auth/register-push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      const response = await fetch("/api/auth/register-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Usuário registrado:', result);
+        console.log("Usuário registrado:", result);
       }
     } catch (error) {
-      console.error('Erro ao registrar usuário:', error);
+      console.error("Erro ao registrar usuário:", error);
     }
   };
 
   const handleRegistrationComplete = () => {
     setCurrentStep(3);
     setRegistrationComplete(true);
-    
+
     // Aguardar um momento e redirecionar
     setTimeout(() => {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }, 3000);
   };
 
   const handleSecondAttempt = async () => {
     setIsLoading(true);
-    
+
     try {
       // Tentar novamente com mais ênfase
       const permission = await requestPermission();
-      
-      if (permission === 'granted') {
+
+      if (permission === "granted") {
         const success = await subscribe();
         if (success) {
           await registerUser();
@@ -161,7 +161,7 @@ export default function PushAuthRegisterPage() {
         handleLimitedAccess();
       }
     } catch (error) {
-      console.error('Segunda tentativa falhou:', error);
+      console.error("Segunda tentativa falhou:", error);
       handleLimitedAccess();
     } finally {
       setIsLoading(false);
@@ -170,8 +170,8 @@ export default function PushAuthRegisterPage() {
 
   const handleLimitedAccess = () => {
     // Permitir acesso limitado sem push
-    console.log('Acesso limitado concedido');
-    router.push('/dashboard?limited=true');
+    console.log("Acesso limitado concedido");
+    router.push("/dashboard?limited=true");
   };
 
   return (
@@ -205,19 +205,27 @@ export default function PushAuthRegisterPage() {
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
-                  step.completed 
-                    ? 'bg-green-500 text-white' 
-                    : currentStep === index + 1
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-gray-200 text-gray-500'
-                }`}>
-                  {step.completed ? <CheckCircle className="w-4 h-4" /> : index + 1}
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
+                    step.completed
+                      ? "bg-green-500 text-white"
+                      : currentStep === index + 1
+                        ? "bg-purple-500 text-white"
+                        : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {step.completed ? (
+                    <CheckCircle className="w-4 h-4" />
+                  ) : (
+                    index + 1
+                  )}
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-16 h-1 mx-2 transition-all duration-300 ${
-                    step.completed ? 'bg-green-500' : 'bg-gray-200'
-                  }`} />
+                  <div
+                    className={`w-16 h-1 mx-2 transition-all duration-300 ${
+                      step.completed ? "bg-green-500" : "bg-gray-200"
+                    }`}
+                  />
                 )}
               </div>
             ))}
@@ -248,7 +256,8 @@ export default function PushAuthRegisterPage() {
                     Vamos nos conhecer
                   </h2>
                   <p className="text-sm text-gray-600">
-                    Precisamos apenas do essencial para calcular seu mapa numerológico
+                    Precisamos apenas do essencial para calcular seu mapa
+                    numerológico
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -260,18 +269,25 @@ export default function PushAuthRegisterPage() {
                       <Input
                         placeholder="Seu nome completo"
                         value={formData.nome}
-                        onChange={(value) => setFormData(prev => ({ ...prev, nome: value }))}
+                        onChange={(value) =>
+                          setFormData((prev) => ({ ...prev, nome: value }))
+                        }
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Data de Nascimento
                       </label>
                       <DateInput
                         value={formData.dataNascimento}
-                        onChange={(value) => setFormData(prev => ({ ...prev, dataNascimento: value }))}
+                        onChange={(value) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            dataNascimento: value,
+                          }))
+                        }
                         required
                       />
                     </div>
@@ -279,7 +295,9 @@ export default function PushAuthRegisterPage() {
                     <Button
                       type="submit"
                       className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white"
-                      disabled={!formData.nome.trim() || !formData.dataNascimento}
+                      disabled={
+                        !formData.nome.trim() || !formData.dataNascimento
+                      }
                     >
                       Continuar <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -308,7 +326,8 @@ export default function PushAuthRegisterPage() {
                       Conecte-se com o Oráculo
                     </h2>
                     <p className="text-sm text-gray-600">
-                      Para uma experiência completa, ative as notificações místicas
+                      Para uma experiência completa, ative as notificações
+                      místicas
                     </p>
                   </div>
                 </CardHeader>
@@ -349,9 +368,7 @@ export default function PushAuthRegisterPage() {
 
                   {pushError && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                      <p className="text-sm text-red-700">
-                        {pushError}
-                      </p>
+                      <p className="text-sm text-red-700">{pushError}</p>
                     </div>
                   )}
 
@@ -468,7 +485,7 @@ export default function PushAuthRegisterPage() {
                   >
                     <CheckCircle className="w-10 h-10 text-white" />
                   </motion.div>
-                  
+
                   <motion.h2
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -477,14 +494,15 @@ export default function PushAuthRegisterPage() {
                   >
                     🎉 Bem-vindo ao Numbly Life!
                   </motion.h2>
-                  
+
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.6 }}
                     className="text-gray-600 mb-6"
                   >
-                    Sua jornada numerológica foi iniciada com sucesso. O oráculo já está preparando suas primeiras revelações...
+                    Sua jornada numerológica foi iniciada com sucesso. O oráculo
+                    já está preparando suas primeiras revelações...
                   </motion.p>
 
                   <motion.div

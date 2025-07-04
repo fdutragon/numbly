@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Modal } from '@/components/ui/modal';
-import { 
-  Heart, 
-  ArrowLeft, 
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
+import {
+  Heart,
+  ArrowLeft,
   Share2,
   Sparkles,
   MessageCircle,
@@ -17,18 +17,19 @@ import {
   Crown,
   Send,
   Calculator,
-  Code
-} from 'lucide-react';
-import { NavBar } from '@/components/ui/navbar';
-import Link from 'next/link';
-import { calcularCompatibilidade } from '@/lib/numerologia';
-import { validateDate } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+  Code,
+} from "lucide-react";
+import { NavBar } from "@/components/ui/navbar";
+import Link from "next/link";
+import { calcularCompatibilidade } from "@/lib/numerologia";
+import { validateDate } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 // Modo desenvolvimento - permite testes gratuitos
-const isDevelopment = process.env.NODE_ENV === 'development' || 
-                     typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const isDevelopment =
+  process.env.NODE_ENV === "development" ||
+  (typeof window !== "undefined" && window.location.hostname === "localhost");
 
 interface CompatibilityResult {
   score: number;
@@ -45,43 +46,46 @@ interface CompatibilityResult {
 export default function CompatibilidadePage() {
   const router = useRouter();
   const { user, requireAuth } = useAuth();
-  
+
   // Proteger rota
   requireAuth();
-  
+
   const [formData, setFormData] = useState({
-    nome: '',
-    dataNascimento: '',
+    nome: "",
+    dataNascimento: "",
   });
-  const [errors, setErrors] = useState<{ nome?: string; dataNascimento?: string }>({});
+  const [errors, setErrors] = useState<{
+    nome?: string;
+    dataNascimento?: string;
+  }>({});
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CompatibilityResult | null>(null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const validateForm = () => {
     const newErrors: { nome?: string; dataNascimento?: string } = {};
-    
+
     if (!formData.nome.trim()) {
-      newErrors.nome = 'Nome é obrigatório';
+      newErrors.nome = "Nome é obrigatório";
     }
-    
+
     if (!formData.dataNascimento) {
-      newErrors.dataNascimento = 'Data de nascimento é obrigatória';
+      newErrors.dataNascimento = "Data de nascimento é obrigatória";
     } else if (!validateDate(formData.dataNascimento)) {
-      newErrors.dataNascimento = 'Data inválida';
+      newErrors.dataNascimento = "Data inválida";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setLoading(true);
-    
+
     try {
       // Verificar se precisa de Premium (exceto em desenvolvimento)
       if (!user?.isPremium && !isDevelopment) {
@@ -91,50 +95,52 @@ export default function CompatibilidadePage() {
       }
 
       // Formatar data do usuário de forma segura
-      const userBirthDate = user?.birthDate ? 
-        (typeof user.birthDate === 'string' ? user.birthDate : 
-         user.birthDate instanceof Date ? user.birthDate.toISOString().split('T')[0] : 
-         new Date(user.birthDate).toISOString().split('T')[0]) : 
-        '';
+      const userBirthDate = user?.birthDate
+        ? typeof user.birthDate === "string"
+          ? user.birthDate
+          : user.birthDate instanceof Date
+            ? user.birthDate.toISOString().split("T")[0]
+            : new Date(user.birthDate).toISOString().split("T")[0]
+        : "";
 
       const compatibility = calcularCompatibilidade(
         {
-          nome: user?.name || 'Usuário',
-          dataNascimento: userBirthDate
+          nome: user?.name || "Usuário",
+          dataNascimento: userBirthDate,
         },
         {
           nome: formData.nome,
-          dataNascimento: formData.dataNascimento
-        }
+          dataNascimento: formData.dataNascimento,
+        },
       );
-      
+
       setResult(compatibility);
     } catch (error) {
-      console.error('Erro ao calcular compatibilidade:', error);
-      alert('Erro ao calcular compatibilidade. Tente novamente.');
+      console.error("Erro ao calcular compatibilidade:", error);
+      alert("Erro ao calcular compatibilidade. Tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleReset = () => {
-    setFormData({ nome: '', dataNascimento: '' });
+    setFormData({ nome: "", dataNascimento: "" });
     setResult(null);
     setErrors({});
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'from-green-500 to-emerald-500';
-    if (score >= 60) return 'from-yellow-500 to-orange-500';
-    if (score >= 40) return 'from-orange-500 to-red-500';
-    return 'from-red-500 to-red-600';
+    if (score >= 80) return "from-green-500 to-emerald-500";
+    if (score >= 60) return "from-yellow-500 to-orange-500";
+    if (score >= 40) return "from-orange-500 to-red-500";
+    return "from-red-500 to-red-600";
   };
 
   const getScoreText = (score: number) => {
-    if (score >= 80) return 'Excelente Compatibilidade';
-    if (score >= 60) return 'Boa Compatibilidade';
-    if (score >= 40) return 'Compatibilidade Moderada';
-    return 'Compatibilidade Baixa';
+    if (score >= 80) return "Excelente Compatibilidade";
+    if (score >= 60) return "Boa Compatibilidade";
+    if (score >= 40) return "Compatibilidade Moderada";
+    return "Compatibilidade Baixa";
   };
 
   if (loading) {
@@ -163,11 +169,15 @@ export default function CompatibilidadePage() {
               <Heart className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-medium text-gray-900">Compatibilidade</h1>
-              <p className="text-xs text-gray-500">Descubra a afinidade numerológica</p>
+              <h1 className="text-sm font-medium text-gray-900">
+                Compatibilidade
+              </h1>
+              <p className="text-xs text-gray-500">
+                Descubra a afinidade numerológica
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {isDevelopment && (
               <div className="px-2 py-1 bg-green-100 rounded-full flex items-center gap-1">
@@ -198,15 +208,20 @@ export default function CompatibilidadePage() {
               <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Heart className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Compatibilidade Numerológica</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                Compatibilidade Numerológica
+              </h2>
               <p className="text-gray-600">
-                Descubra o nível de afinidade entre você e outra pessoa através da numerologia
+                Descubra o nível de afinidade entre você e outra pessoa através
+                da numerologia
               </p>
               {isDevelopment && (
                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center justify-center gap-2 text-green-700">
                     <Code className="w-4 h-4" />
-                    <span className="text-sm font-medium">Modo Desenvolvimento Ativo</span>
+                    <span className="text-sm font-medium">
+                      Modo Desenvolvimento Ativo
+                    </span>
                   </div>
                   <p className="text-xs text-green-600 mt-1">
                     Todos os recursos premium estão liberados para testes
@@ -217,11 +232,15 @@ export default function CompatibilidadePage() {
 
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Seus dados</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Seus dados
+                </h3>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="font-medium text-gray-900">{user?.name}</p>
                   <p className="text-sm text-gray-600">
-                    {user?.birthDate ? new Date(user.birthDate).toLocaleDateString('pt-BR') : 'Data não informada'}
+                    {user?.birthDate
+                      ? new Date(user.birthDate).toLocaleDateString("pt-BR")
+                      : "Data não informada"}
                   </p>
                 </div>
               </div>
@@ -235,8 +254,10 @@ export default function CompatibilidadePage() {
                     type="text"
                     placeholder="Digite o nome completo..."
                     value={formData.nome}
-                    onChange={(value) => setFormData(prev => ({ ...prev, nome: value }))}
-                    className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-colors ${errors.nome ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    onChange={(value) =>
+                      setFormData((prev) => ({ ...prev, nome: value }))
+                    }
+                    className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-colors ${errors.nome ? "border-red-300 focus:border-red-500 focus:ring-red-200" : ""}`}
                   />
                   {errors.nome && (
                     <p className="text-sm text-red-600 mt-1">{errors.nome}</p>
@@ -250,11 +271,18 @@ export default function CompatibilidadePage() {
                   <Input
                     type="date"
                     value={formData.dataNascimento}
-                    onChange={(value) => setFormData(prev => ({ ...prev, dataNascimento: value }))}
-                    className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-colors ${errors.dataNascimento ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    onChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        dataNascimento: value,
+                      }))
+                    }
+                    className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-colors ${errors.dataNascimento ? "border-red-300 focus:border-red-500 focus:ring-red-200" : ""}`}
                   />
                   {errors.dataNascimento && (
-                    <p className="text-sm text-red-600 mt-1">{errors.dataNascimento}</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.dataNascimento}
+                    </p>
                   )}
                 </div>
 
@@ -271,7 +299,9 @@ export default function CompatibilidadePage() {
                   ) : (
                     <>
                       <Calculator className="w-4 h-4 mr-2" />
-                      {isDevelopment ? 'Calcular Compatibilidade (DEV)' : 'Calcular Compatibilidade'}
+                      {isDevelopment
+                        ? "Calcular Compatibilidade (DEV)"
+                        : "Calcular Compatibilidade"}
                     </>
                   )}
                 </Button>
@@ -287,43 +317,58 @@ export default function CompatibilidadePage() {
           >
             {/* Score principal */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 text-center">
-              <div className={`w-24 h-24 bg-gradient-to-br ${getScoreColor(result.score)} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                <span className="text-2xl font-bold text-white">{result.score}%</span>
+              <div
+                className={`w-24 h-24 bg-gradient-to-br ${getScoreColor(result.score)} rounded-full flex items-center justify-center mx-auto mb-4`}
+              >
+                <span className="text-2xl font-bold text-white">
+                  {result.score}%
+                </span>
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">{getScoreText(result.score)}</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                {getScoreText(result.score)}
+              </h2>
               <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-4">
                 <span>{user?.name}</span>
                 <Heart className="w-4 h-4 text-pink-500" />
                 <span>{formData.nome}</span>
               </div>
-              <p className="text-gray-700 leading-relaxed">{result.descricao}</p>
+              <p className="text-gray-700 leading-relaxed">
+                {result.descricao}
+              </p>
             </div>
 
             {/* Áreas detalhadas */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Análise por Áreas</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Análise por Áreas
+              </h3>
               <div className="space-y-4">
                 {Object.entries(result.areas).map(([area, score]) => {
                   const areaNames = {
-                    amor: 'Amor & Romance',
-                    comunicacao: 'Comunicação',
-                    financas: 'Finanças',
-                    familia: 'Família'
+                    amor: "Amor & Romance",
+                    comunicacao: "Comunicação",
+                    financas: "Finanças",
+                    familia: "Família",
                   };
-                  
+
                   return (
-                    <div key={area} className="flex items-center justify-between">
+                    <div
+                      key={area}
+                      className="flex items-center justify-between"
+                    >
                       <span className="text-sm font-medium text-gray-700">
                         {areaNames[area as keyof typeof areaNames]}
                       </span>
                       <div className="flex items-center gap-2">
                         <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className={`h-full bg-gradient-to-r ${getScoreColor(score)} transition-all duration-500`}
                             style={{ width: `${score}%` }}
                           />
                         </div>
-                        <span className="text-sm font-medium text-gray-900 w-8 text-right">{score}%</span>
+                        <span className="text-sm font-medium text-gray-900 w-8 text-right">
+                          {score}%
+                        </span>
                       </div>
                     </div>
                   );
@@ -333,14 +378,18 @@ export default function CompatibilidadePage() {
 
             {/* Sugestões */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Sugestões para o Relacionamento</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Sugestões para o Relacionamento
+              </h3>
               <div className="space-y-3">
                 {result.sugestoes.map((sugestao, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Star className="w-3 h-3 text-purple-600" />
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">{sugestao}</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {sugestao}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -359,9 +408,9 @@ export default function CompatibilidadePage() {
                 onClick={() => {
                   if (navigator.share) {
                     navigator.share({
-                      title: 'Compatibilidade Numerológica',
+                      title: "Compatibilidade Numerológica",
                       text: `${user?.name} e ${formData.nome} têm ${result.score}% de compatibilidade!`,
-                      url: window.location.href
+                      url: window.location.href,
                     });
                   }
                 }}
@@ -386,16 +435,16 @@ export default function CompatibilidadePage() {
           <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <Crown className="w-8 h-8 text-white" />
           </div>
-          
+
           <h3 className="text-xl font-semibold mb-4">
             Análise de Compatibilidade Premium
           </h3>
-          
+
           <p className="text-gray-600 mb-8">
-            Para acessar a análise completa de compatibilidade numerológica, 
+            Para acessar a análise completa de compatibilidade numerológica,
             você precisa do plano Premium.
           </p>
-          
+
           <div className="space-y-3">
             <Button className="w-full" size="lg">
               <Crown className="w-4 h-4 mr-2" />

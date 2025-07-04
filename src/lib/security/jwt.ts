@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
 export interface JWTPayload {
   userId: string;
@@ -26,18 +26,21 @@ const sessionStore = new Map<string, SessionData>();
 /**
  * 🔐 Gerar token simples (sem JWT por enquanto)
  */
-export function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
+export function generateToken(
+  payload: Omit<JWTPayload, "iat" | "exp">,
+): string {
   const data = {
     ...payload,
     iat: Date.now(),
-    exp: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 dias
+    exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 dias
   };
-  
-  const token = Buffer.from(JSON.stringify(data)).toString('base64url');
-  const signature = crypto.createHmac('sha256', process.env.JWT_SECRET || 'numbly_fallback_secret')
+
+  const token = Buffer.from(JSON.stringify(data)).toString("base64url");
+  const signature = crypto
+    .createHmac("sha256", process.env.JWT_SECRET || "numbly_fallback_secret")
     .update(token)
-    .digest('hex');
-  
+    .digest("hex");
+
   return `${token}.${signature}`;
 }
 
@@ -46,30 +49,31 @@ export function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string 
  */
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const [payload, signature] = token.split('.');
+    const [payload, signature] = token.split(".");
     if (!payload || !signature) return null;
-    
+
     // Verificar assinatura
-    const expectedSignature = crypto.createHmac('sha256', process.env.JWT_SECRET || 'numbly_fallback_secret')
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.JWT_SECRET || "numbly_fallback_secret")
       .update(payload)
-      .digest('hex');
-    
+      .digest("hex");
+
     if (signature !== expectedSignature) {
-      console.error('Token signature verification failed');
+      console.error("Token signature verification failed");
       return null;
     }
-    
-    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString());
-    
+
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString());
+
     // Verificar expiração
     if (decoded.exp && Date.now() > decoded.exp) {
-      console.error('Token expired');
+      console.error("Token expired");
       return null;
     }
-    
+
     return decoded;
   } catch (error) {
-    console.error('Token verification failed:', error);
+    console.error("Token verification failed:", error);
     return null;
   }
 }
@@ -78,7 +82,7 @@ export function verifyToken(token: string): JWTPayload | null {
  * 🆔 Gerar session ID único
  */
 export function generateSessionId(): string {
-  return crypto.randomBytes(32).toString('hex');
+  return crypto.randomBytes(32).toString("hex");
 }
 
 /**
@@ -86,22 +90,26 @@ export function generateSessionId(): string {
  */
 export function generateDeviceId(userAgent: string, ip: string): string {
   const deviceFingerprint = `${userAgent}:${ip}`;
-  return crypto.createHash('sha256').update(deviceFingerprint).digest('hex').substring(0, 16);
+  return crypto
+    .createHash("sha256")
+    .update(deviceFingerprint)
+    .digest("hex")
+    .substring(0, 16);
 }
 
 /**
  * 💾 Criar sessão de usuário
  */
 export function createSession(
-  userId: string, 
-  email: string, 
-  nome: string, 
-  ip: string, 
-  userAgent: string
+  userId: string,
+  email: string,
+  nome: string,
+  ip: string,
+  userAgent: string,
 ): { sessionId: string; token: string } {
   const sessionId = generateSessionId();
   const deviceId = generateDeviceId(userAgent, ip);
-  
+
   const sessionData: SessionData = {
     userId,
     email,
@@ -109,56 +117,61 @@ export function createSession(
     deviceId,
     createdAt: Date.now(),
     lastActivity: Date.now(),
-    ip
+    ip,
   };
-  
+
   sessionStore.set(sessionId, sessionData);
-  
+
   const token = generateToken({
     userId,
     email,
     nome,
     deviceId,
-    sessionId
+    sessionId,
   });
-  
+
   return { sessionId, token };
 }
 
 /**
  * ✅ Validar sessão existente
  */
-export function validateSession(sessionId: string, ip: string): SessionData | null {
+export function validateSession(
+  sessionId: string,
+  ip: string,
+): SessionData | null {
   const session = sessionStore.get(sessionId);
-  
+
   if (!session) {
     return null;
   }
-  
+
   // Verificar se a sessão expirou (7 dias)
-  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   if (session.createdAt < sevenDaysAgo) {
     sessionStore.delete(sessionId);
     return null;
   }
-  
+
   // Verificar se houve atividade recente (1 dia)
-  const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
   if (session.lastActivity < oneDayAgo) {
     sessionStore.delete(sessionId);
     return null;
   }
-  
+
   // Verificar se o IP mudou (medida de segurança)
   if (session.ip !== ip) {
-    console.warn(`IP mismatch for session ${sessionId}: ${session.ip} vs ${ip}`);
+    console.warn(
+      `IP mismatch for session ${sessionId}: ${session.ip} vs ${ip}`,
+    );
     // Em produção, pode querer invalidar a sessão ou solicitar reautenticação
   }
-  
+
   // Atualizar última atividade
   session.lastActivity = Date.now();
   sessionStore.set(sessionId, session);
-  
+
   return session;
 }
 
@@ -174,13 +187,13 @@ export function invalidateSession(sessionId: string): boolean {
  */
 export function getSessionsByUserId(userId: string): SessionData[] {
   const sessions: SessionData[] = [];
-  
+
   for (const [sessionId, session] of sessionStore.entries()) {
     if (session.userId === userId) {
       sessions.push(session);
     }
   }
-  
+
   return sessions;
 }
 
@@ -189,10 +202,13 @@ export function getSessionsByUserId(userId: string): SessionData[] {
  */
 export function cleanupExpiredSessions(): void {
   const now = Date.now();
-  const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
-  
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+
   for (const [sessionId, session] of sessionStore.entries()) {
-    if (session.createdAt < sevenDaysAgo || session.lastActivity < sevenDaysAgo) {
+    if (
+      session.createdAt < sevenDaysAgo ||
+      session.lastActivity < sevenDaysAgo
+    ) {
       sessionStore.delete(sessionId);
     }
   }
@@ -203,13 +219,13 @@ export function cleanupExpiredSessions(): void {
  */
 export function getSessionStats() {
   const now = Date.now();
-  const oneDayAgo = now - (24 * 60 * 60 * 1000);
-  const oneHourAgo = now - (60 * 60 * 1000);
-  
+  const oneDayAgo = now - 24 * 60 * 60 * 1000;
+  const oneHourAgo = now - 60 * 60 * 1000;
+
   let activeSessions = 0;
   let recentSessions = 0;
   let currentSessions = 0;
-  
+
   for (const session of sessionStore.values()) {
     if (session.lastActivity > oneDayAgo) {
       activeSessions++;
@@ -217,20 +233,21 @@ export function getSessionStats() {
     if (session.lastActivity > oneHourAgo) {
       recentSessions++;
     }
-    if (session.lastActivity > oneHourAgo - (5 * 60 * 1000)) { // 5 min
+    if (session.lastActivity > oneHourAgo - 5 * 60 * 1000) {
+      // 5 min
       currentSessions++;
     }
   }
-  
+
   return {
     total: sessionStore.size,
     active24h: activeSessions,
     recent1h: recentSessions,
-    current5m: currentSessions
+    current5m: currentSessions,
   };
 }
 
 // Limpeza automática a cada hora
-if (typeof setInterval !== 'undefined') {
+if (typeof setInterval !== "undefined") {
   setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
 }

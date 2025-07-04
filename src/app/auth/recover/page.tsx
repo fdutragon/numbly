@@ -1,29 +1,31 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent } from '@/components/ui/card';
-import { 
-  CheckCircle, 
-  XCircle, 
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  CheckCircle,
+  XCircle,
   Loader2,
   KeyRound,
-  Sparkles
-} from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+  Sparkles,
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function RecoverPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
-  
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('');
+  const token = searchParams.get("token");
+
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (!token) {
-      setStatus('error');
-      setMessage('Token de recuperação não encontrado');
+      setStatus("error");
+      setMessage("Token de recuperação não encontrado");
       return;
     }
 
@@ -33,39 +35,40 @@ export default function RecoverPage() {
   const confirmRecovery = async () => {
     try {
       const deviceId = generateDeviceId();
-      
-      const response = await fetch('/api/auth/confirm-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, deviceId })
+
+      const response = await fetch("/api/auth/confirm-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, deviceId }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setStatus('success');
-        setMessage('Acesso recuperado com sucesso!');
-        
+        setStatus("success");
+        setMessage("Acesso recuperado com sucesso!");
+
         // Aguardar um momento e redirecionar
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push("/dashboard");
         }, 2000);
       } else {
-        setStatus('error');
-        setMessage(result.error || 'Erro na recuperação');
+        setStatus("error");
+        setMessage(result.error || "Erro na recuperação");
       }
-
     } catch (error) {
-      console.error('Erro na recuperação:', error);
-      setStatus('error');
-      setMessage('Erro de conexão. Tente novamente.');
+      console.error("Erro na recuperação:", error);
+      setStatus("error");
+      setMessage("Erro de conexão. Tente novamente.");
     }
   };
 
   const generateDeviceId = () => {
     const timestamp = Date.now().toString();
     const random = Math.random().toString(36).substring(2);
-    const userAgent = navigator.userAgent.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
+    const userAgent = navigator.userAgent
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .substring(0, 10);
     return `recover-${timestamp}-${random}-${userAgent}`;
   };
 
@@ -86,7 +89,7 @@ export default function RecoverPage() {
 
             {/* Status */}
             <div className="space-y-4">
-              {status === 'loading' && (
+              {status === "loading" && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -106,7 +109,7 @@ export default function RecoverPage() {
                 </motion.div>
               )}
 
-              {status === 'success' && (
+              {status === "success" && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -124,9 +127,7 @@ export default function RecoverPage() {
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">
                       🔓 Acesso Recuperado!
                     </h2>
-                    <p className="text-gray-600 mb-4">
-                      {message}
-                    </p>
+                    <p className="text-gray-600 mb-4">{message}</p>
                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
                       <p className="text-sm text-gray-700">
                         ✨ Bem-vindo de volta! Redirecionando...
@@ -136,7 +137,7 @@ export default function RecoverPage() {
                 </motion.div>
               )}
 
-              {status === 'error' && (
+              {status === "error" && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -149,9 +150,7 @@ export default function RecoverPage() {
                     <h2 className="text-xl font-bold text-gray-900 mb-2">
                       Erro na Recuperação
                     </h2>
-                    <p className="text-gray-600 mb-4">
-                      {message}
-                    </p>
+                    <p className="text-gray-600 mb-4">{message}</p>
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                       <p className="text-sm text-red-700">
                         ⚠️ Tente iniciar a recuperação novamente

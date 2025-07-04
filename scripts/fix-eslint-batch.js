@@ -1,11 +1,11 @@
-const { execSync, spawnSync } = require('child_process');
-const { readdirSync, statSync, writeFileSync } = require('fs');
-const path = require('path');
+const { execSync, spawnSync } = require("child_process");
+const { readdirSync, statSync, writeFileSync } = require("fs");
+const path = require("path");
 
 const BATCH_SIZE = 50;
 
 // Função para buscar arquivos recursivamente em um diretório
-function getFilesRecursively(dir, extensions = ['.ts', '.tsx', '.js', '.jsx']) {
+function getFilesRecursively(dir, extensions = [".ts", ".tsx", ".js", ".jsx"]) {
   let files = [];
   const entries = readdirSync(dir, { withFileTypes: true });
 
@@ -14,7 +14,7 @@ function getFilesRecursively(dir, extensions = ['.ts', '.tsx', '.js', '.jsx']) {
 
     // Ignorar diretórios node_modules e .next
     if (entry.isDirectory()) {
-      if (entry.name !== 'node_modules' && entry.name !== '.next') {
+      if (entry.name !== "node_modules" && entry.name !== ".next") {
         files = [...files, ...getFilesRecursively(fullPath, extensions)];
       }
     } else if (extensions.includes(path.extname(entry.name))) {
@@ -28,13 +28,17 @@ function getFilesRecursively(dir, extensions = ['.ts', '.tsx', '.js', '.jsx']) {
 // Função para verificar quantos erros cada arquivo tem
 function getFilesWithErrorCount(files) {
   const result = [];
-  
+
   for (const file of files) {
     try {
       // Execute ESLint sem fazer correções, apenas para contar erros
-      const { stderr } = spawnSync('npx', ['eslint', file, '--format', 'json'], { encoding: 'utf8' });
+      const { stderr } = spawnSync(
+        "npx",
+        ["eslint", file, "--format", "json"],
+        { encoding: "utf8" },
+      );
       let errorCount = 0;
-      
+
       try {
         // Tente analisar a saída JSON, se possível
         const output = JSON.parse(stderr);
@@ -44,14 +48,14 @@ function getFilesWithErrorCount(files) {
       } catch (e) {
         // Se não conseguir analisar o JSON, só ignorar
       }
-      
+
       result.push({ file, errorCount });
     } catch (error) {
       console.error(`Erro ao verificar o arquivo ${file}:`, error);
       result.push({ file, errorCount: 0 });
     }
   }
-  
+
   // Ordenar por contagem de erros (decrescente)
   return result.sort((a, b) => b.errorCount - a.errorCount);
 }
@@ -61,19 +65,19 @@ const projectRoot = process.cwd();
 
 // Priorizar os diretórios mais importantes
 const priorities = [
-  'src/lib',
-  'src/hooks',
-  'src/app/api',
-  'src/app',
-  'src/components',
-  'scripts',
-  'prisma'
+  "src/lib",
+  "src/hooks",
+  "src/app/api",
+  "src/app",
+  "src/components",
+  "scripts",
+  "prisma",
 ];
 
 let allFiles = [];
 
 // Adicionar arquivos priorizados primeiro
-priorities.forEach(priority => {
+priorities.forEach((priority) => {
   try {
     const fullPath = path.join(projectRoot, priority);
     if (statSync(fullPath).isDirectory()) {
@@ -86,7 +90,10 @@ priorities.forEach(priority => {
 
 // Adicionar quaisquer outros arquivos no projeto que não foram incluídos
 const rootFiles = getFilesRecursively(projectRoot);
-allFiles = [...allFiles, ...rootFiles.filter(file => !allFiles.includes(file))];
+allFiles = [
+  ...allFiles,
+  ...rootFiles.filter((file) => !allFiles.includes(file)),
+];
 
 // Remover arquivos duplicados (caso exista algum)
 allFiles = [...new Set(allFiles)];
@@ -108,15 +115,19 @@ console.log(`Total de lotes: ${batches.length}`);
 const batchIndex = parseInt(process.argv[2] || "0");
 if (batchIndex >= 0 && batchIndex < batches.length) {
   const batchFiles = batches[batchIndex];
-  console.log(`Processando lote ${batchIndex + 1}/${batches.length} (${batchFiles.length} arquivos)`);
-  
+  console.log(
+    `Processando lote ${batchIndex + 1}/${batches.length} (${batchFiles.length} arquivos)`,
+  );
+
   try {
-    const filePaths = batchFiles.join(' ');
-    execSync(`npx eslint ${filePaths} --fix`, { stdio: 'inherit' });
+    const filePaths = batchFiles.join(" ");
+    execSync(`npx eslint ${filePaths} --fix`, { stdio: "inherit" });
     console.log(`Lote ${batchIndex + 1} concluído com sucesso.`);
   } catch (error) {
     console.error(`Erro ao processar o lote ${batchIndex + 1}:`, error);
   }
 } else {
-  console.error(`Lote inválido. Escolha um número entre 0 e ${batches.length - 1}`);
+  console.error(
+    `Lote inválido. Escolha um número entre 0 e ${batches.length - 1}`,
+  );
 }

@@ -1,14 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DateInput } from '@/components/ui/date-input';
-import { Heart, Users, Clock, Sparkles, UserPlus, AlertCircle } from 'lucide-react';
-import { gerarMapaNumerologicoCompleto } from '@/lib/numerologia';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
+import {
+  Heart,
+  Users,
+  Clock,
+  Sparkles,
+  UserPlus,
+  AlertCircle,
+} from "lucide-react";
+import { gerarMapaNumerologicoCompleto } from "@/lib/numerologia";
 
 interface InviteData {
   code: string;
@@ -23,29 +30,29 @@ interface InviteData {
 }
 
 const relationshipTypeLabels = {
-  FRIEND: { label: 'Amigo(a)', icon: '👫', color: 'blue' },
-  FAMILY: { label: 'Família', icon: '👨‍👩‍👧‍👦', color: 'green' },
-  ROMANTIC: { label: 'Parceiro(a)', icon: '💕', color: 'pink' },
-  BUSINESS: { label: 'Sócio(a)', icon: '🤝', color: 'purple' },
-  CRUSH: { label: 'Paquera', icon: '😍', color: 'red' },
-  PET: { label: 'Pet', icon: '🐾', color: 'orange' },
-  OTHER: { label: 'Outro', icon: '✨', color: 'gray' }
+  FRIEND: { label: "Amigo(a)", icon: "👫", color: "blue" },
+  FAMILY: { label: "Família", icon: "👨‍👩‍👧‍👦", color: "green" },
+  ROMANTIC: { label: "Parceiro(a)", icon: "💕", color: "pink" },
+  BUSINESS: { label: "Sócio(a)", icon: "🤝", color: "purple" },
+  CRUSH: { label: "Paquera", icon: "😍", color: "red" },
+  PET: { label: "Pet", icon: "🐾", color: "orange" },
+  OTHER: { label: "Outro", icon: "✨", color: "gray" },
 };
 
 export default function ConvitePage() {
   const params = useParams();
   const router = useRouter();
   const code = params.code as string;
-  
+
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Dados do formulário
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [dataNascimento, setDataNascimento] = useState('');
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
 
   useEffect(() => {
     if (code) {
@@ -65,7 +72,7 @@ export default function ConvitePage() {
         setError(result.message);
       }
     } catch (err) {
-      setError('Erro ao carregar convite');
+      setError("Erro ao carregar convite");
     } finally {
       setLoading(false);
     }
@@ -73,9 +80,9 @@ export default function ConvitePage() {
 
   const handleAcceptInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!nome || !dataNascimento) {
-      setError('Preencha todos os campos obrigatórios');
+      setError("Preencha todos os campos obrigatórios");
       return;
     }
 
@@ -84,12 +91,15 @@ export default function ConvitePage() {
 
     try {
       // Calcular mapa numerológico
-      const numerologyData = gerarMapaNumerologicoCompleto(nome, dataNascimento);
+      const numerologyData = gerarMapaNumerologicoCompleto(
+        nome,
+        dataNascimento,
+      );
 
-      const response = await fetch('/api/friends/accept', {
-        method: 'POST',
+      const response = await fetch("/api/friends/accept", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           code,
@@ -97,9 +107,9 @@ export default function ConvitePage() {
             nome,
             email,
             dataNascimento,
-            numerologyData
-          }
-        })
+            numerologyData,
+          },
+        }),
       });
 
       const result = await response.json();
@@ -111,7 +121,7 @@ export default function ConvitePage() {
         setError(result.message);
       }
     } catch (err) {
-      setError('Erro ao aceitar convite');
+      setError("Erro ao aceitar convite");
     } finally {
       setAccepting(false);
     }
@@ -136,7 +146,7 @@ export default function ConvitePage() {
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Ops!</h2>
             <p className="text-gray-700 mb-4">{error}</p>
-            <Button onClick={() => router.push('/')} className="w-full">
+            <Button onClick={() => router.push("/")} className="w-full">
               Ir para o início
             </Button>
           </CardContent>
@@ -147,7 +157,10 @@ export default function ConvitePage() {
 
   if (!inviteData) return null;
 
-  const relationshipInfo = relationshipTypeLabels[inviteData.relationshipType as keyof typeof relationshipTypeLabels] || relationshipTypeLabels.OTHER;
+  const relationshipInfo =
+    relationshipTypeLabels[
+      inviteData.relationshipType as keyof typeof relationshipTypeLabels
+    ] || relationshipTypeLabels.OTHER;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
@@ -164,23 +177,32 @@ export default function ConvitePage() {
               Você foi convidado!
             </h1>
             <p className="text-gray-700">
-              <span className="font-semibold">{inviteData.senderName}</span> quer descobrir a 
-              compatibilidade numerológica de vocês como <span className="font-semibold">{relationshipInfo.label.toLowerCase()}</span>
+              <span className="font-semibold">{inviteData.senderName}</span>{" "}
+              quer descobrir a compatibilidade numerológica de vocês como{" "}
+              <span className="font-semibold">
+                {relationshipInfo.label.toLowerCase()}
+              </span>
             </p>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
             {inviteData.customMessage && (
               <div className="bg-purple-50 rounded-lg p-4">
-                <h3 className="font-medium text-purple-900 mb-2">💌 Mensagem especial:</h3>
-                <p className="text-purple-800 italic">"{inviteData.customMessage}"</p>
+                <h3 className="font-medium text-purple-900 mb-2">
+                  💌 Mensagem especial:
+                </h3>
+                <p className="text-purple-800 italic">
+                  "{inviteData.customMessage}"
+                </p>
               </div>
             )}
 
             <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
               <div className="flex items-center mb-2">
                 <Sparkles className="w-5 h-5 text-yellow-600 mr-2" />
-                <h3 className="font-semibold text-yellow-800">Como funciona:</h3>
+                <h3 className="font-semibold text-yellow-800">
+                  Como funciona:
+                </h3>
               </div>
               <ul className="text-sm text-yellow-700 space-y-1">
                 <li>• Você preenche seus dados</li>
@@ -260,7 +282,8 @@ export default function ConvitePage() {
 
             <div className="text-center">
               <p className="text-xs text-gray-500">
-                Ao aceitar, você concorda com nossos termos e criará uma conta no Numbly.Life
+                Ao aceitar, você concorda com nossos termos e criará uma conta
+                no Numbly.Life
               </p>
             </div>
           </CardContent>

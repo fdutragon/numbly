@@ -20,9 +20,9 @@ const eslintConfig = [
       "react/no-unescaped-entities": "warn",
       "@typescript-eslint/no-require-imports": "warn",
       "react/jsx-no-comment-textnodes": "warn",
-      "react-hooks/rules-of-hooks": "error"
-    }
-  }
+      "react-hooks/rules-of-hooks": "error",
+    },
+  },
 ];
 
 export default eslintConfig;

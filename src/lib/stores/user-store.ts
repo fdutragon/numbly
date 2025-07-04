@@ -1,14 +1,14 @@
-import { create } from 'zustand';
-import { User as PrismaUser } from '@prisma/client';
-import type { MapaNumerologico as IMapaNumerologico } from '../types/api-responses';
+import { create } from "zustand";
+import { User as PrismaUser } from "@prisma/client";
+import type { MapaNumerologico as IMapaNumerologico } from "../types/api-responses";
 
 interface UserSubscription {
-  status: 'active' | 'inactive' | 'trial';
+  status: "active" | "inactive" | "trial";
   expiresAt?: Date;
-  plan: 'free' | 'premium';
+  plan: "free" | "premium";
 }
 
-export interface User extends Omit<PrismaUser, 'hashedPassword'> {
+export interface User extends Omit<PrismaUser, "hashedPassword"> {
   subscription?: UserSubscription;
 }
 
@@ -19,26 +19,26 @@ export interface MapaNumerologico extends IMapaNumerologico {
   numeroExpressao: number;
   numeroPersonalidadeExterna: number;
   numeroSorte: number;
-  
+
   // Números avançados
   numeroMaturidade: number;
   desafioPrincipal: number;
   desejoOculto: number;
   poderInterior: number;
-  
+
   // Números especiais
   numerosCarmicos: number[];
   numerosMestres: number[];
-  
+
   // Análise temporal
   anoPessoal: number;
   mesPessoal: number;
-  
+
   // Frequência numérica
   frequenciaNumerica: { [key: number]: number };
   numerosDominantes: number[];
   numerosFaltantes: number[];
-  
+
   // Interpretações
   potencial: string;
   bloqueios: string[];
@@ -47,7 +47,7 @@ export interface MapaNumerologico extends IMapaNumerologico {
   amor: string;
   carreira: string;
   espiritualidade: string;
-  
+
   // Ciclo de vida
   cicloVida: {
     fase: string;
@@ -55,15 +55,15 @@ export interface MapaNumerologico extends IMapaNumerologico {
     periodo: string;
     numeroRegente: number;
   };
-  
+
   // Compatibilidade base
   numerosCompatíveis: number[];
   numerosDesafiadores: number[];
-  
+
   // Resumo do perfil
   dominioVibracional: string;
   palavrasChave: string[];
-  
+
   // Detalhes dos cálculos
   calculosDetalhados: {
     destinoCalculo: string;
@@ -75,7 +75,7 @@ export interface MapaNumerologico extends IMapaNumerologico {
 
 export interface Compatibilidade {
   pessoa1: User;
-  pessoa2: Pick<User, 'name' | 'birthDate'>;
+  pessoa2: Pick<User, "name" | "birthDate">;
   score: number;
   areas: {
     amor: number;
@@ -96,7 +96,7 @@ interface UserStore {
     resposta: string;
     timestamp: string;
   }>;
-  
+
   // Actions
   setUser: (user: User) => void;
   setMapa: (mapa: MapaNumerologico) => void;
@@ -114,14 +114,14 @@ export const useUserStore = create<UserStore>((set, get) => ({
   historicoPergunta: [],
 
   setUser: (user) => set({ user }),
-  
+
   setMapa: (mapa) => set({ mapa }),
-  
-  updateUser: (updates) => 
+
+  updateUser: (updates) =>
     set((state) => ({
       user: state.user ? { ...state.user, ...updates } : null,
     })),
-  
+
   addPergunta: (pergunta, resposta) =>
     set((state) => ({
       historicoPergunta: [
@@ -133,18 +133,19 @@ export const useUserStore = create<UserStore>((set, get) => ({
         ...state.historicoPergunta,
       ].slice(0, 20), // Manter apenas as últimas 20
     })),
-  
+
   decrementPergunta: () =>
     set((state) => ({
       perguntasRestantes: Math.max(0, state.perguntasRestantes - 1),
     })),
-  
-  clearUser: () => set({ 
-    user: null, 
-    mapa: null, 
-    perguntasRestantes: 3, 
-    historicoPergunta: [] 
-  }),
-  
+
+  clearUser: () =>
+    set({
+      user: null,
+      mapa: null,
+      perguntasRestantes: 3,
+      historicoPergunta: [],
+    }),
+
   resetPerguntas: () => set({ perguntasRestantes: 3 }),
 }));

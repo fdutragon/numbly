@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -19,7 +19,7 @@ export interface SendEmailOptions {
 // 📧 Templates de email
 export const EMAIL_TEMPLATES = {
   welcome: {
-    subject: '🎉 Bem-vindo(a) ao Numbly! Seu acesso está liberado',
+    subject: "🎉 Bem-vindo(a) ao Numbly! Seu acesso está liberado",
     html: `
       <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <!-- Header -->
@@ -58,11 +58,11 @@ export const EMAIL_TEMPLATES = {
           </p>
         </div>
       </div>
-    `
+    `,
   },
-  
+
   passwordReset: {
-    subject: '🔐 Redefinir sua senha do Numbly',
+    subject: "🔐 Redefinir sua senha do Numbly",
     html: `
       <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <div style="background: linear-gradient(90deg, #7c3aed 0%, #6366f1 100%); padding: 25px; text-align: center; border-radius: 16px 16px 0 0;">
@@ -87,11 +87,11 @@ export const EMAIL_TEMPLATES = {
           </p>
         </div>
       </div>
-    `
+    `,
   },
-  
+
   notification: {
-    subject: '🔮 {{TITLE}} - Numbly Oráculo',
+    subject: "🔮 {{TITLE}} - Numbly Oráculo",
     html: `
       <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <div style="background: linear-gradient(90deg, #7c3aed 0%, #6366f1 100%); padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
@@ -112,8 +112,8 @@ export const EMAIL_TEMPLATES = {
           </div>
         </div>
       </div>
-    `
-  }
+    `,
+  },
 };
 
 /**
@@ -121,25 +121,26 @@ export const EMAIL_TEMPLATES = {
  */
 export async function sendEmail(options: SendEmailOptions) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY não configurada. Email não enviado.');
-    return { success: false, error: 'API key não configurada' };
+    console.warn("RESEND_API_KEY não configurada. Email não enviado.");
+    return { success: false, error: "API key não configurada" };
   }
 
   try {
     const result = await resend.emails.send({
-      from: options.from || 'Numbly <noreply@numbly.life>',
+      from: options.from || "Numbly <noreply@numbly.life>",
       to: options.to,
       subject: options.subject,
       html: options.html,
       text: options.text,
-      headers: options.headers
+      headers: options.headers,
     });
 
-    console.log('Email enviado com sucesso:', result);
+    console.log("Email enviado com sucesso:", result);
     return { success: true, data: result };
   } catch (error: unknown) {
-    console.error('Erro ao enviar email:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    console.error("Erro ao enviar email:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
     return { success: false, error: errorMessage };
   }
 }
@@ -148,13 +149,16 @@ export async function sendEmail(options: SendEmailOptions) {
  * 🎉 Enviar email de boas-vindas
  */
 export async function sendWelcomeEmail(
-  email: string, 
-  firstName: string = 'Amigo(a)',
-  dashboardLink?: string
+  email: string,
+  firstName: string = "Amigo(a)",
+  dashboardLink?: string,
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://numbly.life';
+  const baseUrl =
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    "https://numbly.life";
   const finalDashboardLink = dashboardLink || `${baseUrl}/dashboard`;
-  
+
   const personalizedHtml = EMAIL_TEMPLATES.welcome.html
     .replace(/{{FIRST_NAME}}/g, firstName)
     .replace(/{{DASHBOARD_LINK}}/g, finalDashboardLink);
@@ -164,9 +168,9 @@ export async function sendWelcomeEmail(
     subject: EMAIL_TEMPLATES.welcome.subject,
     html: personalizedHtml,
     headers: {
-      'X-Welcome-Email': 'true',
-      'X-User-Email': email
-    }
+      "X-Welcome-Email": "true",
+      "X-User-Email": email,
+    },
   });
 }
 
@@ -176,7 +180,7 @@ export async function sendWelcomeEmail(
 export async function sendPasswordResetEmail(
   email: string,
   firstName: string,
-  resetLink: string
+  resetLink: string,
 ) {
   const personalizedHtml = EMAIL_TEMPLATES.passwordReset.html
     .replace(/{{FIRST_NAME}}/g, firstName)
@@ -187,9 +191,9 @@ export async function sendPasswordResetEmail(
     subject: EMAIL_TEMPLATES.passwordReset.subject,
     html: personalizedHtml,
     headers: {
-      'X-Password-Reset': 'true',
-      'X-User-Email': email
-    }
+      "X-Password-Reset": "true",
+      "X-User-Email": email,
+    },
   });
 }
 
@@ -200,27 +204,32 @@ export async function sendNotificationEmail(
   email: string,
   title: string,
   content: string,
-  actionLink?: string
+  actionLink?: string,
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://numbly.life';
+  const baseUrl =
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    "https://numbly.life";
   const finalActionLink = actionLink || `${baseUrl}/dashboard`;
-  
+
   const personalizedHtml = EMAIL_TEMPLATES.notification.html
     .replace(/{{TITLE}}/g, title)
     .replace(/{{CONTENT}}/g, content)
     .replace(/{{ACTION_LINK}}/g, finalActionLink);
-    
-  const personalizedSubject = EMAIL_TEMPLATES.notification.subject
-    .replace(/{{TITLE}}/g, title);
+
+  const personalizedSubject = EMAIL_TEMPLATES.notification.subject.replace(
+    /{{TITLE}}/g,
+    title,
+  );
 
   return sendEmail({
     to: email,
     subject: personalizedSubject,
     html: personalizedHtml,
     headers: {
-      'X-Notification-Email': 'true',
-      'X-User-Email': email
-    }
+      "X-Notification-Email": "true",
+      "X-User-Email": email,
+    },
   });
 }
 
@@ -228,8 +237,9 @@ export async function sendNotificationEmail(
  * 📊 Helper para emails em modo de desenvolvimento
  */
 export function getTestEmail(originalEmail: string): string {
-  const isDevMode = process.env.NODE_ENV === 'development' || 
-                   process.env.NODE_ENV !== 'production';
-  
-  return isDevMode ? 'delivered@resend.dev' : originalEmail;
+  const isDevMode =
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV !== "production";
+
+  return isDevMode ? "delivered@resend.dev" : originalEmail;
 }

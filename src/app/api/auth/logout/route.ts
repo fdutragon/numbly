@@ -9,51 +9,64 @@ interface LogoutResponse {
   error?: string;
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * 🚪 Endpoint de Logout - Seguro e rápido
  * POST /api/auth/logout
  */
-export async function POST(req: NextRequest): Promise<NextResponse<LogoutResponse>> {
+export async function POST(
+  req: NextRequest,
+): Promise<NextResponse<LogoutResponse>> {
   // 1. 🛡️ Inicializar contexto de segurança
   let securityContext: SecurityContext;
-  
+
   try {
     securityContext = await authGuard(req);
   } catch (error: any) {
     // Logout deve funcionar mesmo sem contexto válido
     securityContext = {
-      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
-      userAgent: req.headers.get('user-agent') || '',
+      ip:
+        req.headers.get("x-forwarded-for") ||
+        req.headers.get("x-real-ip") ||
+        "unknown",
+      userAgent: req.headers.get("user-agent") || "",
       riskScore: 0,
       timestamp: Date.now(),
       endpoint: req.nextUrl.pathname,
-      method: req.method
+      method: req.method,
     };
   }
-  
+
   try {
     // 2. 🍪 Obter token do cookie
-    const token = req.cookies.get('auth-token')?.value;
+    const token = req.cookies.get("auth-token")?.value;
 
     if (token) {
       try {
         // 3. 🔍 Verificar token para log de auditoria
         const payload = await verifyToken(token);
         if (payload?.userId) {
-          logSecurityEvent('AUTH_SUCCESS', securityContext, `User logged out: ${payload.userId}`);
+          logSecurityEvent(
+            "AUTH_SUCCESS",
+            securityContext,
+            `User logged out: ${payload.userId}`,
+          );
         }
       } catch (error) {
         // Token inválido, mas vamos continuar o logout mesmo assim
-        logSecurityEvent('SUSPICIOUS', securityContext, 'Invalid token on logout');
+        logSecurityEvent(
+          "SUSPICIOUS",
+          securityContext,
+          "Invalid token on logout",
+        );
       }
     }
 
     // 4. 📤 Resposta de sucesso
     const response = NextResponse.json<LogoutResponse>({
       success: true,
-      message: "Logout realizado com sucesso"
+      message: "Logout realizado com sucesso",
     });
 
     // 5. 🧹 Limpar cookie de autenticação
@@ -68,21 +81,24 @@ export async function POST(req: NextRequest): Promise<NextResponse<LogoutRespons
     });
 
     return response;
-
   } catch (error: any) {
     console.error("🚨 Erro no logout:", error);
-    
+
     if (securityContext) {
-      logSecurityEvent('SUSPICIOUS', securityContext, `Logout error: ${error.message}`);
+      logSecurityEvent(
+        "SUSPICIOUS",
+        securityContext,
+        `Logout error: ${error.message}`,
+      );
     }
-    
+
     // Mesmo com erro, devemos limpar os cookies
     const response = NextResponse.json<LogoutResponse>(
-      { 
+      {
         success: true, // True porque o logout deve sempre "funcionar" do ponto de vista do usuário
-        message: "Logout realizado com sucesso" 
+        message: "Logout realizado com sucesso",
       },
-      { status: 200 }
+      { status: 200 },
     );
 
     response.cookies.set({
@@ -102,10 +118,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<LogoutRespons
 // GET - Informações da API de logout
 export async function GET() {
   return NextResponse.json({
-    endpoint: '/api/auth/logout',
-    method: 'POST',
-    description: 'Endpoint para logout de usuários autenticados',
-    authentication: 'Bearer token required',
-    response: 'Limpa cookies e invalida sessão'
+    endpoint: "/api/auth/logout",
+    method: "POST",
+    description: "Endpoint para logout de usuários autenticados",
+    authentication: "Bearer token required",
+    response: "Limpa cookies e invalida sessão",
   });
 }

@@ -1,6 +1,8 @@
-import { SignJWT, jwtVerify, JWTPayload } from 'jose';
+import { SignJWT, jwtVerify, JWTPayload } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'numbly-secret-key-2025');
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "numbly-secret-key-2025",
+);
 
 export interface UserPayload extends JWTPayload {
   userId: string;
@@ -8,11 +10,13 @@ export interface UserPayload extends JWTPayload {
   nome: string;
 }
 
-export async function createToken(payload: Omit<UserPayload, keyof JWTPayload>): Promise<string> {
+export async function createToken(
+  payload: Omit<UserPayload, keyof JWTPayload>,
+): Promise<string> {
   return await new SignJWT(payload as JWTPayload)
-    .setProtectedHeader({ alg: 'HS256' })
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime('30d') // Token expira em 30 dias
+    .setExpirationTime("30d") // Token expira em 30 dias
     .sign(JWT_SECRET);
 }
 

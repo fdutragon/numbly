@@ -1,17 +1,20 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/lib/contexts/auth-context';
+import { useAuth } from "@/lib/contexts/auth-context";
 
 // 🚨 Classe de erro para APIs
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
 // 🌐 Base URL da API
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 // 🔧 Hook base para requisições autenticadas
 export function useApiRequest() {
@@ -19,7 +22,7 @@ export function useApiRequest() {
 
   const makeRequest = async (url: string, options: RequestInit = {}) => {
     const headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     };
@@ -31,15 +34,15 @@ export function useApiRequest() {
       });
 
       // Auto-logout em caso de token inválido (mas não em rotas de auth)
-      if (response.status === 401 && token && !url.includes('/auth/')) {
-        console.warn('Token inválido detectado, fazendo logout automático');
+      if (response.status === 401 && token && !url.includes("/auth/")) {
+        console.warn("Token inválido detectado, fazendo logout automático");
         logout();
-        throw new ApiError(401, 'Sessão expirada');
+        throw new ApiError(401, "Sessão expirada");
       }
 
       return response;
     } catch (error) {
-      console.error('Erro na requisição:', error);
+      console.error("Erro na requisição:", error);
       throw error;
     }
   };
@@ -54,31 +57,34 @@ export function useAuthApi() {
   return {
     login: async (deviceId: string) => {
       const response = await makeRequest(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify({
-          type: 'device',
+          type: "device",
           deviceId,
-          platform: 'web',
+          platform: "web",
           deviceName: navigator.userAgent,
         }),
       });
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
-    
+
     logout: async () => {
       const response = await makeRequest(`${API_BASE_URL}/auth/logout`, {
-        method: 'POST'
+        method: "POST",
       });
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
-    
+
     getSession: async () => {
       const response = await makeRequest(`${API_BASE_URL}/auth/me`);
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
-    }
+    },
   };
 }
 
@@ -92,16 +98,18 @@ export function useUserApi() {
       pushEnabled?: boolean;
     }) => {
       const response = await makeRequest(`${API_BASE_URL}/auth/me_new`, {
-        method: 'PATCH',
+        method: "PATCH",
         body: JSON.stringify(updates),
       });
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
 
     refreshProfile: async () => {
       const response = await makeRequest(`${API_BASE_URL}/auth/me`);
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
   };
@@ -114,19 +122,21 @@ export function useChatApi() {
   return {
     sendMessage: async (message: string, context?: any) => {
       const response = await makeRequest(`${API_BASE_URL}/ai/chat`, {
-        method: 'POST',
-        body: JSON.stringify({ 
+        method: "POST",
+        body: JSON.stringify({
           prompt: message,
-          ...context
+          ...context,
         }),
       });
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
 
     getSuggestedQuestions: async () => {
       const response = await makeRequest(`${API_BASE_URL}/ai/prompt`);
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
   };
@@ -139,10 +149,11 @@ export function useCompatibilidadeApi() {
   return {
     calculate: async (pessoa2: { nome: string; dataNascimento: string }) => {
       const response = await makeRequest(`${API_BASE_URL}/ai/compatibility`, {
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify(pessoa2),
       });
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
   };
@@ -155,16 +166,18 @@ export function usePushApi() {
   return {
     subscribe: async (subscription: PushSubscription) => {
       const response = await makeRequest(`${API_BASE_URL}/push/subscribe`, {
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify(subscription),
       });
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
 
     validate: async () => {
       const response = await makeRequest(`${API_BASE_URL}/push/validate`);
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
   };
@@ -177,7 +190,8 @@ export function useReportsApi() {
   return {
     generate: async () => {
       const response = await makeRequest(`${API_BASE_URL}/ai/reports`);
-      if (!response.ok) throw new ApiError(response.status, await response.text());
+      if (!response.ok)
+        throw new ApiError(response.status, await response.text());
       return response.json();
     },
   };

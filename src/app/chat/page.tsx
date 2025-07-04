@@ -1,52 +1,61 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Modal } from '@/components/ui/modal';
-import { AppLayout } from '@/components/ui/app-layout';
-import { 
-  Send, 
-  Sparkles, 
-  Crown, 
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { AppLayout } from "@/components/ui/app-layout";
+import {
+  Send,
+  Sparkles,
+  Crown,
   Loader2,
   MessageCircle,
   Star,
   Heart,
-  TrendingUp
-} from 'lucide-react';
-import { useUserStore } from '@/lib/stores/user-store';
-import { useChatApi } from '@/lib/api';
-import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
-import { NavBar } from '@/components/ui/navbar';
+  TrendingUp,
+} from "lucide-react";
+import { useUserStore } from "@/lib/stores/user-store";
+import { useChatApi } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { NavBar } from "@/components/ui/navbar";
 
-import { User, MapaNumerologico } from '@/lib/stores/user-store';
+import { User, MapaNumerologico } from "@/lib/stores/user-store";
 
 interface Message {
   id: string;
   content: string;
-  sender: 'user' | 'oracle';
+  sender: "user" | "oracle";
   timestamp: Date;
 }
 
 export default function ChatPage() {
   const router = useRouter();
-  const { user, mapa, perguntasRestantes, addPergunta, decrementPergunta, isAuthenticated, isLoading: authLoading, requireAuth } = useAuth();
+  const {
+    user,
+    mapa,
+    perguntasRestantes,
+    addPergunta,
+    decrementPergunta,
+    isAuthenticated,
+    isLoading: authLoading,
+    requireAuth,
+  } = useAuth();
   const chatApi = useChatApi();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const suggestedQuestions = [
-    'Qual é o melhor momento para tomar decisões importantes?',
-    'Como posso superar meus bloqueios pessoais?',
-    'Que tipo de relacionamento é ideal para mim?',
-    'Qual é meu propósito de vida segundo a numerologia?',
-    'Como posso usar meu número da sorte a meu favor?',
-    'Quais são minhas maiores fortalezas espirituais?'
+    "Qual é o melhor momento para tomar decisões importantes?",
+    "Como posso superar meus bloqueios pessoais?",
+    "Que tipo de relacionamento é ideal para mim?",
+    "Qual é meu propósito de vida segundo a numerologia?",
+    "Como posso usar meu número da sorte a meu favor?",
+    "Quais são minhas maiores fortalezas espirituais?",
   ];
 
   // Proteger rota - chamada correta do hook
@@ -55,12 +64,12 @@ export default function ChatPage() {
   useEffect(() => {
     // Mensagem de boas-vindas
     if (user?.name && messages.length === 0) {
-      const firstName = user.name.split(' ')[0];
-      const destinyNumber = mapa?.numeroDestino || '?';
+      const firstName = user.name.split(" ")[0];
+      const destinyNumber = mapa?.numeroDestino || "?";
       const welcomeMessage: Message = {
-        id: 'welcome',
+        id: "welcome",
         content: `Olá, ${firstName}! 🔮 Sou seu Oráculo Numerológico pessoal. Baseado no seu número do destino ${destinyNumber}, estou aqui para oferecer orientação e insights sobre sua jornada. O que gostaria de saber hoje?`,
-        sender: 'oracle',
+        sender: "oracle",
         timestamp: new Date(),
       };
       setMessages([welcomeMessage]);
@@ -72,7 +81,7 @@ export default function ChatPage() {
   }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleSendMessage = async () => {
@@ -86,13 +95,13 @@ export default function ChatPage() {
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputValue,
-      sender: 'user',
+      sender: "user",
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     const currentInput = inputValue;
-    setInputValue('');
+    setInputValue("");
     setIsLoading(true);
 
     try {
@@ -100,49 +109,53 @@ export default function ChatPage() {
         numerologyContext: {
           userData: {
             name: user.name,
-            firstName: user.name ? user.name.split(' ')[0] : '',
+            firstName: user.name ? user.name.split(" ")[0] : "",
             birthDate: user.birthDate,
             numerologyData: {
               numeroDestino: mapa?.numeroDestino?.toString(),
               numeroSorte: mapa?.numeroSorte?.toString() || "0",
               potencial: mapa?.potencial || "",
-              fortalezas: Array.isArray(mapa?.fortalezas) ? mapa.fortalezas.join(", ") : "",
-              desafios: Array.isArray(mapa?.desafios) ? mapa.desafios.join(", ") : "",
+              fortalezas: Array.isArray(mapa?.fortalezas)
+                ? mapa.fortalezas.join(", ")
+                : "",
+              desafios: Array.isArray(mapa?.desafios)
+                ? mapa.desafios.join(", ")
+                : "",
               amor: mapa?.amor || "",
-              cicloVida: mapa?.cicloVida?.fase || ""
-            }
-          }
-        }
+              cicloVida: mapa?.cicloVida?.fase || "",
+            },
+          },
+        },
       };
-      
+
       const data = await chatApi.sendMessage(currentInput, context);
 
       if (data.success && data.data) {
         const oracleMessage: Message = {
           id: (Date.now() + 1).toString(),
           content: data.data.response,
-          sender: 'oracle',
+          sender: "oracle",
           timestamp: new Date(),
         };
 
-        setMessages(prev => [...prev, oracleMessage]);
+        setMessages((prev) => [...prev, oracleMessage]);
 
         if (!user.isPremium) {
           decrementPergunta();
         }
       } else {
-        throw new Error(data.error || 'Erro na resposta da API');
+        throw new Error(data.error || "Erro na resposta da API");
       }
-
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
+      console.error("Erro ao enviar mensagem:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'Desculpe, ocorreu um erro. Tente novamente em alguns instantes.',
-        sender: 'oracle',
+        content:
+          "Desculpe, ocorreu um erro. Tente novamente em alguns instantes.",
+        sender: "oracle",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -153,7 +166,7 @@ export default function ChatPage() {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -179,15 +192,19 @@ export default function ChatPage() {
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-medium text-gray-900">Oráculo Numerológico</h1>
-            <p className="text-xs text-gray-500">Número do destino: {mapa?.numeroDestino || '?'}</p>
+            <h1 className="text-sm font-medium text-gray-900">
+              Oráculo Numerológico
+            </h1>
+            <p className="text-xs text-gray-500">
+              Número do destino: {mapa?.numeroDestino || "?"}
+            </p>
           </div>
         </div>
-        
+
         {!user.isPremium && (
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-500">
-              {perguntasRestantes} restante{perguntasRestantes !== 1 ? 's' : ''}
+              {perguntasRestantes} restante{perguntasRestantes !== 1 ? "s" : ""}
             </span>
             <Button
               variant="outline"
@@ -215,16 +232,18 @@ export default function ChatPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   className={`group mb-6 ${
-                    message.sender === 'user' ? '' : 'bg-gray-50'
+                    message.sender === "user" ? "" : "bg-gray-50"
                   }`}
                 >
-                  <div className={`flex gap-4 p-6 ${message.sender === 'user' ? '' : 'bg-gray-50 -mx-4'}`}>
+                  <div
+                    className={`flex gap-4 p-6 ${message.sender === "user" ? "" : "bg-gray-50 -mx-4"}`}
+                  >
                     {/* Avatar */}
                     <div className="flex-shrink-0">
-                      {message.sender === 'user' ? (
+                      {message.sender === "user" ? (
                         <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                           <span className="text-xs font-medium text-gray-700">
-                            {user?.name?.charAt(0).toUpperCase() || 'U'}
+                            {user?.name?.charAt(0).toUpperCase() || "U"}
                           </span>
                         </div>
                       ) : (
@@ -233,21 +252,24 @@ export default function ChatPage() {
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Message content */}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
                         {message.content}
                       </div>
                       <div className="text-xs text-gray-500 mt-2">
-                        {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        {message.timestamp.toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </div>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
-            
+
             {isLoading && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -275,7 +297,9 @@ export default function ChatPage() {
         {messages.length <= 1 && (
           <div className="border-t border-gray-100 bg-white px-4 py-4">
             <div className="max-w-3xl mx-auto">
-              <p className="text-sm font-medium text-gray-700 mb-3">Sugestões para começar:</p>
+              <p className="text-sm font-medium text-gray-700 mb-3">
+                Sugestões para começar:
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {suggestedQuestions.slice(0, 4).map((question, index) => (
                   <button
@@ -301,7 +325,7 @@ export default function ChatPage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage();
                   }
@@ -332,22 +356,36 @@ export default function ChatPage() {
           <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <Crown className="w-8 h-8 text-white" />
           </div>
-          
-          <h3 className="text-xl font-semibold mb-4">
-            Perguntas Ilimitadas
-          </h3>
-          
+
+          <h3 className="text-xl font-semibold mb-4">Perguntas Ilimitadas</h3>
+
           <p className="text-gray-600 mb-8">
-            Com o plano Premium, você tem acesso ilimitado ao oráculo numerológico, 
-            análises mais profundas e recursos exclusivos.
+            Com o plano Premium, você tem acesso ilimitado ao oráculo
+            numerológico, análises mais profundas e recursos exclusivos.
           </p>
-          
+
           <div className="grid grid-cols-1 gap-4 mb-8">
             {[
-              { icon: MessageCircle, title: 'Perguntas Ilimitadas', desc: 'Converse quanto quiser com o oráculo' },
-              { icon: Star, title: 'Análises Profundas', desc: 'Insights mais detalhados e personalizados' },
-              { icon: Heart, title: 'Compatibilidade Avançada', desc: 'Análise completa de relacionamentos' },
-              { icon: TrendingUp, title: 'Previsões Mensais', desc: 'Tendências e orientações para o futuro' }
+              {
+                icon: MessageCircle,
+                title: "Perguntas Ilimitadas",
+                desc: "Converse quanto quiser com o oráculo",
+              },
+              {
+                icon: Star,
+                title: "Análises Profundas",
+                desc: "Insights mais detalhados e personalizados",
+              },
+              {
+                icon: Heart,
+                title: "Compatibilidade Avançada",
+                desc: "Análise completa de relacionamentos",
+              },
+              {
+                icon: TrendingUp,
+                title: "Previsões Mensais",
+                desc: "Tendências e orientações para o futuro",
+              },
             ].map((feature, index) => (
               <div key={index} className="flex items-center text-left">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
@@ -360,7 +398,7 @@ export default function ChatPage() {
               </div>
             ))}
           </div>
-          
+
           <div className="space-y-3">
             <Button className="w-full" size="lg">
               <Crown className="w-4 h-4 mr-2" />
