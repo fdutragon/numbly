@@ -11,7 +11,7 @@ export function useAuth() {
   const userStore = useUserStore();
   const auth = useAuthContext();
   
-  const requireAuth = (redirectTo?: string) => {
+  const useRequireAuth = (redirectTo?: string) => {
     useEffect(() => {
       // Se não está carregando e não está autenticado
       if (!auth.isLoading && !auth.isAuthenticated) {
@@ -26,7 +26,7 @@ export function useAuth() {
   return {
     ...auth,
     ...userStore,
-    requireAuth,
+    useRequireAuth,
   };
 }
 

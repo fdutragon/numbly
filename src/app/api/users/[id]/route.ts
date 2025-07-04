@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   let securityContext: SecurityContext | undefined;
   
@@ -20,7 +20,7 @@ export async function GET(
     securityContext = await authGuard(req);
     
     const { params } = context;
-    const { id } = params;
+    const { id } = await params;
     
     if (!id) {
       return NextResponse.json(
@@ -70,7 +70,7 @@ export async function GET(
       logSecurityEvent('SUSPICIOUS', securityContext, `User not found: ${id}`);
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
-        { status: 4024 }
+        { status: 404 }
       );
     }
     

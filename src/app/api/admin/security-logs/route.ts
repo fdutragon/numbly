@@ -7,11 +7,7 @@ interface SecurityLogsResponse {
   message?: string;
   error?: string;
   data?: {
-    stats: {
-      totalIPs: number;
-      rateLimitEntries: number; 
-      recentEvents: any[];
-    };
+    stats: unknown;
     timestamp: string;
   };
 }
@@ -62,11 +58,11 @@ export async function GET(req: NextRequest): Promise<NextResponse<SecurityLogsRe
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("🚨 Erro ao buscar logs de segurança:", error);
     
     if (securityContext) {
-      logSecurityEvent('SUSPICIOUS', securityContext, `Admin security logs error: ${error.message}`);
+      logSecurityEvent('SUSPICIOUS', securityContext, `Admin security logs error: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
     
     return NextResponse.json<SecurityLogsResponse>(

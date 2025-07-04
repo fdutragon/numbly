@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { AppLayout } from '@/components/ui/app-layout';
 import { Sparkles, Star, Heart, Lightbulb, Target, Users } from 'lucide-react';
-import { NotionEditor } from '@/notion/NotionEditor';
 import { NavBar } from '@/components/ui/navbar';
 
 export default function AboutPage() {

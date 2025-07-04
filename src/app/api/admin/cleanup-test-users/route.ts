@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { logSecurityEvent } from '@/lib/security/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +7,7 @@ export const dynamic = 'force-dynamic';
  * 🧹 DELETE - Limpar usuários de teste
  * DELETE /api/admin/cleanup-test-users
  */
-export async function DELETE(req: NextRequest) {
+export async function DELETE() {
   try {
     // Log da tentativa de limpeza
     console.log('[Admin] Tentativa de limpeza de usuários de teste');
@@ -34,13 +33,13 @@ export async function DELETE(req: NextRequest) {
       count: result.count
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin] Erro ao limpar usuários de teste:', error);
     
     return NextResponse.json({
       success: false,
       error: 'Erro ao limpar usuários de teste',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Erro desconhecido'
     }, { status: 500 });
   }
 }

@@ -11,11 +11,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId é obrigatório' }, { status: 400 });
     }
 
-    // Buscar badges do usuário
-    const userBadges = await prisma.userBadge.findMany({
-      where: { userId },
-      orderBy: { earnedAt: 'desc' }
-    });
+    // Buscar badges do usuário (temporariamente retornando array vazio até o modelo ser criado)
+    const userBadges: never[] = []; // TODO: Implementar modelo UserBadge no Prisma
+    // const userBadges = await prisma.userBadge.findMany({
+    //   where: { userId },
+    //   orderBy: { earnedAt: 'desc' }
+    // });
 
     // Definir todas as badges disponíveis
     const allBadges = [

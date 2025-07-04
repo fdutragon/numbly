@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     // 7. Buscar dispositivo baseado no email do token
     const deviceId = magicToken.email.replace('device_', '').replace('@numbly.local', '');
     
-    const userDevice = await db.userDevice.findUnique({
+    const userDevice = await db.userDevice.findFirst({
       where: { deviceId },
       include: {
         user: {
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     // 9. Atualizar lastSeen do dispositivo
     await db.userDevice.update({
-      where: { deviceId },
+      where: { id: userDevice.id },
       data: { lastSeen: new Date() }
     });
 

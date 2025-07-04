@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { authMiddleware, getAuthUser, type AuthenticatedRequest } from '@/lib/security/auth-middleware';
 import { logSecurityEvent, type SecurityContext } from '@/lib/security/auth-guard';
 import { checkRateLimit } from '@/lib/security/auth-guard';
 

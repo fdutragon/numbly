@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const { deviceId } = MagicLinkSchema.parse(body);
     
     // 4. Verificar se dispositivo existe e está ativo
-    const userDevice = await db.userDevice.findUnique({
+    const userDevice = await db.userDevice.findFirst({
       where: { deviceId },
       include: { 
         user: {

@@ -22,11 +22,11 @@ async function sendPush() {
         body: 'Mensagem de teste para o deviceId: ' + deviceId,
       }),
     });
-    const data = await res.json();
+    const data = await res.json() as { error?: string };
     if (!res.ok) throw new Error(data?.error || 'Erro desconhecido');
     console.log('Push enviado com sucesso:', data);
-  } catch (err: any) {
-    console.error('Erro ao enviar push:', err.message);
+  } catch (err: unknown) {
+    console.error('Erro ao enviar push:', err instanceof Error ? err.message : 'Erro desconhecido');
     process.exit(1);
   }
 }

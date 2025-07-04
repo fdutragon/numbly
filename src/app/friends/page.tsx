@@ -60,11 +60,11 @@ const relationshipOptions = [
 ];
 
 export default function FriendsPage() {
-  const { user, requireAuth } = useAuth();
+  const { user, useRequireAuth } = useAuth();
   const router = useRouter();
   
   // Proteger rota
-  requireAuth();
+  useRequireAuth();
 
   const [invites, setInvites] = useState<InviteData[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
