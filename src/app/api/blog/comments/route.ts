@@ -52,14 +52,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar post para contexto
-    const post = await prisma.blogPost.findUnique({
+    const post = await prisma.post.findUnique({
       where: { id: postId },
       select: {
-        type: true,
-        personalDay: true,
-        lunarPhase: true,
-        numerologyFocus: true,
         content: true,
+        // Adicione outros campos de contexto se necessário
       },
     });
 
@@ -85,15 +82,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Salvar comentário
-    const comment = await prisma.aIComment.create({
+    const comment = await prisma.comment.create({
       data: {
         postId,
-        userId,
-        userComment,
-        aiResponse,
-        userMood,
-        personalDay,
-        cosmicContext: getCurrentCosmicContext(),
+        authorId: userId,
+        content: userComment,
+        // Campos extras podem ser salvos em outro lugar ou ignorados
       },
     });
 
@@ -120,10 +114,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const comments = await prisma.aIComment.findMany({
+    const comments = await prisma.comment.findMany({
       where: {
         postId,
-        userId,
+        authorId: userId,
       },
       orderBy: {
         createdAt: "desc",

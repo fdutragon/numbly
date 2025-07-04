@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  authMiddleware,
-  getAuthUser,
-  type AuthenticatedRequest,
-} from "@/lib/security/auth-middleware";
-import {
-  logSecurityEvent,
-  type SecurityContext,
-} from "@/lib/security/auth-guard";
+import { logSecurityEvent, type SecurityContext } from "@/lib/security/auth-guard";
 import { checkRateLimit } from "@/lib/security/auth-guard";
 
 // Schema de validação para numerologia
@@ -456,8 +448,6 @@ export async function POST(
     // Adicionar resposta à thread
     addMessageToThread(thread, "assistant", chatResult.response);
 
-    const processingTime = Date.now() - startTime;
-
     // Log de sucesso
     logSecurityEvent(
       "AUTH_SUCCESS",
@@ -477,13 +467,11 @@ export async function POST(
         conversationLength: thread.messages.length - 1, // Excluir sistema
       },
     });
-  } catch (error: any) {
-    const processingTime = Date.now() - startTime;
-
+  } catch (error: unknown) {
     logSecurityEvent(
       "SUSPICIOUS",
       securityContext,
-      `Chat error: ${error.message}`,
+      `Chat error: ${error instanceof Error ? error.message : "unknown"}`,
     );
 
     console.error("Erro no chat:", error);
@@ -541,11 +529,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         lastActivity: thread.lastActivity,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent(
       "SUSPICIOUS",
       securityContext,
-      `Chat thread retrieval error: ${error.message}`,
+      `Chat thread retrieval error: ${error instanceof Error ? error.message : "unknown"}`,
     );
 
     return NextResponse.json(
@@ -585,11 +573,11 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       message: existed ? "Thread deletada com sucesso" : "Thread não existia",
       data: { threadId, existed },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent(
       "SUSPICIOUS",
       securityContext,
-      `Chat thread deletion error: ${error.message}`,
+      `Chat thread deletion error: ${error instanceof Error ? error.message : "unknown"}`,
     );
 
     return NextResponse.json(

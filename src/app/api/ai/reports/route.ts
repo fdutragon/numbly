@@ -160,10 +160,6 @@ async function generateNumerologyReport(
     },
   };
 
-  const lang =
-    languageConfig[language as keyof typeof languageConfig] ||
-    languageConfig.pt;
-
   // Gerar prompt baseado no tipo de relatório
   const firstName =
     userData?.firstName || userData?.name?.split(" ")[0] || "Usuário";
@@ -388,7 +384,7 @@ export async function POST(
         processingTime,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const processingTime = Date.now() - startTime;
 
     console.error("🚨 Erro na geração de relatório:", error);
@@ -401,10 +397,10 @@ export async function POST(
         endpoint: "/api/ai/reports",
         method: "POST",
       },
-      `Report generation error: ${error.message}`,
+      `Report generation error: ${error instanceof Error ? error.message : error}`,
       {
-        error: error.message,
-        stack: error.stack,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
         processingTime,
       },
     );

@@ -12,15 +12,6 @@ const numerologyDataSchema = z.record(
   z.union([z.string(), z.number()]),
 );
 
-const userDataSchema = z.object({
-  name: z.string().optional(),
-  firstName: z.string().optional(),
-  birthDate: z.string().optional(),
-  date: z.string().optional(),
-  numerologyData: numerologyDataSchema.optional(),
-  userId: z.string().optional(),
-});
-
 const createCompatibilitySchema = z.object({
   userId: z.string().min(1, "User ID é obrigatório"),
   target_name: z.string().min(1, "Nome do alvo é obrigatório"),
@@ -69,27 +60,6 @@ const COMPATIBILITY_RATE_LIMIT = {
 
 // Inicialização do Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-
-/**
- * Obter userId do token JWT
- */
-function getUserIdFromToken(req: NextRequest): string | null {
-  const token =
-    req.cookies.get("token")?.value ||
-    req.headers.get("authorization")?.replace("Bearer ", "");
-
-  if (!token) return null;
-
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "your-secret-key",
-    ) as any;
-    return decoded.userId || null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Calcular compatibilidade dinâmica entre dois mapas numerológicos
@@ -273,7 +243,7 @@ export async function GET(req: NextRequest) {
 
     // Parse numerologyData para cada compatibilidade
     const parsedCompatibilities = compatibilities.map((comp) => {
-      let parsedNumerologyData: any;
+      let parsedNumerologyData: unknown;
       try {
         // Tenta fazer o parse se for string
         parsedNumerologyData =
@@ -292,11 +262,15 @@ export async function GET(req: NextRequest) {
         };
 
         // Formata os números principais
-        ["lifePath", "destiny", "soulUrge", "personality"].forEach((key) => {
-          if (parsedNumerologyData[key]) {
-            parsedNumerologyData[key] = formatNumber(parsedNumerologyData[key]);
+        // Faz type narrowing para garantir acesso seguro a propriedades de parsedNumerologyData
+        if (typeof parsedNumerologyData === 'object' && parsedNumerologyData !== null) {
+          for (const key in parsedNumerologyData) {
+            if (Object.prototype.hasOwnProperty.call(parsedNumerologyData, key)) {
+              // @ts-expect-error: pode ser necessário ajustar o tipo de parsedNumerologyData
+              parsedNumerologyData[key] = formatNumber((parsedNumerologyData as Record<string, unknown>)[key]);
+            }
           }
-        });
+        }
       } catch (error) {
         console.error("Erro ao fazer parse dos dados numerológicos:", error);
         parsedNumerologyData = comp.numerologyData;
@@ -500,7 +474,8 @@ export async function POST(
       );
     }
 
-    const userNumerologyData = user.numerologyData as any;
+    // Corrigido cast seguro para UserNumerologyData
+    const userNumerologyData: UserNumerologyData = (user.numerologyData ?? {}) as UserNumerologyData;
     const formattedUserNumerologyData: NumerologyNumbers = {
       lifePath: userNumerologyData?.lifePath || 0,
       destiny: userNumerologyData?.destiny || 0,
@@ -559,8 +534,6 @@ export async function POST(
         },
       });
 
-      const processingTime = Date.now() - startTime;
-
       // Log de sucesso
       logSecurityEvent(
         "AUTH_SUCCESS",
@@ -592,8 +565,6 @@ export async function POST(
       );
     }
   } catch (error: any) {
-    const processingTime = Date.now() - startTime;
-
     console.error("Erro ao criar compatibilidade:", error);
 
     logSecurityEvent(
@@ -807,8 +778,6 @@ Crie um relatório de compatibilidade **${compatibilityType}** detalhado e perso
       );
     }
 
-    const processingTime = Date.now() - startTime;
-
     // Log de sucesso
     logSecurityEvent(
       "AUTH_SUCCESS",
@@ -835,8 +804,6 @@ Crie um relatório de compatibilidade **${compatibilityType}** detalhado e perso
       },
     });
   } catch (error: any) {
-    const processingTime = Date.now() - startTime;
-
     console.error("Erro ao gerar relatório personalizado:", error);
 
     logSecurityEvent(
@@ -871,4 +838,12 @@ Crie um relatório de compatibilidade **${compatibilityType}** detalhado e perso
       { status: 500 },
     );
   }
+}
+
+// Corrigido tipo de userNumerologyData para garantir propriedades corretas
+interface UserNumerologyData {
+  lifePath?: number;
+  destiny?: number;
+  soulUrge?: number;
+  personality?: number;
 }

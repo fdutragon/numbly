@@ -3,7 +3,6 @@ import { authGuard, logSecurityEvent } from "@/lib/security/auth-guard";
 import type { SecurityContext } from "@/lib/security/auth-guard";
 import { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/auth";
-import { headers } from "next/headers";
 
 export async function GET(request: NextRequest) {
   let securityContext: SecurityContext | undefined;
@@ -137,14 +136,13 @@ export async function GET(request: NextRequest) {
       }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ME] ❌ Erro no endpoint /me:", error);
-    console.error("[ME] ❌ Stack trace:", error.stack);
     if (securityContext) {
       logSecurityEvent(
         "SUSPICIOUS",
         securityContext,
-        `JWT validation error: ${error.message}`,
+        `JWT validation error: ${error instanceof Error ? error.message : error}`,
       );
     }
     return new Response(

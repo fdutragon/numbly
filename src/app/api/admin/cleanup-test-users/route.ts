@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { logSecurityEvent } from "@/lib/security/auth-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -33,16 +32,24 @@ export async function DELETE(req: NextRequest) {
       message: `${result.count} usuários de teste removidos`,
       count: result.count,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[Admin] Erro ao limpar usuários de teste:", error);
 
     return NextResponse.json(
       {
         success: false,
         error: "Erro ao limpar usuários de teste",
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },
     );
   }
+}
+
+// Remove parâmetro não utilizado 'req' do handler
+export async function POST() {
+  return new Response(
+    JSON.stringify({ error: "Not implemented." }),
+    { status: 501, headers: { "Content-Type": "application/json" } },
+  );
 }

@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         { status: 500 },
       );
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro na criação do magic link:", error);
 
     if (securityContext) {

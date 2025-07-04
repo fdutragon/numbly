@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import {
   authGuard,
-  handleSecurityError,
   logSecurityEvent,
   checkRateLimit,
 } from "@/lib/security/auth-guard";

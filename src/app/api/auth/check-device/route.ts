@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     });
     console.log("[CHECK-DEVICE] userDevice encontrado:", userDevice);
     // 4. Buscar todos os devices ativos pelo IP normalizado (ignora deviceId, foca só no IP)
-    let userDevices: any[] = [];
+    let userDevices: unknown[] = [];
     let user = null;
     let deviceIds: string[] = [];
     if (securityContext?.ip) {
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 6. Buscar todas as subscriptions de push para devices do mesmo IP
-    let pushSubscriptions: any[] = [];
+    let pushSubscriptions: unknown[] = [];
     if (userDevices.length > 0) {
       pushSubscriptions = await db.pushSubscription.findMany({
         where: {

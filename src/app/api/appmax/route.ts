@@ -17,20 +17,6 @@ interface ProductConfig {
   CURRENCY: string;
 }
 
-interface PaymentRequest {
-  email: string;
-  name: string;
-  cpf?: string;
-  phone?: string;
-  isPWA?: boolean;
-  cardData?: {
-    number: string;
-    expiry: string;
-    cvv: string;
-    holder: string;
-  };
-}
-
 interface PaymentResponse {
   success: boolean;
   message?: string;
@@ -185,8 +171,8 @@ async function sendTikTokInitiateCheckoutEvent(
         error,
       );
     }
-  } catch (error: any) {
-    console.error("[TikTok Pixel] ❌ Erro inesperado:", error.message);
+  } catch (error: unknown) {
+    console.error("[TikTok Pixel] ❌ Erro inesperado:", (error as Error).message);
   }
 }
 
@@ -203,7 +189,7 @@ export async function POST(
     // 1. 🛡️ Validação de segurança
     try {
       securityContext = await authGuard(req);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json<PaymentResponse>(
         {
           success: false,
@@ -266,7 +252,7 @@ export async function POST(
       throw error;
     }
 
-    const { email, name, cpf, phone, isPWA, cardData } = validatedData;
+    const { email, isPWA } = validatedData;
 
     // 4. 💰 Calcular preço baseado no tipo (PWA vs Browser)
     const amount = getPrice(isPWA || false);
@@ -316,14 +302,14 @@ export async function POST(
         checkoutUrl: `https://checkout.appmax.com.br/${mockPaymentId}`, // Mock URL
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("🚨 Erro ao processar pagamento AppMax:", error);
 
     if (securityContext) {
       logSecurityEvent(
         "SUSPICIOUS",
         securityContext,
-        `AppMax payment error: ${error.message}`,
+        `AppMax payment error: ${(error as Error).message}`,
       );
     }
 

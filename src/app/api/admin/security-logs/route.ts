@@ -10,7 +10,7 @@ interface SecurityLogsResponse {
     stats: {
       totalIPs: number;
       rateLimitEntries: number;
-      recentEvents: any[];
+      recentEvents: unknown[];
     };
     timestamp: string;
   };
@@ -74,14 +74,14 @@ export async function GET(
         timestamp: new Date().toISOString(),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("🚨 Erro ao buscar logs de segurança:", error);
 
     if (securityContext) {
       logSecurityEvent(
         "SUSPICIOUS",
         securityContext,
-        `Admin security logs error: ${error.message}`,
+        `Admin security logs error: ${error instanceof Error ? error.message : 'unknown error'}`,
       );
     }
 

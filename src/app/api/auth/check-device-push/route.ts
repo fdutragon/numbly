@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   console.log("[CHECK_DEVICE] ✨ Nova requisição de check device recebida");
-  let securityContext: any;
+  let securityContext: unknown;
   try {
     const body = await req.json();
     securityContext = await authGuard(req);

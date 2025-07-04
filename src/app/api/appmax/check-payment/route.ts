@@ -168,9 +168,9 @@ export async function POST(req: NextRequest) {
         });
 
         status = data.data?.status || data.status || "unknown";
-      } catch (fetchError: any) {
+      } catch (fetchError: unknown) {
         clearTimeout(timeoutId);
-        if (fetchError.name === "AbortError") {
+        if ((fetchError as Error).name === "AbortError") {
           logWithTransaction(transactionId, "Timeout na consulta AppMax");
 
           addSecurityLog(
@@ -342,12 +342,12 @@ export async function POST(req: NextRequest) {
       transactionId,
       message: "Usuário atualizado para premium com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const processingTime = Date.now() - startTime;
 
     logWithTransaction(transactionId, "ERRO na verificação de pagamento", {
-      error: error.message,
-      stack: error.stack,
+      error: (error as Error).message,
+      stack: (error as Error).stack,
       processingTime,
     });
 
@@ -361,8 +361,8 @@ export async function POST(req: NextRequest) {
       },
       "Payment verification error",
       {
-        error: error.message,
-        stack: error.stack,
+        error: (error as Error).message,
+        stack: (error as Error).stack,
         transactionId,
         processingTime,
       },

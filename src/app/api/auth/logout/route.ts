@@ -23,7 +23,7 @@ export async function POST(
 
   try {
     securityContext = await authGuard(req);
-  } catch (error: any) {
+  } catch {
     // Logout deve funcionar mesmo sem contexto válido
     securityContext = {
       ip:
@@ -53,7 +53,7 @@ export async function POST(
             `User logged out: ${payload.userId}`,
           );
         }
-      } catch (error) {
+      } catch {
         // Token inválido, mas vamos continuar o logout mesmo assim
         logSecurityEvent(
           "SUSPICIOUS",
@@ -81,14 +81,14 @@ export async function POST(
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("🚨 Erro no logout:", error);
 
     if (securityContext) {
       logSecurityEvent(
         "SUSPICIOUS",
         securityContext,
-        `Logout error: ${error.message}`,
+        `Logout error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
 

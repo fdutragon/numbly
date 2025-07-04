@@ -9,7 +9,6 @@ import {
 import { createToken } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { SecurityContext } from "@/lib/security/auth-guard";
-import { randomUUID } from "crypto";
 
 // Schema de validação para registro
 const RegisterSchema = z.object({
@@ -229,7 +228,7 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro no registro:", error);
     if (error?.meta) {
       console.error("Prisma meta:", error.meta);

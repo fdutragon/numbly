@@ -138,14 +138,14 @@ export async function GET(request: NextRequest) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro na verificação do magic token:", error);
 
     if (securityContext) {
       logSecurityEvent(
         "SUSPICIOUS",
         securityContext,
-        `Magic token verify error: ${error.message}`,
+        `Magic token verify error: ${error instanceof Error ? error.message : error}`,
       );
     }
 
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     });
 
     return GET(newRequest);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro na verificação POST do magic token:", error);
 
     if (error instanceof z.ZodError) {

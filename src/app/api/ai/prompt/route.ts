@@ -257,7 +257,6 @@ function addMessageToThread(
  */
 function prepareNumerologyContext(
   numerologyContext: any,
-  userMessage: string,
 ): string {
   const userData = numerologyContext?.userData;
   const selectedFriend = numerologyContext?.selectedFriend;
@@ -570,7 +569,6 @@ export async function POST(
       );
       const contextInfo = prepareNumerologyContext(
         validatedData.numerologyContext,
-        validatedData.prompt,
       );
 
       addMessageToThread(thread, "user", validatedData.prompt);
