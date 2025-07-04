@@ -44,8 +44,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.4",
+    "@typescript-eslint/eslint-plugin": "^8.35.1",
+    "@typescript-eslint/parser": "^8.35.1",
+    "eslint": "^9.30.1",
+    "eslint-config-next": "^15.3.4",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

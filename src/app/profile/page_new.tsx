@@ -198,7 +198,7 @@ export default function ProfilePage() {
       }
 
       // Se nome ou data mudaram, recalcular mapa
-      let novoMapa = mapa;
+      const novoMapa = mapa;
       if (nomeClean !== user.name || formData.dataNascimento !== (user.birthDate ? user.birthDate.toISOString().split('T')[0] : '')) {
         // Simular recálculo - em produção, chamar a função real
         console.log('Recalculando mapa numerológico...');

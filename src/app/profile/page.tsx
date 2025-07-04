@@ -218,7 +218,7 @@ export default function ProfilePage() {
       }
 
       // Se nome ou data mudaram, recalcular mapa
-      let novoMapa = mapa;
+      const novoMapa = mapa;
       const currentBirthDate = formatDateForInput(user.birthDate);
       if (nomeClean !== user.name || formData.birthDate !== currentBirthDate) {
         // Simular recálculo - em produção, chamar a função real

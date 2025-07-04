@@ -100,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4. Buscar todos os devices ativos do IP (não precisa buscar user)
     let userDevices: any[] = [];
     let deviceIds: string[] = [];
-    let normalizedIp = securityContext?.ip ? normalizeIp(securityContext.ip) : null;
+    const normalizedIp = securityContext?.ip ? normalizeIp(securityContext.ip) : null;
     if (normalizedIp) {
       userDevices = await db.userDevice.findMany({
         where: {
