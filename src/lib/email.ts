@@ -137,9 +137,10 @@ export async function sendEmail(options: SendEmailOptions) {
 
     console.log('Email enviado com sucesso:', result);
     return { success: true, data: result };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao enviar email:', error);
-    return { success: false, error: error.message };
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    return { success: false, error: errorMessage };
   }
 }
 

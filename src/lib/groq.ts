@@ -40,6 +40,8 @@ export async function generate({
   };
 }
 
-export default {
+const groqService = {
   generate
 };
+
+export default groqService;

@@ -280,8 +280,8 @@ export function gerarMapaNumerologicoCompleto(
   // Frequência numérica
   const frequenciaNumerica = calcularFrequenciaNumerica(nome);
   const numerosDominantes = Object.entries(frequenciaNumerica)
-    .filter(([_, freq]) => freq >= 3)
-    .map(([num, _]) => parseInt(num));
+    .filter(([, freq]) => freq >= 3)
+    .map(([num]) => parseInt(num));
   const numerosFaltantes = Array.from({length: 9}, (_, i) => i + 1)
     .filter(num => !frequenciaNumerica[num]);
   
@@ -349,28 +349,6 @@ function calcularIdade(dataNascimento: string): number {
   return idade;
 }
 
-function calcularCicloVida(idade: number) {
-  if (idade < 30) {
-    return {
-      fase: "Descoberta",
-      descricao: "Período de autoconhecimento e estabelecimento de bases",
-      periodo: "0-30 anos"
-    };
-  } else if (idade < 60) {
-    return {
-      fase: "Construção",
-      descricao: "Época de realização profissional e consolidação",
-      periodo: "30-60 anos"
-    };
-  } else {
-    return {
-      fase: "Sabedoria",
-      descricao: "Momento de compartilhar experiências e orientar outros",
-      periodo: "60+ anos"
-    };
-  }
-}
-
 // Função para calcular ciclo de vida avançado
 function calcularCicloVidaAvancado(idade: number, numeroDestino: number) {
   let fase: string;
@@ -436,7 +414,7 @@ export function calcularCompatibilidade(
   };
 }
 
-function gerarDescricaoCompatibilidade(num1: number, num2: number, score: number): string {
+function gerarDescricaoCompatibilidade(_num1: number, _num2: number, score: number): string {
   if (score >= 90) {
     return "Vocês formam uma dupla extraordinária! Há uma sintonia natural que permite crescimento mútuo e realizações conjuntas.";
   } else if (score >= 80) {
@@ -448,7 +426,7 @@ function gerarDescricaoCompatibilidade(num1: number, num2: number, score: number
   }
 }
 
-function gerarSugestoes(num1: number, num2: number): string[] {
+function gerarSugestoes(_num1: number, _num2: number): string[] {
   const sugestoes = [
     "Pratiquem a escuta ativa nas conversas diárias",
     "Reservem tempo de qualidade juntos regularmente",
@@ -509,7 +487,7 @@ export function calcularDesejoOculto(nome: string): number {
   });
   
   const letrasMaisFrequentes = Object.entries(frequencia)
-    .filter(([_, freq]) => freq > 1)
+    .filter(([, freq]) => freq > 1)
     .map(([letra, freq]) => letra.repeat(freq))
     .join('');
     
@@ -639,7 +617,7 @@ function determinarDominioVibracional(destino: number, expressao: number, alma: 
 }
 
 // Função para gerar interpretação de carreira
-function gerarInterpretacaoCarreira(destino: number, expressao: number): string {
+function gerarInterpretacaoCarreira(destino: number, _expressao: number): string {
   const carreiras = {
     1: "Empreendedorismo, liderança executiva, inovação, consultorias estratégicas",
     2: "Diplomacia, recursos humanos, trabalho em equipe, mediação de conflitos",
@@ -659,7 +637,7 @@ function gerarInterpretacaoCarreira(destino: number, expressao: number): string 
 }
 
 // Função para gerar interpretação espiritual
-function gerarInterpretacaoEspiritual(alma: number, destino: number): string {
+function gerarInterpretacaoEspiritual(alma: number, _destino: number): string {
   const caminhos = {
     1: "Busca pela autodescoberta e liderança espiritual através da ação",
     2: "Desenvolvimento da intuição e conexão emocional com o divino",

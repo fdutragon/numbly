@@ -8,16 +8,16 @@
 
 export const prisma = {
   user: {
-    findUnique: async (query: any) => {
+    findUnique: async (query: unknown) => {
       console.log('[Prisma Mock] user.findUnique:', query);
       return null; // Mock: usuário não encontrado
     },
-    create: async (data: any) => {
+    create: async (data: unknown) => {
       console.log('[Prisma Mock] user.create:', data);
       return {
         id: 'mock-user-id',
-        email: data.data.email,
-        nome: data.data.nome,
+        email: (data as any).data.email,
+        nome: (data as any).data.nome,
         createdAt: new Date(),
         ...data.data
       };
