@@ -5,10 +5,10 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AppLayout } from '@/components/ui/app-layout';
-import { useUserStore } from '@/lib/stores/user-store';
 import { DateInput } from '@/components/ui/date-input';
-import { MapaNumerologico } from '@/lib/numerologia';
+import { NavBar } from '@/components/ui/navbar';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   User, 
   Calendar, 
@@ -31,8 +31,6 @@ import {
   Smartphone,
   Monitor
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
 
 // Opções de relacionamento e preferências
 const toqueOptions = [
@@ -69,8 +67,8 @@ export default function ProfilePage() {
   
   // Estados do formulário
   const [formData, setFormData] = useState({
-    nome: '',
-    dataNascimento: '',
+    name: '',
+    birthDate: '',
     apelidoEspiritual: '',
     toqueNotificacao: 'tibetan',
     estiloLeitura: 'espiritual',
@@ -91,12 +89,30 @@ export default function ProfilePage() {
   // Proteger rota
   requireAuth();
 
+  // Função auxiliar para converter data para string do input
+  const formatDateForInput = (date: Date | string | null | undefined): string => {
+    if (!date) return '';
+    
+    try {
+      if (typeof date === 'string') {
+        // Se já é string, extrair apenas a parte da data (YYYY-MM-DD)
+        return date.includes('T') ? date.split('T')[0] : date;
+      }
+      
+      // Se é um objeto Date
+      return new Date(date).toISOString().split('T')[0];
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return '';
+    }
+  };
+
   // Inicializar dados do usuário
   useEffect(() => {
     if (user) {
       setFormData({
-        nome: user.nome || '',
-        dataNascimento: user.dataNascimento || '',
+        name: user.name || '',
+        birthDate: formatDateForInput(user.birthDate),
         apelidoEspiritual: '',
         toqueNotificacao: 'tibetan',
         estiloLeitura: 'espiritual',
@@ -195,7 +211,7 @@ export default function ProfilePage() {
     
     try {
       // Validar nome
-      const nomeClean = validateName(formData.nome);
+      const nomeClean = validateName(formData.name);
       if (!nomeClean.trim()) {
         alert('Por favor, digite um nome válido (apenas letras)');
         return;
@@ -203,16 +219,28 @@ export default function ProfilePage() {
 
       // Se nome ou data mudaram, recalcular mapa
       let novoMapa = mapa;
-      if (nomeClean !== user.nome || formData.dataNascimento !== user.dataNascimento) {
+      const currentBirthDate = formatDateForInput(user.birthDate);
+      if (nomeClean !== user.name || formData.birthDate !== currentBirthDate) {
         // Simular recálculo - em produção, chamar a função real
         console.log('Recalculando mapa numerológico...');
       }
 
       // Preparar dados para atualização
       const dadosAtualizados = {
-        ...formData,
-        nome: nomeClean,
-        numeroDestino: user.numeroDestino // Manter o existente por enquanto
+        name: nomeClean,
+        birthDate: new Date(formData.birthDate),
+        // Outras propriedades mantidas do user original
+        id: user.id,
+        email: user.email,
+        isPremium: user.isPremium,
+        credits: user.credits,
+        profileImage: user.profileImage,
+        bio: user.bio,
+        numerologyData: user.numerologyData,
+        role: user.role,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        hasSeenIntro: user.hasSeenIntro
       };
 
       // Atualizar via API
@@ -222,16 +250,19 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
           'x-user-id': user.id || ''
         },
-        body: JSON.stringify(dadosAtualizados)
+        body: JSON.stringify({
+          name: nomeClean,
+          birthDate: formData.birthDate
+        })
       });
 
       if (response.ok) {
         // Atualizar estado local
-        updateUser({ ...user, ...dadosAtualizados });
+        updateUser(dadosAtualizados);
         setIsEditing(false);
         
         // Notificar se nome/data mudaram
-        if (nomeClean !== user.nome || formData.dataNascimento !== user.dataNascimento) {
+        if (nomeClean !== user.name || formData.birthDate !== currentBirthDate) {
           alert('✨ Seu mapa numerológico foi recalculado com as novas informações!');
         }
       } else {
@@ -256,81 +287,82 @@ export default function ProfilePage() {
 
   if (!user || !mapa) {
     return (
-      <AppLayout title="Perfil">
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
-            <p className="text-gray-600">Carregando perfil...</p>
-          </div>
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+          <p className="text-gray-600">Carregando perfil...</p>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout title="Configurações do Oráculo">
-      <div className="max-w-2xl mx-auto px-4 space-y-6">
-        {/* Header */}
+    <div className="min-h-screen bg-neutral-50">
+      {/* Header fixo */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+              <User className="w-5 h-5 text-purple-600" />
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900">Perfil</h1>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {!isEditing ? (
+              <Button
+                onClick={() => setIsEditing(true)}
+                variant="ghost"
+                size="sm"
+              >
+                <Edit2 className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
+            ) : (
+              <div className="flex space-x-2">
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {isSaving ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Salvar
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-2xl mx-auto px-4 space-y-6 py-8 pb-20">{/* pb-20 for navbar space */}
+        {/* Intro minimalista */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="text-center"
         >
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
-                      {(user.name?.charAt(0) || '?').toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
-                    <p className="text-gray-600 text-sm">
-                      Número do Destino: {user.numeroDestino}
-                    </p>
-                    {formData.apelidoEspiritual && (
-                      <p className="text-purple-600 text-sm font-medium">
-                        ✨ {formData.apelidoEspiritual}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {!isEditing ? (
-                    <Button
-                      onClick={() => setIsEditing(true)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <Edit2 className="w-4 h-4 mr-2" />
-                      Editar
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        onClick={() => setIsEditing(false)}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        onClick={handleSave}
-                        loading={isSaving}
-                        size="sm"
-                        className="bg-gradient-to-r from-purple-500 to-blue-600"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Salvar
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="w-8 h-8 text-purple-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {user.name ? `Olá, ${user.name.split(' ')[0]}` : 'Meu Perfil'}
+          </h2>
+          <p className="text-gray-600 leading-relaxed">
+            Personalize sua experiência no universo numerológico.
+          </p>
         </motion.div>
 
         {/* Formulário de Edição */}
@@ -353,8 +385,8 @@ export default function ProfilePage() {
                     Nome Completo
                   </label>
                   <Input
-                    value={formData.nome}
-                    onChange={(value) => setFormData(prev => ({ ...prev, nome: validateName(value) }))}
+                    value={formData.name}
+                    onChange={(value) => setFormData(prev => ({ ...prev, name: validateName(value) }))}
                     placeholder="Seu nome completo"
                   />
                   <div className="flex items-center mt-2 p-2 bg-yellow-50 rounded-lg">
@@ -370,8 +402,8 @@ export default function ProfilePage() {
                     Data de Nascimento
                   </label>
                   <DateInput
-                    value={formData.dataNascimento}
-                    onChange={(value) => setFormData(prev => ({ ...prev, dataNascimento: value }))}
+                    value={formData.birthDate}
+                    onChange={(value) => setFormData(prev => ({ ...prev, birthDate: value }))}
                   />
                   <div className="flex items-center mt-2 p-2 bg-blue-50 rounded-lg">
                     <Star className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0" />
@@ -761,6 +793,9 @@ export default function ProfilePage() {
           <p>🔮 Configure sua conexão com o universo numerológico 🔮</p>
         </div>
       </div>
-    </AppLayout>
+      
+      {/* Navbar */}
+      <NavBar />
+    </div>
   );
 }

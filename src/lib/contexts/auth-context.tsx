@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useUserStore, User, MapaNumerologico } from '@/lib/stores/user-store';
 import { getOrCreateDeviceId } from '../device-id';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -142,41 +143,75 @@ function recordLoginAttempt(): void {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { setUser, setMapa } = useUserStore();
+  const { setUser, setMapa, clearUser } = useUserStore();
+  const router = useRouter();
   const sessionManager = SessionManager.getInstance();
 
-  // Carrega dados do usuário do servidor
-  const loadUserDataFromServer = async (): Promise<boolean> => {
+  // Função para verificar autenticação
+  const checkAuth = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include'
-      });
+      const response = await fetch('/api/auth/me');
       
-      if (!response.ok) {
+      // Se não conseguir fazer parse do JSON, provavelmente é HTML (redirecionamento)
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.log('Erro ao fazer parse do JSON, redirecionando para /');
+        setIsAuthenticated(false);
+        clearUser();
+        setIsLoading(false);
+        if (window.location.pathname !== '/') {
+          router.replace('/');
+        }
         return false;
       }
-      
-      const data = await response.json();
-      if (data.user) {
-        setIsAuthenticated(true);
-        setUser(data.user);
-        if (data.mapa) {
-          setMapa(data.mapa);
+
+      if (!response.ok || !data.success) {
+        console.log('Resposta não OK ou não success, redirecionando...');
+        setIsAuthenticated(false);
+        clearUser();
+        setIsLoading(false);
+        
+        // Sempre redireciona para / se não estiver autenticado
+        if (window.location.pathname !== '/') {
+          const redirectUrl = data.redirect || '/';
+          console.log('Redirecionando para:', redirectUrl, 'de:', window.location.pathname);
+          router.replace(redirectUrl);
         }
-        
-        // Armazena sessão localmente
-        sessionManager.storeSession({
-          user: data.user,
-          mapa: data.mapa
-        });
-        
+        return false;
+      }
+
+      if (data.success && data.user) {
+        setUser(data.user);
+        if (data.mapa) setMapa(data.mapa);
+        setIsAuthenticated(true);
+        setIsLoading(false);
         return true;
+      }
+
+      setIsAuthenticated(false);
+      clearUser();
+      setIsLoading(false);
+      if (window.location.pathname !== '/') {
+        router.replace('/');
       }
       return false;
     } catch (error) {
-      console.error('[AUTH] Erro ao carregar dados do servidor:', error);
+      console.error('Erro ao verificar autenticação:', error);
+      setIsAuthenticated(false);
+      clearUser();
+      setIsLoading(false);
+      if (window.location.pathname !== '/') {
+        router.replace('/');
+      }
       return false;
     }
+  }, [setUser, setMapa, clearUser, router]);
+
+  // Carrega dados do usuário do servidor
+  const loadUserDataFromServer = async (): Promise<boolean> => {
+    return await checkAuth();
   };
 
   // Carrega dados da sessão (local primeiro, depois servidor)

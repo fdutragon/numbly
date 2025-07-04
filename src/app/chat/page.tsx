@@ -19,6 +19,9 @@ import { useUserStore } from '@/lib/stores/user-store';
 import { useChatApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { NavBar } from '@/components/ui/navbar';
+
+import { User, MapaNumerologico } from '@/lib/stores/user-store';
 
 interface Message {
   id: string;
@@ -50,19 +53,19 @@ export default function ChatPage() {
   requireAuth();
 
   useEffect(() => {
-    // Remover verificação redundante já que requireAuth já cuida disso
-    
     // Mensagem de boas-vindas
-    if (user && messages.length === 0) {
+    if (user?.name && messages.length === 0) {
+      const firstName = user.name.split(' ')[0];
+      const destinyNumber = mapa?.numeroDestino || '?';
       const welcomeMessage: Message = {
         id: 'welcome',
-        content: `Olá, ${user.nome.split(' ')[0]}! 🔮 Sou seu Oráculo Numerológico pessoal. Baseado no seu número do destino ${user.numeroDestino}, estou aqui para oferecer orientação e insights sobre sua jornada. O que gostaria de saber hoje?`,
+        content: `Olá, ${firstName}! 🔮 Sou seu Oráculo Numerológico pessoal. Baseado no seu número do destino ${destinyNumber}, estou aqui para oferecer orientação e insights sobre sua jornada. O que gostaria de saber hoje?`,
         sender: 'oracle',
         timestamp: new Date(),
       };
       setMessages([welcomeMessage]);
     }
-  }, [user, messages.length]);
+  }, [user, mapa?.numeroDestino, messages.length]);
 
   useEffect(() => {
     scrollToBottom();
@@ -75,7 +78,7 @@ export default function ChatPage() {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading || !user) return;
 
-    if (user.plano === 'gratuito' && perguntasRestantes <= 0) {
+    if (!user.isPremium && perguntasRestantes <= 0) {
       setShowPremiumModal(true);
       return;
     }
@@ -96,11 +99,11 @@ export default function ChatPage() {
       const context = {
         numerologyContext: {
           userData: {
-            name: user.nome,
-            firstName: user.nome.split(' ')[0],
-            birthDate: user.dataNascimento,
+            name: user.name,
+            firstName: user.name ? user.name.split(' ')[0] : '',
+            birthDate: user.birthDate,
             numerologyData: {
-              numeroDestino: user.numeroDestino.toString(),
+              numeroDestino: mapa?.numeroDestino?.toString(),
               numeroSorte: mapa?.numeroSorte?.toString() || "0",
               potencial: mapa?.potencial || "",
               fortalezas: Array.isArray(mapa?.fortalezas) ? mapa.fortalezas.join(", ") : "",
@@ -124,7 +127,7 @@ export default function ChatPage() {
 
         setMessages(prev => [...prev, oracleMessage]);
 
-        if (user.plano === 'gratuito') {
+        if (!user.isPremium) {
           decrementPergunta();
         }
       } else {
@@ -158,129 +161,143 @@ export default function ChatPage() {
 
   if (authLoading || !user || !mapa) {
     return (
-      <AppLayout title="Chat">
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando oráculo...</p>
-          </div>
+      <div className="h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm">Carregando oráculo...</p>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout title="Oráculo">
-      <div className="flex flex-col h-[calc(100vh-10rem)] max-w-4xl mx-auto relative">
-        {/* Header Info */}
-        <div className="px-4 py-2 bg-purple-50 rounded-lg mb-4 mx-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-2">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-purple-900">Oráculo Numerológico</p>
-                <p className="text-xs text-purple-600">Baseado no seu número {user.numeroDestino}</p>
-              </div>
-            </div>
-            
-            {user.plano === 'gratuito' && (
-              <div className="text-right">
-                <p className="text-xs text-purple-600">
-                  {perguntasRestantes} pergunta{perguntasRestantes !== 1 ? 's' : ''} restante{perguntasRestantes !== 1 ? 's' : ''}
-                </p>
-                <Button
-                  variant="premium"
-                  size="sm"
-                  onClick={() => setShowPremiumModal(true)}
-                  className="text-xs mt-1"
+    <div className="h-screen bg-white flex flex-col">
+      {/* Header minimalista estilo OpenAI */}
+      <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h1 className="text-sm font-medium text-gray-900">Oráculo Numerológico</h1>
+            <p className="text-xs text-gray-500">Número do destino: {mapa?.numeroDestino || '?'}</p>
+          </div>
+        </div>
+        
+        {!user.isPremium && (
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500">
+              {perguntasRestantes} restante{perguntasRestantes !== 1 ? 's' : ''}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPremiumModal(true)}
+              className="text-xs border-purple-200 text-purple-600 hover:bg-purple-50"
+            >
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Container principal estilo ChatGPT com padding bottom para navbar */}
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full pb-20">
+        {/* Messages container */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <AnimatePresence>
+              {messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`group mb-6 ${
+                    message.sender === 'user' ? '' : 'bg-gray-50'
+                  }`}
                 >
-                  <Crown className="w-3 h-3 mr-1" />
-                  Premium
-                </Button>
-              </div>
+                  <div className={`flex gap-4 p-6 ${message.sender === 'user' ? '' : 'bg-gray-50 -mx-4'}`}>
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      {message.sender === 'user' ? (
+                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                          <span className="text-xs font-medium text-gray-700">
+                            {user?.name?.charAt(0).toUpperCase() || 'U'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Message content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                        {message.content}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group mb-6 bg-gray-50"
+              >
+                <div className="flex gap-4 p-6 bg-gray-50 -mx-4">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Consultando os números...
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             )}
+            <div ref={messagesEndRef} />
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 space-y-4 pb-4">
-          <AnimatePresence>
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] p-3 rounded-2xl ${
-                    message.sender === 'user'
-                      ? 'bg-purple-600 text-white rounded-br-sm'
-                      : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm shadow-sm'
-                  }`}
-                >
-                  {message.sender === 'oracle' && (
-                    <div className="flex items-center mb-2">
-                      <Sparkles className="w-4 h-4 text-purple-600 mr-2" />
-                      <span className="text-xs font-medium text-purple-600">Oráculo</span>
-                    </div>
-                  )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                  <p className={`text-xs mt-2 ${message.sender === 'user' ? 'text-purple-200' : 'text-gray-500'}`}>
-                    {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          
-          {isLoading && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start"
-            >
-              <div className="bg-white border border-gray-200 p-3 rounded-2xl rounded-bl-sm shadow-sm">
-                <div className="flex items-center">
-                  <Loader2 className="w-4 h-4 animate-spin text-purple-600 mr-2" />
-                  <span className="text-sm text-gray-600">O oráculo está consultando os números...</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Suggested Questions */}
+        {/* Suggested Questions - apenas quando não há mensagens */}
         {messages.length <= 1 && (
-          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-            <p className="text-sm font-medium text-gray-700 mb-3">Perguntas sugeridas:</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {suggestedQuestions.slice(0, 4).map((question, index) => (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSuggestedQuestion(question)}
-                  className="text-left justify-start h-auto p-2 text-xs hover:bg-white"
-                >
-                  {question}
-                </Button>
-              ))}
+          <div className="border-t border-gray-100 bg-white px-4 py-4">
+            <div className="max-w-3xl mx-auto">
+              <p className="text-sm font-medium text-gray-700 mb-3">Sugestões para começar:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {suggestedQuestions.slice(0, 4).map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestedQuestion(question)}
+                    className="text-left p-3 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 border border-gray-200 hover:border-gray-300"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Input */}
-        <div className="p-4 border-t border-gray-200 bg-white sticky bottom-0">
-          <div className="flex items-center space-x-3 w-full max-w-4xl mx-auto">
-            <div className="flex-1">
+        {/* Input area estilo ChatGPT */}
+        <div className="border-t border-gray-100 bg-white px-4 py-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative flex items-end bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
               <input
                 type="text"
-                placeholder="Digite sua pergunta para o oráculo..."
+                placeholder="Faça sua pergunta ao oráculo..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => {
@@ -290,17 +307,16 @@ export default function ChatPage() {
                   }
                 }}
                 disabled={isLoading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                className="flex-1 px-4 py-3 bg-transparent border-0 outline-none text-gray-900 placeholder-gray-500 resize-none"
               />
+              <button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+                className="m-2 p-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 text-gray-600 rounded-lg transition-colors duration-200"
+              >
+                <Send className="w-4 h-4" />
+              </button>
             </div>
-            <Button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
-              size="sm"
-              className="px-4 py-3 bg-purple-600 hover:bg-purple-700"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
           </div>
         </div>
       </div>
@@ -360,6 +376,9 @@ export default function ChatPage() {
           </div>
         </div>
       </Modal>
-    </AppLayout>
+
+      {/* Navbar */}
+      <NavBar />
+    </div>
   );
 }

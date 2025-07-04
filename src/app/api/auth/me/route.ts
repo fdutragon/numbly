@@ -2,28 +2,60 @@ import { db } from '@/lib/db';
 import { authGuard, logSecurityEvent } from '@/lib/security/auth-guard';
 import type { SecurityContext } from '@/lib/security/auth-guard';
 import { NextRequest } from 'next/server';
+import { verifyToken } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 export async function GET(request: NextRequest) {
   let securityContext: SecurityContext | undefined;
 
   try {
+    console.log('[ME] 1. Iniciando validação do endpoint /me');
+    
     // Validação de segurança
+    console.log('[ME] 2. Executando authGuard...');
     securityContext = await authGuard(request);
+    console.log('[ME] 2.1. Security Context:', securityContext);
 
-    // Verificar se há cookie de sessão
-    const cookieHeader = request.headers.get('cookie') || '';
-    const sessionMatch = cookieHeader.match(/numbly_session=([^;]+)/);
-    if (!sessionMatch) {
+    // Verificar se há token JWT
+    const token = request.cookies.get('auth-token')?.value;
+    console.log('[ME] 3. Token encontrado:', token ? 'Sim' : 'Não');
+    
+    if (!token) {
+      console.log('[ME] 3.1. Erro: Token não encontrado, retornando JSON para redirecionamento');
       return new Response(JSON.stringify({
         success: false,
-        error: 'Não autenticado'
-      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+        error: 'Token não encontrado',
+        redirect: '/'
+      }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
-    const userId = sessionMatch[1];
 
-    // Buscar usuário no banco
+    // Validar token JWT
+    console.log('[ME] 4. Validando token JWT...');
+    const payload = await verifyToken(token);
+    console.log('[ME] 4.1. Resultado da validação:', payload ? 'Válido' : 'Inválido');
+    
+    if (!payload) {
+      console.log('[ME] 4.2. Erro: Token inválido ou expirado');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Token inválido ou expirado',
+        redirect: '/'
+      }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': 'auth-token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'
+        }
+      });
+    }
+
+    // Buscar usuário no banco usando o ID do token
+    console.log('[ME] 5. Buscando usuário com ID:', payload.userId);
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: payload.userId },
       select: {
         id: true,
         email: true,
@@ -37,17 +69,19 @@ export async function GET(request: NextRequest) {
         numerologyData: true
       }
     });
+    console.log('[ME] 5.1. Usuário encontrado:', user ? 'Sim' : 'Não');
 
     if (!user) {
-      // Limpar cookie inválido
+      console.log('[ME] 5.2. Erro: Usuário não encontrado no banco');
       return new Response(JSON.stringify({
         success: false,
-        error: 'Sessão inválida'
+        error: 'Usuário não encontrado',
+        redirect: '/'
       }), {
         status: 401,
         headers: {
           'Content-Type': 'application/json',
-          'Set-Cookie': 'numbly_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'
+          'Set-Cookie': 'auth-token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'
         }
       });
     }
@@ -57,11 +91,14 @@ export async function GET(request: NextRequest) {
     if (user.numerologyData && typeof user.numerologyData === 'object') {
       mapa = user.numerologyData;
     }
+    console.log('[ME] 6. Dados numerológicos extraídos:', mapa ? 'Sim' : 'Não');
 
     // Log de acesso bem-sucedido
-    logSecurityEvent('AUTH_SUCCESS', securityContext, `Session validation successful for user: ${user.id}`);
+    console.log('[ME] 7. Autenticação bem-sucedida para usuário:', user.id);
+    logSecurityEvent('AUTH_SUCCESS', securityContext, `JWT validation successful for user: ${user.id}`);
 
     // Retornar dados do usuário
+    console.log('[ME] 8. Retornando resposta com sucesso');
     return new Response(JSON.stringify({
       success: true,
       user: {
@@ -78,9 +115,10 @@ export async function GET(request: NextRequest) {
       mapa: mapa || undefined
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error: any) {
-    console.error('Erro no endpoint /me:', error);
+    console.error('[ME] ❌ Erro no endpoint /me:', error);
+    console.error('[ME] ❌ Stack trace:', error.stack);
     if (securityContext) {
-      logSecurityEvent('SUSPICIOUS', securityContext, `Session validation error: ${error.message}`);
+      logSecurityEvent('SUSPICIOUS', securityContext, `JWT validation error: ${error.message}`);
     }
     return new Response(JSON.stringify({
       success: false,

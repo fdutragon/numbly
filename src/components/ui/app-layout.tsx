@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { AppBar } from "@/components/ui/appbar";
+import { DarkAppBar } from "@/components/ui/dark-appbar";
 import { NavBar } from "@/components/ui/navbar";
 
 interface AppLayoutProps {
@@ -10,9 +10,9 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, title }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppBar title={title} />
-      <main className="pb-20 pt-4">{children}</main>
+    <div className="min-h-screen bg-gray-50 dark:bg-black">
+      <DarkAppBar title={title} />
+      <main className="pb-20 pt-20">{children}</main>
       <NavBar />
     </div>
   );

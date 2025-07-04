@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { AppLayout } from '@/components/ui/app-layout';
 import { Sparkles, Star, Heart, Lightbulb, Target, Users } from 'lucide-react';
+import { NotionEditor } from '@/notion/NotionEditor';
+import { NavBar } from '@/components/ui/navbar';
 
 export default function AboutPage() {
   const features = [
@@ -53,21 +55,21 @@ export default function AboutPage() {
 
   return (
     <AppLayout title="Sobre">
-      <div className="max-w-2xl mx-auto px-4 space-y-6">
-        {/* Header */}
+      <div className="max-w-2xl mx-auto px-4 space-y-6 bg-neutral-50 py-8 pb-20">
+        {/* Header minimalista */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-8 h-8 text-purple-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-neutral-900 mb-2">
             Numbly Life
           </h1>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-neutral-600 leading-relaxed">
             Sua jornada de autoconhecimento através da sabedoria milenar dos números.
           </p>
         </motion.div>
@@ -189,6 +191,9 @@ export default function AboutPage() {
           <p>✨ Feito com amor para sua jornada espiritual ✨</p>
         </motion.div>
       </div>
+     
+      {/* Navbar */}
+      <NavBar />
     </AppLayout>
   );
 }

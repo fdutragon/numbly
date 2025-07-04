@@ -10,7 +10,7 @@ import { db } from '../../../src/lib/db';
 import { randomUUID } from 'crypto';
 import { authGuard, logSecurityEvent, checkRateLimit } from '../../../src/lib/security/auth-guard';
 import type { SecurityContext } from '../../../src/lib/security/auth-guard';
-import { generateToken } from '../../../src/lib/security/jwt';
+import { createToken } from '../../../src/lib/auth';
 
 // Schema de validação para check de device
 const CheckDeviceSchema = z.object({
@@ -153,8 +153,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         select: { name: true, email: true, id: true }
       });
       userName = user?.name || '';
-      // Gerar JWT válido para o usuário
-      jwt = generateToken({
+      // Gerar JWT válido para o usuário usando a implementação correta
+      jwt = await createToken({
         userId: userDevices[0].userId,
         email: user?.email || '',
         nome: user?.name || '',
@@ -181,20 +181,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: { in: userDevices.map(d => d.id) } },
       data: { lastSeen: new Date() }
     });
+
     // 9. Log de sucesso
     logSecurityEvent('AUTH_SUCCESS', securityContext, `Auto-push sent to ${pushSentCount} devices for IP: ${normalizedIp}`);
-    // 10. Resposta (não retorna mais o token ou link para evitar uso manual)
-    const response = res.json({
+
+    // 10. Configurar cookie de autenticação se JWT foi gerado
+    const cookieOptions = [
+      jwt ? `auth-token=${jwt}` : '',
+      'HttpOnly',
+      'Secure',
+      'SameSite=Strict',
+      'Path=/',
+      'Max-Age=604800' // 7 dias
+    ].filter(Boolean).join('; ');
+
+    // 11. Resposta com cookie de auth e dados
+    res.setHeader('Set-Cookie', cookieOptions);
+    return res.json({
       success: true,
       exists: true,
       hasPush: true,
       pushSent: pushSentCount,
-      message: `Push de autenticação enviado para ${pushSentCount} dispositivo(s). Clique na notificação para entrar automaticamente.`,
+      message: `Push de autenticação enviado para ${pushSentCount} dispositivo(s) do mesmo IP`,
       deviceIds,
-      userName // retorna para uso opcional no front
+      token,
+      authLink: fallbackLink,
+      userName
     });
-    res.setHeader('Set-Cookie', []); // Não seta cookie de auth
-    return response;
     
   } catch (error: any) {
     console.error('Erro no check de device:', error);

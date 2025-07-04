@@ -1,14 +1,11 @@
 {
-  "name": "Numbly Oráculo",
+  "name": "Numbly",
   "short_name": "Numbly",
-  "description": "Sua Jornada Numerológica - Descubra os mistérios da numerologia com orientação personalizada",
+  "description": "Sua Jornada Numerológica",
   "theme_color": "#1E1E2E",
   "background_color": "#1E1E2E",
   "display": "standalone",
-  "orientation": "portrait",
-  "scope": "/",
   "start_url": "/",
-  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icon-72x72.svg",

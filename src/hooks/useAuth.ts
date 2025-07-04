@@ -1,38 +1,43 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth as useAuthContext } from '@/lib/contexts/auth-context';
 import { useUserStore } from '@/lib/stores/user-store';
 
 export function useAuth() {
   const router = useRouter();
+  const pathname = usePathname();
   const userStore = useUserStore();
   const auth = useAuthContext();
   
   const requireAuth = (redirectTo?: string) => {
     useEffect(() => {
-      // Só redireciona se não estiver carregando E não estiver autenticado
-      if (!auth.isLoading && !auth.isAuthenticated && redirectTo) {
-        router.push(redirectTo);
+      // Se não está carregando e não está autenticado
+      if (!auth.isLoading && !auth.isAuthenticated) {
+        // Se não estiver na página inicial, redireciona
+        if (pathname !== '/') {
+          router.replace('/');
+        }
       }
-    }, [auth.isAuthenticated, auth.isLoading, redirectTo, router]);
+    }, [auth.isAuthenticated, auth.isLoading]);
   };
 
   return {
     ...auth,
-    ...userStore, // Inclui todos os dados do user store
+    ...userStore,
     requireAuth,
   };
 }
 
 export function useRedirectIfAuthenticated(redirectTo: string = '/dashboard') {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated } = useAuthContext();
   
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push(redirectTo);
+    if (isAuthenticated && pathname === '/') {
+      router.replace(redirectTo);
     }
-  }, [isAuthenticated, redirectTo, router]);
+  }, [isAuthenticated, redirectTo, router, pathname]);
 }

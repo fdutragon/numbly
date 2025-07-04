@@ -35,14 +35,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
-        <link rel="icon" href="/icon-192x192.svg" type="image/svg+xml" sizes="any" />
+        <link rel="icon" href="/icon-192x192.svg" type="image/svg+xml" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" sizes="128x128" href="/icon-128x128.svg" />
-        <link rel="apple-touch-icon" sizes="144x144" href="/icon-144x144.svg" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/icon-152x152.svg" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.svg" />
-        <link rel="apple-touch-icon" sizes="384x384" href="/icon-384x384.svg" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.svg" />
+        <link rel="apple-touch-icon" href="/icon-192x192.svg" />
         <meta name="theme-color" content="#1E1E2E" />
       </head>
       <body className={`${inter.className} antialiased bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 min-h-screen`}>

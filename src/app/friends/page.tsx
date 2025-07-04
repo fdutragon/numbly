@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { AppLayout } from '@/components/ui/app-layout';
 import { 
   Users, 
   UserPlus, 
@@ -22,6 +20,7 @@ import {
   Sparkles,
   Plus
 } from 'lucide-react';
+import { NavBar } from '@/components/ui/navbar';
 
 interface InviteData {
   id: string;
@@ -150,12 +149,15 @@ export default function FriendsPage() {
     }
   };
 
+  const getRelationshipConfig = (type: string) => {
+    return relationshipOptions.find(opt => opt.value === type) || relationshipOptions[0];
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING': return 'text-yellow-600 bg-yellow-50';
       case 'ACCEPTED': return 'text-green-600 bg-green-50';
       case 'EXPIRED': return 'text-gray-600 bg-gray-50';
-      case 'BLOCKED': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
     }
   };
@@ -165,228 +167,156 @@ export default function FriendsPage() {
       case 'PENDING': return 'Pendente';
       case 'ACCEPTED': return 'Aceito';
       case 'EXPIRED': return 'Expirado';
-      case 'BLOCKED': return 'Bloqueado';
-      default: return status;
+      default: return 'Desconhecido';
     }
   };
 
-  const getRelationshipOption = (type: string) => {
-    return relationshipOptions.find(opt => opt.value === type) || relationshipOptions[0];
-  };
+  if (loading) {
+    return (
+      <div className="h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm">Carregando amigos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <AppLayout title="Amigos & Convites">
-      <div className="max-w-2xl mx-auto px-4 space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Conexões Numerológicas
-                </h2>
-                <p className="text-gray-700 mb-4">
-                  Convide pessoas especiais e descubra a compatibilidade numerológica entre vocês
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Lista de Convites */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Gift className="w-5 h-5 mr-2 text-purple-500" />
-                Seus Convites ({invites.length})
-              </h3>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                  <span className="ml-2 text-gray-600">Carregando...</span>
-                </div>
-              ) : invites.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">Você ainda não criou nenhum convite</p>
-                  <Button
-                    onClick={() => setShowCreateModal(true)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Criar Primeiro Convite
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {invites.map((invite, index) => {
-                    const relationship = getRelationshipOption(invite.relationshipType);
-                    return (
-                      <motion.div
-                        key={invite.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="text-2xl">{relationship.icon}</div>
-                            <div>
-                              <h4 className="font-medium text-gray-900">
-                                {invite.invitedName}
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                {relationship.label}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invite.status)}`}>
-                              {getStatusText(invite.status)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
-                          <div className="flex items-center space-x-4">
-                            <span className="flex items-center">
-                              <Eye className="w-4 h-4 mr-1" />
-                              {invite.clicks} visualizações
-                            </span>
-                            <span className="flex items-center">
-                              <Clock className="w-4 h-4 mr-1" />
-                              {new Date(invite.createdAt).toLocaleDateString('pt-BR')}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              onClick={() => copyInviteCode(invite.code, invite.inviteUrl)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                            >
-                              {copiedCode === invite.code ? (
-                                <Check className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
-                            </Button>
-                            <Button
-                              onClick={() => shareInvite(invite)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                            >
-                              <Share2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {invite.customMessage && (
-                          <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
-                            "{invite.customMessage}"
-                          </div>
-                        )}
-
-                        {invite.status === 'ACCEPTED' && invite.isRevealed && (
-                          <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-purple-700">
-                                🎉 Mapa de Compatibilidade Revelado!
-                              </span>
-                              <Button
-                                size="sm"
-                                className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white"
-                              >
-                                Ver Mapa
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Recursos Futuros */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Sparkles className="w-5 h-5 mr-2 text-yellow-500" />
-                Próximos Recursos
-              </h3>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg opacity-75">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Star className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Oráculo Combinado</h3>
-                  <p className="text-sm text-gray-700">Revelações místicas únicas para duplas</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg opacity-75">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Chat em Grupo</h3>
-                  <p className="text-sm text-gray-700">Converse com seus amigos numerológicos</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg opacity-75">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Análise de Relacionamentos</h3>
-                  <p className="text-sm text-gray-700">Insights profundos sobre suas conexões</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="text-center text-sm text-gray-500 py-4"
-        >
-          <p>💫 As melhores conexões começam com os números 💫</p>
-        </motion.div>
+    <div className="min-h-screen bg-white">
+      {/* Header minimalista */}
+      <div className="border-b border-gray-100 px-4 py-4 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-sm font-medium text-gray-900">Amigos</h1>
+              <p className="text-xs text-gray-500">Conecte-se com outras pessoas</p>
+            </div>
+          </div>
+          <Button 
+            onClick={() => setShowCreateModal(true)}
+            size="sm" 
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Convidar
+          </Button>
+        </div>
       </div>
 
-      {/* Modal de Criação de Convite */}
+      {/* Container principal com padding bottom para navbar */}
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 space-y-6">
+        {/* Empty state ou lista de convites */}
+        {invites.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="w-8 h-8 text-gray-400" />
+            </div>
+            <h2 className="text-lg font-medium text-gray-900 mb-2">Nenhum convite ainda</h2>
+            <p className="text-gray-600 mb-6">Convide amigos para descobrir a compatibilidade numerológica entre vocês!</p>
+            <Button onClick={() => setShowCreateModal(true)} className="bg-blue-600 hover:bg-blue-700">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Criar Primeiro Convite
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {invites.map((invite) => {
+              const config = getRelationshipConfig(invite.relationshipType);
+              
+              return (
+                <motion.div
+                  key={invite.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-lg border border-gray-200 shadow-sm p-6"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className={`w-12 h-12 bg-gradient-to-br from-${config.color}-500 to-${config.color}-600 rounded-full flex items-center justify-center text-2xl`}>
+                        {config.icon}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{invite.invitedName}</h3>
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(invite.status)}`}>
+                            {getStatusText(invite.status)}
+                          </span>
+                        </div>
+                        
+                        <p className="text-sm text-gray-600 mb-2">{config.label}</p>
+                        
+                        {invite.customMessage && (
+                          <p className="text-sm text-gray-700 italic mb-2">"{invite.customMessage}"</p>
+                        )}
+                        
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {invite.clicks} visualizações
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(invite.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {invite.status === 'ACCEPTED' && invite.isRevealed && (
+                        <Button size="sm" variant="outline" className="text-purple-600 border-purple-200">
+                          <Heart className="w-4 h-4 mr-1" />
+                          Ver Compatibilidade
+                        </Button>
+                      )}
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyInviteCode(invite.code, invite.inviteUrl)}
+                        className="relative"
+                      >
+                        {copiedCode === invite.code ? (
+                          <>
+                            <Check className="w-4 h-4 mr-1 text-green-600" />
+                            Copiado!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 mr-1" />
+                            Copiar Link
+                          </>
+                        )}
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        onClick={() => shareInvite(invite)}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Share2 className="w-4 h-4 mr-1" />
+                        Compartilhar
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Modal de criar convite */}
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Criar Convite"
+        title="Convidar Pessoa"
+        size="md"
       >
         <form onSubmit={handleCreateInvite} className="space-y-4">
           <div>
@@ -394,78 +324,83 @@ export default function FriendsPage() {
               Nome da pessoa
             </label>
             <Input
-              placeholder="Ex: Maria, João, etc."
+              type="text"
+              placeholder="Digite o nome..."
               value={formData.invitedName}
-              onChange={(value) => setFormData(prev => ({ ...prev, invitedName: value }))}
+              onChange={(value) => setFormData(prev => ({...prev, invitedName: value}))}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Tipo de relacionamento
             </label>
-            <select 
-              value={formData.relationshipType}
-              onChange={(e) => setFormData(prev => ({ ...prev, relationshipType: e.target.value }))}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              {relationshipOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.icon} {option.label}
-                </option>
+            <div className="grid grid-cols-2 gap-2">
+              {relationshipOptions.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({...prev, relationshipType: option.value}))}
+                  className={`p-3 rounded-lg border text-left transition-colors ${
+                    formData.relationshipType === option.value
+                      ? 'border-blue-500 bg-blue-50 text-blue-900'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{option.icon}</span>
+                    <span className="text-sm font-medium">{option.label}</span>
+                  </div>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Mensagem personalizada (opcional)
             </label>
-            <textarea
-              placeholder="Ex: Vamos descobrir nossa compatibilidade numerológica!"
+            <Input
+              type="text"
+              placeholder="Ex: Quero saber nossa compatibilidade!"
               value={formData.customMessage}
-              onChange={(e) => setFormData(prev => ({ ...prev, customMessage: e.target.value }))}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              rows={3}
+              onChange={(value) => setFormData(prev => ({...prev, customMessage: value}))}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Convite expira em
-            </label>
-            <select 
-              value={formData.expiresInDays}
-              onChange={(e) => setFormData(prev => ({ ...prev, expiresInDays: parseInt(e.target.value) }))}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value={1}>1 dia</option>
-              <option value={3}>3 dias</option>
-              <option value={7}>1 semana</option>
-              <option value={30}>1 mês</option>
-              <option value={0}>Nunca</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end space-x-3">
+          <div className="flex gap-3 pt-4">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => setShowCreateModal(false)}
+              className="flex-1"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              loading={creating}
-              className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white"
+              disabled={creating || !formData.invitedName.trim()}
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
-              Criar Convite
+              {creating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Criando...
+                </>
+              ) : (
+                <>
+                  <Gift className="w-4 h-4 mr-2" />
+                  Criar Convite
+                </>
+              )}
             </Button>
           </div>
         </form>
       </Modal>
-    </AppLayout>
+
+      {/* Navbar */}
+      <NavBar />
+    </div>
   );
 }
