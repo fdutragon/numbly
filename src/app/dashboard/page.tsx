@@ -1,14 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { ReportModal } from '@/components/ui/report-modal';
-import { useUserStore } from '@/lib/stores/user-store';
-import { useAuth } from '@/lib/contexts/auth-context';
-import { Sparkles, Heart, MessageCircle, TrendingUp, Calendar, Star, ChevronLeft, ChevronRight, FileText, Settings } from 'lucide-react';
-import { NavBar } from '@/components/ui/navbar';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { ReportModal } from "@/components/ui/report-modal";
+import { useUserStore } from "@/lib/stores/user-store";
+import { useAuth } from "@/lib/contexts/auth-context";
+import {
+  Sparkles,
+  Heart,
+  MessageCircle,
+  TrendingUp,
+  Calendar,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Settings,
+} from "lucide-react";
+import { NavBar } from "@/components/ui/navbar";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, mapa } = useUserStore();
@@ -22,49 +33,53 @@ export default function DashboardPage() {
     icon: string;
   }>({
     isOpen: false,
-    reportType: '',
-    title: '',
-    icon: ''
+    reportType: "",
+    title: "",
+    icon: "",
   });
 
   // Função auxiliar para formatar data de forma segura
   const formatDateSafely = (date: any): string | undefined => {
     if (!date) return undefined;
-    
+
     try {
       // Se já é uma string no formato YYYY-MM-DD
-      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) {
-        return date.split('T')[0];
+      if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}/.test(date)) {
+        return date.split("T")[0];
       }
-      
+
       // Se é string, tentar converter para Date
-      if (typeof date === 'string') {
+      if (typeof date === "string") {
         const dateObj = new Date(date);
         if (!isNaN(dateObj.getTime())) {
-          return dateObj.toISOString().split('T')[0];
+          return dateObj.toISOString().split("T")[0];
         }
       }
-      
+
       // Se é objeto Date
       if (date instanceof Date && !isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0];
+        return date.toISOString().split("T")[0];
       }
-      
+
       // Se tem método toISOString
-      if (date && typeof date.toISOString === 'function') {
-        return date.toISOString().split('T')[0];
+      if (date && typeof date.toISOString === "function") {
+        return date.toISOString().split("T")[0];
       }
-      
+
       return undefined;
     } catch (error) {
-      console.warn('Erro ao formatar data:', error);
+      console.warn("Erro ao formatar data:", error);
       return undefined;
     }
   };
 
   // Calcular dia pessoal atual
-  const diaPessoalAtual = mapa ? (mapa.mesPessoal + new Date().getDate()) % 9 === 0 ? 9 : (mapa.mesPessoal + new Date().getDate()) % 9 : (new Date().getDate() % 9) + 1;
-  
+  const diaPessoalAtual = mapa
+    ? (mapa.mesPessoal + new Date().getDate()) % 9 === 0
+      ? 9
+      : (mapa.mesPessoal + new Date().getDate()) % 9
+    : (new Date().getDate() % 9) + 1;
+
   // Estado para o blog diário
   const [blogData, setBlogData] = useState<{
     blogPosts: Array<{
@@ -96,9 +111,11 @@ export default function DashboardPage() {
       6: "Ano de responsabilidade familiar. Cuide daqueles que ama.",
       7: "Ano de reflexão e espiritualidade. Busque conhecimento interior.",
       8: "Ano de conquistas materiais. Foque em negócios e reconhecimento.",
-      9: "Ano de finalização e serviço. Complete ciclos e ajude os outros."
+      9: "Ano de finalização e serviço. Complete ciclos e ajude os outros.",
     };
-    return mensagens[ano as keyof typeof mensagens] || "Ano de crescimento pessoal.";
+    return (
+      mensagens[ano as keyof typeof mensagens] || "Ano de crescimento pessoal."
+    );
   };
 
   const getMesPessoalMessage = (mes: number): string => {
@@ -111,21 +128,24 @@ export default function DashboardPage() {
       6: "Período de cuidado e harmonia familiar",
       7: "Mês de introspecção e estudos",
       8: "Tempo de foco nos negócios",
-      9: "Período de encerramento de ciclos"
+      9: "Período de encerramento de ciclos",
     };
-    return mensagens[mes as keyof typeof mensagens] || "Mês de desenvolvimento pessoal";
+    return (
+      mensagens[mes as keyof typeof mensagens] ||
+      "Mês de desenvolvimento pessoal"
+    );
   };
 
   // Carregar dados do blog diário
   const loadDailyBlog = async () => {
     if (!user || !mapa) return;
-    
+
     setLoadingBlog(true);
     try {
-      const response = await fetch('/api/ai/reports/daily-blog', {
-        method: 'POST',
+      const response = await fetch("/api/ai/reports/daily-blog", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           diaPessoal: diaPessoalAtual,
@@ -133,8 +153,8 @@ export default function DashboardPage() {
           mesPessoal: mapa.mesPessoal,
           anoPessoal: mapa.anoPessoal,
           nomeUsuario: user.name,
-          palavrasChave: mapa.palavrasChave
-        })
+          palavrasChave: mapa.palavrasChave,
+        }),
       });
 
       const result = await response.json();
@@ -142,7 +162,7 @@ export default function DashboardPage() {
         setBlogData(result.data);
       }
     } catch (error) {
-      console.error('Erro ao carregar blog diário:', error);
+      console.error("Erro ao carregar blog diário:", error);
     } finally {
       setLoadingBlog(false);
     }
@@ -155,137 +175,142 @@ export default function DashboardPage() {
     }
   }, [user, mapa]);
 
-  const openReport = (reportType: string, title: string, icon: string, reportNumber?: number) => {
+  const openReport = (
+    reportType: string,
+    title: string,
+    icon: string,
+    reportNumber?: number,
+  ) => {
     setReportModal({
       isOpen: true,
       reportType,
       reportNumber,
       title: `Relatório: ${title}`,
-      icon
+      icon,
     });
   };
 
   const closeReport = () => {
     setReportModal({
       isOpen: false,
-      reportType: '',
-      title: '',
-      icon: ''
+      reportType: "",
+      title: "",
+      icon: "",
     });
   };
 
   // Carousel completo com todos os números numerológicos
   const numerologySlides = [
     {
-      title: 'Número do Destino',
+      title: "Número do Destino",
       number: mapa?.numeroDestino,
-      description: 'Seu propósito de vida e missão principal',
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-700',
-      icon: '🎯',
-      reportType: 'geral'
+      description: "Seu propósito de vida e missão principal",
+      color: "from-purple-500 to-purple-600",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-700",
+      icon: "🎯",
+      reportType: "geral",
     },
     {
-      title: 'Número da Alma',
+      title: "Número da Alma",
       number: mapa?.numeroAlma,
-      description: 'Sua motivação interior e desejos profundos',
-      color: 'from-pink-500 to-pink-600',
-      bgColor: 'bg-pink-50',
-      textColor: 'text-pink-700',
-      icon: '💖',
-      reportType: 'espiritual'
+      description: "Sua motivação interior e desejos profundos",
+      color: "from-pink-500 to-pink-600",
+      bgColor: "bg-pink-50",
+      textColor: "text-pink-700",
+      icon: "💖",
+      reportType: "espiritual",
     },
     {
-      title: 'Número de Expressão',
+      title: "Número de Expressão",
       number: mapa?.numeroExpressao,
-      description: 'Como você se expressa e se comunica com o mundo',
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-700',
-      icon: '🎭',
-      reportType: 'carreira'
+      description: "Como você se expressa e se comunica com o mundo",
+      color: "from-blue-500 to-blue-600",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-700",
+      icon: "🎭",
+      reportType: "carreira",
     },
     {
-      title: 'Personalidade Externa',
+      title: "Personalidade Externa",
       number: mapa?.numeroPersonalidadeExterna,
-      description: 'Como os outros te veem e sua primeira impressão',
-      color: 'from-green-500 to-green-600',
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-700',
-      icon: '👤',
-      reportType: 'geral'
+      description: "Como os outros te veem e sua primeira impressão",
+      color: "from-green-500 to-green-600",
+      bgColor: "bg-green-50",
+      textColor: "text-green-700",
+      icon: "👤",
+      reportType: "geral",
     },
     {
-      title: 'Número da Sorte',
+      title: "Número da Sorte",
       number: mapa?.numeroSorte,
-      description: 'Energia que atrai oportunidades favoráveis',
-      color: 'from-yellow-500 to-yellow-600',
-      bgColor: 'bg-yellow-50',
-      textColor: 'text-yellow-700',
-      icon: '🍀',
-      reportType: 'dinheiro'
+      description: "Energia que atrai oportunidades favoráveis",
+      color: "from-yellow-500 to-yellow-600",
+      bgColor: "bg-yellow-50",
+      textColor: "text-yellow-700",
+      icon: "🍀",
+      reportType: "dinheiro",
     },
     {
-      title: 'Número de Maturidade',
+      title: "Número de Maturidade",
       number: mapa?.numeroMaturidade,
-      description: 'Sua evolução após os 35 anos de idade',
-      color: 'from-indigo-500 to-indigo-600',
-      bgColor: 'bg-indigo-50',
-      textColor: 'text-indigo-700',
-      icon: '🌟',
-      reportType: 'geral'
+      description: "Sua evolução após os 35 anos de idade",
+      color: "from-indigo-500 to-indigo-600",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-700",
+      icon: "🌟",
+      reportType: "geral",
     },
     {
-      title: 'Desafio Principal',
+      title: "Desafio Principal",
       number: mapa?.desafioPrincipal,
-      description: 'Sua maior lição e crescimento nesta vida',
-      color: 'from-red-500 to-red-600',
-      bgColor: 'bg-red-50',
-      textColor: 'text-red-700',
-      icon: '⚡',
-      reportType: 'espiritual'
+      description: "Sua maior lição e crescimento nesta vida",
+      color: "from-red-500 to-red-600",
+      bgColor: "bg-red-50",
+      textColor: "text-red-700",
+      icon: "⚡",
+      reportType: "espiritual",
     },
     {
-      title: 'Desejo Oculto',
+      title: "Desejo Oculto",
       number: mapa?.desejoOculto,
-      description: 'Suas aspirações mais secretas e profundas',
-      color: 'from-violet-500 to-violet-600',
-      bgColor: 'bg-violet-50',
-      textColor: 'text-violet-700',
-      icon: '🔮',
-      reportType: 'espiritual'
+      description: "Suas aspirações mais secretas e profundas",
+      color: "from-violet-500 to-violet-600",
+      bgColor: "bg-violet-50",
+      textColor: "text-violet-700",
+      icon: "🔮",
+      reportType: "espiritual",
     },
     {
-      title: 'Poder Interior',
+      title: "Poder Interior",
       number: mapa?.poderInterior,
-      description: 'Sua força espiritual e capacidade de transformação',
-      color: 'from-orange-500 to-orange-600',
-      bgColor: 'bg-orange-50',
-      textColor: 'text-orange-700',
-      icon: '🔥',
-      reportType: 'espiritual'
+      description: "Sua força espiritual e capacidade de transformação",
+      color: "from-orange-500 to-orange-600",
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-700",
+      icon: "🔥",
+      reportType: "espiritual",
     },
     {
-      title: 'Ano Pessoal',
+      title: "Ano Pessoal",
       number: mapa?.anoPessoal,
-      description: 'A energia que rege este ano para você',
-      color: 'from-teal-500 to-teal-600',
-      bgColor: 'bg-teal-50',
-      textColor: 'text-teal-700',
-      icon: '📅',
-      reportType: 'anual'
+      description: "A energia que rege este ano para você",
+      color: "from-teal-500 to-teal-600",
+      bgColor: "bg-teal-50",
+      textColor: "text-teal-700",
+      icon: "📅",
+      reportType: "anual",
     },
     {
-      title: 'Mês Pessoal',
+      title: "Mês Pessoal",
       number: mapa?.mesPessoal,
-      description: 'A vibração específica deste mês',
-      color: 'from-cyan-500 to-cyan-600',
-      bgColor: 'bg-cyan-50',
-      textColor: 'text-cyan-700',
-      icon: '🌙',
-      reportType: 'mensal'
-    }
+      description: "A vibração específica deste mês",
+      color: "from-cyan-500 to-cyan-600",
+      bgColor: "bg-cyan-50",
+      textColor: "text-cyan-700",
+      icon: "🌙",
+      reportType: "mensal",
+    },
   ];
 
   const nextSlide = () => {
@@ -293,7 +318,9 @@ export default function DashboardPage() {
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + numerologySlides.length) % numerologySlides.length);
+    setCurrentSlide(
+      (prev) => (prev - 1 + numerologySlides.length) % numerologySlides.length,
+    );
   };
 
   if (authLoading || !user || !mapa) {
@@ -317,8 +344,12 @@ export default function DashboardPage() {
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-medium text-gray-900">Olá, {user.name?.split(' ')[0] || 'Usuário'}</h1>
-              <p className="text-xs text-gray-500">Seu mapa numerológico pessoal</p>
+              <h1 className="text-sm font-medium text-gray-900">
+                Olá, {user.name?.split(" ")[0] || "Usuário"}
+              </h1>
+              <p className="text-xs text-gray-500">
+                Seu mapa numerológico pessoal
+              </p>
             </div>
           </div>
           <Link href="/profile">
@@ -337,7 +368,9 @@ export default function DashboardPage() {
         <div className="relative">
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Seus Números</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Seus Números
+              </h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={prevSlide}
@@ -366,7 +399,9 @@ export default function DashboardPage() {
               className="space-y-6"
             >
               <div className="flex items-center gap-4">
-                <div className={`w-20 h-20 bg-gradient-to-br ${numerologySlides[currentSlide].color} rounded-2xl flex items-center justify-center text-4xl shadow-lg`}>
+                <div
+                  className={`w-20 h-20 bg-gradient-to-br ${numerologySlides[currentSlide].color} rounded-2xl flex items-center justify-center text-4xl shadow-lg`}
+                >
                   {numerologySlides[currentSlide].icon}
                 </div>
                 <div className="flex-1">
@@ -383,12 +418,14 @@ export default function DashboardPage() {
               </div>
 
               <Button
-                onClick={() => openReport(
-                  numerologySlides[currentSlide].reportType,
-                  numerologySlides[currentSlide].title,
-                  numerologySlides[currentSlide].icon,
-                  numerologySlides[currentSlide].number
-                )}
+                onClick={() =>
+                  openReport(
+                    numerologySlides[currentSlide].reportType,
+                    numerologySlides[currentSlide].title,
+                    numerologySlides[currentSlide].icon,
+                    numerologySlides[currentSlide].number,
+                  )
+                }
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3"
                 size="sm"
               >
@@ -405,29 +442,43 @@ export default function DashboardPage() {
             <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
               <Star className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Energia de Hoje</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Energia de Hoje
+            </h2>
           </div>
-          
+
           <div className="space-y-4">
             <div className="flex items-center justify-between p-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
               <div>
-                <h3 className="font-semibold text-gray-900 text-lg">Dia Pessoal</h3>
+                <h3 className="font-semibold text-gray-900 text-lg">
+                  Dia Pessoal
+                </h3>
                 <p className="text-sm text-gray-600">Vibração do dia</p>
               </div>
-              <div className="text-4xl font-bold text-purple-600">{diaPessoalAtual}</div>
+              <div className="text-4xl font-bold text-purple-600">
+                {diaPessoalAtual}
+              </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <h4 className="font-medium text-gray-900 mb-1">Ano Pessoal</h4>
-                <p className="text-2xl font-bold text-blue-600 mb-2">{mapa.anoPessoal}</p>
-                <p className="text-xs text-gray-600 leading-relaxed">{getAnoPessoalMessage(mapa.anoPessoal)}</p>
+                <p className="text-2xl font-bold text-blue-600 mb-2">
+                  {mapa.anoPessoal}
+                </p>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  {getAnoPessoalMessage(mapa.anoPessoal)}
+                </p>
               </div>
-              
+
               <div className="p-4 bg-green-50 rounded-xl border border-green-200">
                 <h4 className="font-medium text-gray-900 mb-1">Mês Pessoal</h4>
-                <p className="text-2xl font-bold text-green-600 mb-2">{mapa.mesPessoal}</p>
-                <p className="text-xs text-gray-600 leading-relaxed">{getMesPessoalMessage(mapa.mesPessoal)}</p>
+                <p className="text-2xl font-bold text-green-600 mb-2">
+                  {mapa.mesPessoal}
+                </p>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  {getMesPessoalMessage(mapa.mesPessoal)}
+                </p>
               </div>
             </div>
           </div>
@@ -443,7 +494,9 @@ export default function DashboardPage() {
                 </div>
                 <h3 className="font-medium text-gray-900">Compatibilidade</h3>
               </div>
-              <p className="text-sm text-gray-600">Descubra sua afinidade com outras pessoas</p>
+              <p className="text-sm text-gray-600">
+                Descubra sua afinidade com outras pessoas
+              </p>
             </div>
           </Link>
 
@@ -455,12 +508,21 @@ export default function DashboardPage() {
                 </div>
                 <h3 className="font-medium text-gray-900">Amigos</h3>
               </div>
-              <p className="text-sm text-gray-600">Conecte-se com outros usuários</p>
+              <p className="text-sm text-gray-600">
+                Conecte-se com outros usuários
+              </p>
             </div>
           </Link>
 
-          <div 
-            onClick={() => openReport('geral', 'Relatório Completo', '📊', mapa.numeroDestino)}
+          <div
+            onClick={() =>
+              openReport(
+                "geral",
+                "Relatório Completo",
+                "📊",
+                mapa.numeroDestino,
+              )
+            }
             className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
           >
             <div className="flex items-center gap-3 mb-2">
@@ -469,7 +531,9 @@ export default function DashboardPage() {
               </div>
               <h3 className="font-medium text-gray-900">Relatórios</h3>
             </div>
-            <p className="text-sm text-gray-600">Análises detalhadas personalizadas</p>
+            <p className="text-sm text-gray-600">
+              Análises detalhadas personalizadas
+            </p>
           </div>
         </div>
 
@@ -480,25 +544,37 @@ export default function DashboardPage() {
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-500 rounded-xl flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">Reflexão do Dia</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Reflexão do Dia
+              </h2>
             </div>
-            
+
             <div className="space-y-6">
               <div className="p-6 bg-gradient-to-br from-green-50 to-teal-50 rounded-xl border border-green-200">
-                <h3 className="font-semibold text-green-900 mb-3 text-lg">{blogData.dicaEspecial.titulo}</h3>
-                <p className="text-green-800 leading-relaxed">{blogData.dicaEspecial.conteudo}</p>
+                <h3 className="font-semibold text-green-900 mb-3 text-lg">
+                  {blogData.dicaEspecial.titulo}
+                </h3>
+                <p className="text-green-800 leading-relaxed">
+                  {blogData.dicaEspecial.conteudo}
+                </p>
               </div>
-              
+
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm text-gray-700">Energia dominante:</span>
-                  <strong className="text-purple-600">{blogData.energiaDominante}</strong>
+                  <span className="text-sm text-gray-700">
+                    Energia dominante:
+                  </span>
+                  <strong className="text-purple-600">
+                    {blogData.energiaDominante}
+                  </strong>
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-blue-500" />
                   <span className="text-sm text-gray-700">Sincronia:</span>
-                  <strong className="text-blue-600">{blogData.numeroSincronia}</strong>
+                  <strong className="text-blue-600">
+                    {blogData.numeroSincronia}
+                  </strong>
                 </div>
               </div>
             </div>
@@ -516,10 +592,10 @@ export default function DashboardPage() {
         icon={reportModal.icon}
         userData={{
           name: user?.name,
-          firstName: user?.name?.split(' ')[0] || 'Usuário',
+          firstName: user?.name?.split(" ")[0] || "Usuário",
           birthDate: formatDateSafely(user?.birthDate),
           numerologyData: mapa,
-          userId: user?.id
+          userId: user?.id,
         }}
       />
 

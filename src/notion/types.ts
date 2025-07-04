@@ -1,6 +1,12 @@
 // Tipos de bloco para o editor Notion-like
 
-export type BlockType = 'text' | 'heading' | 'list' | 'code' | 'image' | 'divider';
+export type BlockType =
+  | "text"
+  | "heading"
+  | "list"
+  | "code"
+  | "image"
+  | "divider";
 
 export interface BaseBlock {
   id: string;
@@ -8,36 +14,42 @@ export interface BaseBlock {
 }
 
 export interface TextBlock extends BaseBlock {
-  type: 'text';
+  type: "text";
   content: string;
 }
 
 export interface HeadingBlock extends BaseBlock {
-  type: 'heading';
+  type: "heading";
   content: string;
   level: 1 | 2 | 3;
 }
 
 export interface ListBlock extends BaseBlock {
-  type: 'list';
+  type: "list";
   items: string[];
   ordered?: boolean;
 }
 
 export interface CodeBlock extends BaseBlock {
-  type: 'code';
+  type: "code";
   code: string;
   language?: string;
 }
 
 export interface ImageBlock extends BaseBlock {
-  type: 'image';
+  type: "image";
   url: string;
   alt?: string;
 }
 
 export interface DividerBlock extends BaseBlock {
-  type: 'divider';
+  type: "divider";
 }
 
-export type Block = TextBlock | HeadingBlock | ListBlock | CodeBlock | ImageBlock | DividerBlock;
+export type Block =
+  | TextBlock
+  | HeadingBlock
+  | ListBlock
+  | CodeBlock
+  | ImageBlock
+  | DividerBlock;

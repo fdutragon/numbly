@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface UseLocalStorageReturn<T> {
   value: T;
@@ -10,7 +10,7 @@ interface UseLocalStorageReturn<T> {
 
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): UseLocalStorageReturn<T> {
   // State to store our value
   const [storedValue, setStoredValue] = useState<T>(initialValue);
@@ -31,7 +31,8 @@ export function useLocalStorage<T>(
   const setValue = (value: T | ((prev: T) => T)) => {
     try {
       // Allow value to be a function so we have the same API as useState
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      const valueToStore =
+        value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {

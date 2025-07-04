@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { authGuard, logSecurityEvent } from '@/lib/security/auth-guard';
-import type { SecurityContext } from '@/lib/security/auth-guard';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { authGuard, logSecurityEvent } from "@/lib/security/auth-guard";
+import type { SecurityContext } from "@/lib/security/auth-guard";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * 👤 GET - Buscar usuário por ID
@@ -11,24 +11,24 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: { id: string } },
 ) {
   let securityContext: SecurityContext | undefined;
-  
+
   try {
     // 1. Validação de segurança
     securityContext = await authGuard(req);
-    
+
     const { params } = context;
     const { id } = params;
-    
+
     if (!id) {
       return NextResponse.json(
-        { error: 'ID do usuário é obrigatório' },
-        { status: 400 }
+        { error: "ID do usuário é obrigatório" },
+        { status: 400 },
       );
     }
-    
+
     // 2. Buscar usuário no banco
     const user = await db.user.findUnique({
       where: { id },
@@ -51,35 +51,35 @@ export async function GET(
             plan: true,
             status: true,
             startDate: true,
-            endDate: true
+            endDate: true,
           },
-          take: 1
+          take: 1,
         },
         _count: {
           select: {
             sentFriendRequests: true,
             receivedFriendRequests: true,
             compatibility: true,
-            posts: true
-          }
-        }
-      }
+            posts: true,
+          },
+        },
+      },
     });
-    
+
     if (!user) {
-      logSecurityEvent('SUSPICIOUS', securityContext, `User not found: ${id}`);
+      logSecurityEvent("SUSPICIOUS", securityContext, `User not found: ${id}`);
       return NextResponse.json(
-        { error: 'Usuário não encontrado' },
-        { status: 4024 }
+        { error: "Usuário não encontrado" },
+        { status: 4024 },
       );
     }
-    
+
     // 3. Formatar resposta
     const userProfile = {
       id: user.id,
       name: user.name,
       email: user.email,
-      birthDate: user.birthDate?.toISOString().split('T')[0],
+      birthDate: user.birthDate?.toISOString().split("T")[0],
       profileImage: user.profileImage,
       bio: user.bio,
       isPremium: user.isPremium,
@@ -88,31 +88,39 @@ export async function GET(
       hasSeenIntro: user.hasSeenIntro,
       subscription: user.subscriptions[0] || null,
       stats: {
-        friendRequests: user._count.sentFriendRequests + user._count.receivedFriendRequests,
+        friendRequests:
+          user._count.sentFriendRequests + user._count.receivedFriendRequests,
         compatibilityAnalyses: user._count.compatibility,
-        posts: user._count.posts
+        posts: user._count.posts,
       },
       memberSince: user.createdAt,
-      lastUpdated: user.updatedAt
+      lastUpdated: user.updatedAt,
     };
-    
-    logSecurityEvent('AUTH_SUCCESS', securityContext, `User profile accessed: ${user.name} (${id})`);
-    
+
+    logSecurityEvent(
+      "AUTH_SUCCESS",
+      securityContext,
+      `User profile accessed: ${user.name} (${id})`,
+    );
+
     return NextResponse.json({
       success: true,
-      user: userProfile
+      user: userProfile,
     });
-    
   } catch (error: any) {
-    console.error('Erro ao buscar usuário:', error);
-    
+    console.error("Erro ao buscar usuário:", error);
+
     if (securityContext) {
-      logSecurityEvent('SUSPICIOUS', securityContext, `Get user error: ${error.message}`);
+      logSecurityEvent(
+        "SUSPICIOUS",
+        securityContext,
+        `Get user error: ${error.message}`,
+      );
     }
-    
+
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
+      { error: "Erro interno do servidor" },
+      { status: 500 },
     );
   }
 }

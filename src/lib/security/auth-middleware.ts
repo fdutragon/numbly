@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authGuard, logSecurityEvent, checkRateLimit } from './auth-guard';
-import { verifyToken, validateSession } from './jwt';
-import type { SecurityContext } from './auth-guard';
-import type { JWTPayload, SessionData } from './jwt';
+import { NextRequest, NextResponse } from "next/server";
+import { authGuard, logSecurityEvent, checkRateLimit } from "./auth-guard";
+import { verifyToken, validateSession } from "./jwt";
+import type { SecurityContext } from "./auth-guard";
+import type { JWTPayload, SessionData } from "./jwt";
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: JWTPayload;
@@ -26,9 +26,9 @@ export interface AuthMiddlewareOptions {
  */
 export async function withAuth(
   handler: (req: AuthenticatedRequest) => Promise<NextResponse>,
-  options: AuthMiddlewareOptions = {}
+  options: AuthMiddlewareOptions = {},
 ) {
-  return async function(req: NextRequest) {
+  return async function (req: NextRequest) {
     let securityContext: SecurityContext | undefined;
     let user: JWTPayload | undefined;
     let session: SessionData | undefined;
@@ -37,57 +37,75 @@ export async function withAuth(
       // 1. 🛡️ Verificações de segurança (se não puladas)
       if (!options.skipSecurityCheck) {
         securityContext = await authGuard(req);
-        
+
         // Verificação customizada de segurança
-        if (options.customSecurityCheck && !options.customSecurityCheck(securityContext)) {
-          logSecurityEvent('SUSPICIOUS', securityContext, 'Custom security check failed');
-          return NextResponse.json(
-            { error: 'Access denied' },
-            { status: 403 }
+        if (
+          options.customSecurityCheck &&
+          !options.customSecurityCheck(securityContext)
+        ) {
+          logSecurityEvent(
+            "SUSPICIOUS",
+            securityContext,
+            "Custom security check failed",
           );
+          return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
       }
 
       // 2. 🚦 Rate limiting (se configurado)
       if (options.rateLimit && securityContext) {
         const rateLimitKey = `${req.nextUrl.pathname}_${securityContext.ip}`;
-        if (!checkRateLimit(rateLimitKey, options.rateLimit.window, options.rateLimit.max, { allowLocalhost: true })) {
-          logSecurityEvent('RATE_LIMITED', securityContext, 'API rate limit exceeded');
+        if (
+          !checkRateLimit(
+            rateLimitKey,
+            options.rateLimit.window,
+            options.rateLimit.max,
+            { allowLocalhost: true },
+          )
+        ) {
+          logSecurityEvent(
+            "RATE_LIMITED",
+            securityContext,
+            "API rate limit exceeded",
+          );
           return NextResponse.json(
-            { error: 'Rate limit exceeded' },
-            { status: 429 }
+            { error: "Rate limit exceeded" },
+            { status: 429 },
           );
         }
       }
 
       // 3. 🔐 Verificação de autenticação (se requerida)
       if (options.requireAuth) {
-        const authHeader = req.headers.get('authorization');
-        const token = authHeader?.replace('Bearer ', '');
+        const authHeader = req.headers.get("authorization");
+        const token = authHeader?.replace("Bearer ", "");
 
         if (!token) {
           return NextResponse.json(
-            { error: 'Token de autenticação requerido' },
-            { status: 401 }
+            { error: "Token de autenticação requerido" },
+            { status: 401 },
           );
         }
 
         const userResult = verifyToken(token);
         if (!userResult) {
           return NextResponse.json(
-            { error: 'Token inválido ou expirado' },
-            { status: 401 }
+            { error: "Token inválido ou expirado" },
+            { status: 401 },
           );
         }
         user = userResult;
 
         // Validar sessão se tiver sessionId
         if (user.sessionId && securityContext) {
-          const sessionResult = validateSession(user.sessionId, securityContext.ip);
+          const sessionResult = validateSession(
+            user.sessionId,
+            securityContext.ip,
+          );
           if (!sessionResult) {
             return NextResponse.json(
-              { error: 'Sessão inválida ou expirada' },
-              { status: 401 }
+              { error: "Sessão inválida ou expirada" },
+              { status: 401 },
             );
           }
           session = sessionResult;
@@ -110,23 +128,28 @@ export async function withAuth(
 
       // 5. 📝 Log de sucesso
       if (securityContext) {
-        logSecurityEvent('AUTH_SUCCESS', securityContext, 
-          `API access granted${user ? ` for user ${user.userId}` : ''}`
+        logSecurityEvent(
+          "AUTH_SUCCESS",
+          securityContext,
+          `API access granted${user ? ` for user ${user.userId}` : ""}`,
         );
       }
 
       return response;
-
     } catch (error: any) {
-      console.error('Auth middleware error:', error);
-      
+      console.error("Auth middleware error:", error);
+
       if (securityContext) {
-        logSecurityEvent('SUSPICIOUS', securityContext, `Auth middleware error: ${error.message}`);
+        logSecurityEvent(
+          "SUSPICIOUS",
+          securityContext,
+          `Auth middleware error: ${error.message}`,
+        );
       }
 
       return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
+        { error: "Internal server error" },
+        { status: 500 },
       );
     }
   };
@@ -142,7 +165,7 @@ export const authMiddleware = {
   public: (handler: (req: AuthenticatedRequest) => Promise<NextResponse>) =>
     withAuth(handler, {
       requireAuth: false,
-      rateLimit: { window: 60000, max: 100 } // 100 req/min
+      rateLimit: { window: 60000, max: 100 }, // 100 req/min
     }),
 
   /**
@@ -151,7 +174,7 @@ export const authMiddleware = {
   protected: (handler: (req: AuthenticatedRequest) => Promise<NextResponse>) =>
     withAuth(handler, {
       requireAuth: true,
-      rateLimit: { window: 60000, max: 60 } // 60 req/min
+      rateLimit: { window: 60000, max: 60 }, // 60 req/min
     }),
 
   /**
@@ -161,7 +184,7 @@ export const authMiddleware = {
     withAuth(handler, {
       requireAuth: true,
       rateLimit: { window: 60000, max: 20 }, // 20 req/min
-      customSecurityCheck: (context) => context.riskScore < 30
+      customSecurityCheck: (context) => context.riskScore < 30,
     }),
 
   /**
@@ -171,8 +194,8 @@ export const authMiddleware = {
     withAuth(handler, {
       requireAuth: false,
       skipSecurityCheck: true, // Webhooks podem vir de IPs variados
-      rateLimit: { window: 60000, max: 200 } // 200 req/min
-    })
+      rateLimit: { window: 60000, max: 200 }, // 200 req/min
+    }),
 };
 
 /**
@@ -192,6 +215,8 @@ export function getAuthSession(req: AuthenticatedRequest): SessionData | null {
 /**
  * 🛡️ Extrair contexto de segurança de uma requisição
  */
-export function getSecurityContext(req: AuthenticatedRequest): SecurityContext | null {
+export function getSecurityContext(
+  req: AuthenticatedRequest,
+): SecurityContext | null {
   return req.securityContext || null;
 }

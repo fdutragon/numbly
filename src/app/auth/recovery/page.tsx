@@ -1,51 +1,51 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DateInput } from '@/components/ui/date-input';
-import { 
-  Sparkles, 
-  Bell, 
-  ArrowLeft, 
-  Send, 
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
+import {
+  Sparkles,
+  Bell,
+  ArrowLeft,
+  Send,
   CheckCircle,
-  AlertCircle
-} from 'lucide-react';
-import Link from 'next/link';
+  AlertCircle,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function RecoveryPage() {
   const [formData, setFormData] = useState({
-    nome: '',
-    dataNascimento: ''
+    nome: "",
+    dataNascimento: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<'form' | 'sent' | 'success'>('form');
-  const [error, setError] = useState('');
+  const [step, setStep] = useState<"form" | "sent" | "success">("form");
+  const [error, setError] = useState("");
 
   const handleRecovery = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/auth/recovery-push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      const response = await fetch("/api/auth/recovery-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setStep('sent');
+        setStep("sent");
       } else {
-        setError(result.error || 'Erro na recuperação');
+        setError(result.error || "Erro na recuperação");
       }
     } catch (error) {
-      setError('Erro de conexão. Tente novamente.');
+      setError("Erro de conexão. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +77,7 @@ export default function RecoveryPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          {step === 'form' && (
+          {step === "form" && (
             <Card>
               <CardHeader>
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -96,18 +96,25 @@ export default function RecoveryPage() {
                     <Input
                       placeholder="Seu nome completo"
                       value={formData.nome}
-                      onChange={(value) => setFormData(prev => ({ ...prev, nome: value }))}
+                      onChange={(value) =>
+                        setFormData((prev) => ({ ...prev, nome: value }))
+                      }
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Data de Nascimento
                     </label>
                     <DateInput
                       value={formData.dataNascimento}
-                      onChange={(value) => setFormData(prev => ({ ...prev, dataNascimento: value }))}
+                      onChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          dataNascimento: value,
+                        }))
+                      }
                       required
                     />
                   </div>
@@ -135,7 +142,7 @@ export default function RecoveryPage() {
             </Card>
           )}
 
-          {step === 'sent' && (
+          {step === "sent" && (
             <Card>
               <CardContent className="text-center py-8">
                 <motion.div
@@ -146,24 +153,26 @@ export default function RecoveryPage() {
                 >
                   <CheckCircle className="w-8 h-8 text-white" />
                 </motion.div>
-                
+
                 <h2 className="text-xl font-bold text-gray-900 mb-3">
                   🔮 Acesso Enviado!
                 </h2>
-                
+
                 <p className="text-gray-600 mb-6">
-                  Se seus dados estão corretos, você receberá uma notificação mágica para acessar sua conta.
+                  Se seus dados estão corretos, você receberá uma notificação
+                  mágica para acessar sua conta.
                 </p>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-blue-700">
-                    💡 <strong>Dica:</strong> Verifique se as notificações estão ativadas no seu navegador e aguarde alguns segundos.
+                    💡 <strong>Dica:</strong> Verifique se as notificações estão
+                    ativadas no seu navegador e aguarde alguns segundos.
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <Button
-                    onClick={() => setStep('form')}
+                    onClick={() => setStep("form")}
                     variant="outline"
                     className="w-full"
                   >
@@ -182,7 +191,7 @@ export default function RecoveryPage() {
           transition={{ duration: 0.5, delay: 0.8 }}
           className="text-center mt-6"
         >
-          <Link 
+          <Link
             href="/auth/register-push"
             className="inline-flex items-center text-sm text-purple-600 hover:text-purple-700"
           >

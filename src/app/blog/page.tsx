@@ -1,16 +1,29 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { AppLayout } from '@/components/ui/app-layout';
-import { 
-  Sparkles, Moon, Sun, Heart, BookOpen, MessageCircle, 
-  PenTool, Trophy, Zap, Eye, Calendar, Filter,
-  Play, Pause, Volume2, VolumeX
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { AppLayout } from "@/components/ui/app-layout";
+import {
+  Sparkles,
+  Moon,
+  Sun,
+  Heart,
+  BookOpen,
+  MessageCircle,
+  PenTool,
+  Trophy,
+  Zap,
+  Eye,
+  Calendar,
+  Filter,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // Types
 interface BlogPost {
@@ -18,7 +31,12 @@ interface BlogPost {
   title: string;
   content: string;
   excerpt?: string;
-  type: 'DAILY_MEDITATION' | 'ARTICLE' | 'ORACLE_MESSAGE' | 'RITUAL_GUIDE' | 'NUMEROLOGY_INSIGHT';
+  type:
+    | "DAILY_MEDITATION"
+    | "ARTICLE"
+    | "ORACLE_MESSAGE"
+    | "RITUAL_GUIDE"
+    | "NUMEROLOGY_INSIGHT";
   personalDay?: number;
   lunarPhase?: string;
   numerologyFocus?: string;
@@ -42,108 +60,128 @@ interface UserStats {
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
-  const [filterType, setFilterType] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>("all");
   const [userStats, setUserStats] = useState<UserStats>({
     streak: 7,
     completedMeditations: 12,
     journalEntries: 8,
-    badges: ['guardian-constancy', 'soul-scribe'],
-    personalDay: 7
+    badges: ["guardian-constancy", "soul-scribe"],
+    personalDay: 7,
   });
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showOracleModal, setShowOracleModal] = useState(false);
   const [showJournalModal, setShowJournalModal] = useState(false);
-  const [journalText, setJournalText] = useState('');
-  const [oracleQuestion, setOracleQuestion] = useState('');
-  const [oracleResponse, setOracleResponse] = useState('');
+  const [journalText, setJournalText] = useState("");
+  const [oracleQuestion, setOracleQuestion] = useState("");
+  const [oracleResponse, setOracleResponse] = useState("");
 
   // Mock data - substituir por API calls
   useEffect(() => {
     const mockPosts: BlogPost[] = [
       {
-        id: '1',
-        title: 'Meditação da Aurora: Conectando com seu Dia Pessoal 7',
-        content: 'Hoje é um dia de introspecção e sabedoria interior. Seu dia pessoal 7 convida você a mergulhar nas profundezas da sua alma...',
-        excerpt: 'Uma jornada guiada para dias de contemplação e busca espiritual.',
-        type: 'DAILY_MEDITATION',
+        id: "1",
+        title: "Meditação da Aurora: Conectando com seu Dia Pessoal 7",
+        content:
+          "Hoje é um dia de introspecção e sabedoria interior. Seu dia pessoal 7 convida você a mergulhar nas profundezas da sua alma...",
+        excerpt:
+          "Uma jornada guiada para dias de contemplação e busca espiritual.",
+        type: "DAILY_MEDITATION",
         personalDay: 7,
-        lunarPhase: 'Crescente',
-        numerologyFocus: 'Espiritualidade',
-        meditationAudio: '/meditations/aurora-day7.mp3',
+        lunarPhase: "Crescente",
+        numerologyFocus: "Espiritualidade",
+        meditationAudio: "/meditations/aurora-day7.mp3",
         meditationDuration: 900, // 15 minutos
-        tags: ['meditação', 'dia-pessoal-7', 'introspecção'],
+        tags: ["meditação", "dia-pessoal-7", "introspecção"],
         views: 234,
         likes: 89,
-        publishedAt: '2025-07-02T06:00:00Z'
+        publishedAt: "2025-07-02T06:00:00Z",
       },
       {
-        id: '2',
-        title: 'Os Mistérios do Número 11: Portal de Iluminação',
-        content: 'O número 11 é conhecido como um número mestre na numerologia, representando intuição, espiritualidade e iluminação...',
-        excerpt: 'Descubra os segredos místicos por trás do poderoso número 11.',
-        type: 'NUMEROLOGY_INSIGHT',
-        numerologyFocus: 'Número Mestre 11',
-        tags: ['numerologia', 'número-mestre', 'intuição'],
+        id: "2",
+        title: "Os Mistérios do Número 11: Portal de Iluminação",
+        content:
+          "O número 11 é conhecido como um número mestre na numerologia, representando intuição, espiritualidade e iluminação...",
+        excerpt:
+          "Descubra os segredos místicos por trás do poderoso número 11.",
+        type: "NUMEROLOGY_INSIGHT",
+        numerologyFocus: "Número Mestre 11",
+        tags: ["numerologia", "número-mestre", "intuição"],
         views: 456,
         likes: 123,
-        publishedAt: '2025-07-01T14:00:00Z'
+        publishedAt: "2025-07-01T14:00:00Z",
       },
       {
-        id: '3',
-        title: 'Ritual da Lua Nova: Plantando Sementes de Transformação',
-        content: 'A Lua Nova é o momento perfeito para novos começos. Este ritual irá ajudá-lo a manifestar seus desejos mais profundos...',
-        excerpt: 'Um guia completo para aproveitar a energia da Lua Nova.',
-        type: 'RITUAL_GUIDE',
-        lunarPhase: 'Nova',
-        tags: ['ritual', 'lua-nova', 'manifestação'],
+        id: "3",
+        title: "Ritual da Lua Nova: Plantando Sementes de Transformação",
+        content:
+          "A Lua Nova é o momento perfeito para novos começos. Este ritual irá ajudá-lo a manifestar seus desejos mais profundos...",
+        excerpt: "Um guia completo para aproveitar a energia da Lua Nova.",
+        type: "RITUAL_GUIDE",
+        lunarPhase: "Nova",
+        tags: ["ritual", "lua-nova", "manifestação"],
         views: 678,
         likes: 234,
-        publishedAt: '2025-06-30T20:00:00Z'
-      }
+        publishedAt: "2025-06-30T20:00:00Z",
+      },
     ];
     setPosts(mockPosts);
   }, []);
 
   const getPostTypeIcon = (type: string) => {
     switch (type) {
-      case 'DAILY_MEDITATION': return Play;
-      case 'ARTICLE': return BookOpen;
-      case 'ORACLE_MESSAGE': return Sparkles;
-      case 'RITUAL_GUIDE': return Moon;
-      case 'NUMEROLOGY_INSIGHT': return Eye;
-      default: return BookOpen;
+      case "DAILY_MEDITATION":
+        return Play;
+      case "ARTICLE":
+        return BookOpen;
+      case "ORACLE_MESSAGE":
+        return Sparkles;
+      case "RITUAL_GUIDE":
+        return Moon;
+      case "NUMEROLOGY_INSIGHT":
+        return Eye;
+      default:
+        return BookOpen;
     }
   };
 
   const getPostTypeColor = (type: string) => {
     switch (type) {
-      case 'DAILY_MEDITATION': return 'from-purple-500 to-violet-600';
-      case 'ARTICLE': return 'from-blue-500 to-indigo-600';
-      case 'ORACLE_MESSAGE': return 'from-yellow-500 to-amber-600';
-      case 'RITUAL_GUIDE': return 'from-indigo-500 to-purple-600';
-      case 'NUMEROLOGY_INSIGHT': return 'from-green-500 to-emerald-600';
-      default: return 'from-gray-500 to-gray-600';
+      case "DAILY_MEDITATION":
+        return "from-purple-500 to-violet-600";
+      case "ARTICLE":
+        return "from-blue-500 to-indigo-600";
+      case "ORACLE_MESSAGE":
+        return "from-yellow-500 to-amber-600";
+      case "RITUAL_GUIDE":
+        return "from-indigo-500 to-purple-600";
+      case "NUMEROLOGY_INSIGHT":
+        return "from-green-500 to-emerald-600";
+      default:
+        return "from-gray-500 to-gray-600";
     }
   };
 
-  const filteredPosts = filterType === 'all' 
-    ? posts 
-    : posts.filter(post => post.type === filterType);
+  const filteredPosts =
+    filterType === "all"
+      ? posts
+      : posts.filter((post) => post.type === filterType);
 
   const handleOracleConsult = async () => {
     if (!oracleQuestion.trim()) return;
-    
+
     // Simulate AI response
     setTimeout(() => {
-      setOracleResponse(`🔮 O Oráculo sussurra: "${oracleQuestion}" ecoa na câmara dos espíritos. Vejo que sua alma busca respostas em meio à neblina do tempo. No seu dia pessoal ${userStats.personalDay}, os números cantam uma melodia de transformação. Confie na sua intuição - ela é o farol que guiará seus passos pelos caminhos ocultos do destino.`);
+      setOracleResponse(
+        `🔮 O Oráculo sussurra: "${oracleQuestion}" ecoa na câmara dos espíritos. Vejo que sua alma busca respostas em meio à neblina do tempo. No seu dia pessoal ${userStats.personalDay}, os números cantam uma melodia de transformação. Confie na sua intuição - ela é o farol que guiará seus passos pelos caminhos ocultos do destino.`,
+      );
     }, 2000);
   };
 
   const handleJournalSave = () => {
     // Save journal entry
-    console.log('Salvando entrada do diário:', journalText);
-    setJournalText('');
+    console.log("Salvando entrada do diário:", journalText);
+    setJournalText("");
     setShowJournalModal(false);
   };
 
@@ -178,7 +216,7 @@ export default function BlogPage() {
             <p className="text-gray-700 mb-6">
               Sabedoria ancestral para nutrir seu despertar espiritual
             </p>
-            
+
             {/* User Stats */}
             <div className="flex items-center justify-center space-x-6 text-sm">
               <div className="flex items-center space-x-2">
@@ -235,40 +273,40 @@ export default function BlogPage() {
           className="flex flex-wrap gap-2 justify-center"
         >
           <Button
-            variant={filterType === 'all' ? 'default' : 'outline'}
+            variant={filterType === "all" ? "default" : "outline"}
             size="sm"
-            onClick={() => setFilterType('all')}
+            onClick={() => setFilterType("all")}
           >
             Todos
           </Button>
           <Button
-            variant={filterType === 'DAILY_MEDITATION' ? 'default' : 'outline'}
+            variant={filterType === "DAILY_MEDITATION" ? "default" : "outline"}
             size="sm"
-            onClick={() => setFilterType('DAILY_MEDITATION')}
+            onClick={() => setFilterType("DAILY_MEDITATION")}
           >
             <Play className="w-3 h-3 mr-1" />
             Meditações
           </Button>
           <Button
-            variant={filterType === 'ARTICLE' ? 'default' : 'outline'}
+            variant={filterType === "ARTICLE" ? "default" : "outline"}
             size="sm"
-            onClick={() => setFilterType('ARTICLE')}
+            onClick={() => setFilterType("ARTICLE")}
           >
             <BookOpen className="w-3 h-3 mr-1" />
             Artigos
           </Button>
           <Button
-            variant={filterType === 'ORACLE_MESSAGE' ? 'default' : 'outline'}
+            variant={filterType === "ORACLE_MESSAGE" ? "default" : "outline"}
             size="sm"
-            onClick={() => setFilterType('ORACLE_MESSAGE')}
+            onClick={() => setFilterType("ORACLE_MESSAGE")}
           >
             <Sparkles className="w-3 h-3 mr-1" />
             Oráculo
           </Button>
           <Button
-            variant={filterType === 'RITUAL_GUIDE' ? 'default' : 'outline'}
+            variant={filterType === "RITUAL_GUIDE" ? "default" : "outline"}
             size="sm"
-            onClick={() => setFilterType('RITUAL_GUIDE')}
+            onClick={() => setFilterType("RITUAL_GUIDE")}
           >
             <Moon className="w-3 h-3 mr-1" />
             Rituais
@@ -294,7 +332,9 @@ export default function BlogPage() {
                   <Card className="h-full hover:shadow-lg transition-all duration-300 border-purple-100 hover:border-purple-200">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between mb-3">
-                        <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${getPostTypeColor(post.type)} flex items-center justify-center flex-shrink-0`}>
+                        <div
+                          className={`w-12 h-12 rounded-lg bg-gradient-to-r ${getPostTypeColor(post.type)} flex items-center justify-center flex-shrink-0`}
+                        >
                           <IconComponent className="w-6 h-6 text-white" />
                         </div>
                         <div className="text-right text-xs text-gray-500">
@@ -308,18 +348,18 @@ export default function BlogPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <h3 className="font-semibold text-gray-900 leading-tight line-clamp-2">
                         {post.title}
                       </h3>
-                      
+
                       {post.excerpt && (
                         <p className="text-sm text-gray-600 line-clamp-3">
                           {post.excerpt}
                         </p>
                       )}
                     </CardHeader>
-                    
+
                     <CardContent className="pt-0">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-wrap gap-1">
@@ -334,7 +374,7 @@ export default function BlogPage() {
                             </span>
                           )}
                         </div>
-                        
+
                         {post.meditationDuration && (
                           <div className="text-xs text-gray-500 flex items-center">
                             <Play className="w-3 h-3 mr-1" />
@@ -371,12 +411,15 @@ export default function BlogPage() {
                   <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Sparkles className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Oráculo Contextual</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Oráculo Contextual
+                  </h3>
                   <p className="text-sm text-gray-600">
-                    Faça sua pergunta e receba uma orientação mística baseada no seu momento atual
+                    Faça sua pergunta e receba uma orientação mística baseada no
+                    seu momento atual
                   </p>
                 </div>
-                
+
                 <div className="space-y-4">
                   <Input
                     placeholder="Me senti ansioso hoje..."
@@ -384,7 +427,7 @@ export default function BlogPage() {
                     onChange={(value: string) => setOracleQuestion(value)}
                     className="border-purple-200 focus:border-purple-400"
                   />
-                  
+
                   {oracleResponse && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -396,21 +439,21 @@ export default function BlogPage() {
                       </p>
                     </motion.div>
                   )}
-                  
+
                   <div className="flex space-x-3">
                     <Button
                       onClick={handleOracleConsult}
                       disabled={!oracleQuestion.trim() || !!oracleResponse}
                       className="flex-1 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700"
                     >
-                      {oracleResponse ? 'Consultado' : 'Consultar Oráculo'}
+                      {oracleResponse ? "Consultado" : "Consultar Oráculo"}
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => {
                         setShowOracleModal(false);
-                        setOracleQuestion('');
-                        setOracleResponse('');
+                        setOracleQuestion("");
+                        setOracleResponse("");
                       }}
                     >
                       Fechar
@@ -443,21 +486,25 @@ export default function BlogPage() {
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
                     <PenTool className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Diário da Alma</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Diário da Alma
+                  </h3>
                   <p className="text-sm text-gray-600">
                     Escreva em poucas palavras o que sentiu...
                   </p>
                 </div>
-                
+
                 <div className="space-y-4">
                   <textarea
                     placeholder="Hoje me senti conectado com minha intuição..."
                     value={journalText}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setJournalText(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      setJournalText(e.target.value)
+                    }
                     rows={4}
                     className="w-full border border-purple-200 rounded-lg p-3 focus:border-purple-400 focus:outline-none resize-none"
                   />
-                  
+
                   <div className="flex space-x-3">
                     <Button
                       onClick={handleJournalSave}
@@ -470,7 +517,7 @@ export default function BlogPage() {
                       variant="outline"
                       onClick={() => {
                         setShowJournalModal(false);
-                        setJournalText('');
+                        setJournalText("");
                       }}
                     >
                       Cancelar

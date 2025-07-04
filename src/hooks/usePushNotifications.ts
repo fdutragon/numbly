@@ -1,25 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { pushService } from '@/lib/push';
+import { useState, useEffect } from "react";
+import { pushService } from "@/lib/push";
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [permission, setPermission] =
+    useState<NotificationPermission>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Verificar se o browser suporta notifications
-    if (typeof window !== 'undefined') {
-      setIsSupported('Notification' in window && 'serviceWorker' in navigator);
+    if (typeof window !== "undefined") {
+      setIsSupported("Notification" in window && "serviceWorker" in navigator);
       setPermission(Notification.permission);
     }
   }, []);
 
   const requestPermission = async () => {
     if (!isSupported) return false;
-    
+
     setLoading(true);
     try {
       const granted = await pushService.requestPermission();
@@ -27,15 +28,15 @@ export function usePushNotifications() {
       setLoading(false);
       return granted;
     } catch (error) {
-      console.error('Erro ao solicitar permissão:', error);
+      console.error("Erro ao solicitar permissão:", error);
       setLoading(false);
       return false;
     }
   };
 
   const subscribe = async () => {
-    if (!isSupported || permission !== 'granted') return false;
-    
+    if (!isSupported || permission !== "granted") return false;
+
     setLoading(true);
     try {
       const subscription = await pushService.subscribeToPush();
@@ -43,7 +44,7 @@ export function usePushNotifications() {
       setLoading(false);
       return !!subscription;
     } catch (error) {
-      console.error('Erro ao subscrever:', error);
+      console.error("Erro ao subscrever:", error);
       setLoading(false);
       return false;
     }
@@ -57,7 +58,7 @@ export function usePushNotifications() {
       setLoading(false);
       return success;
     } catch (error) {
-      console.error('Erro ao cancelar subscription:', error);
+      console.error("Erro ao cancelar subscription:", error);
       setLoading(false);
       return false;
     }
@@ -70,6 +71,6 @@ export function usePushNotifications() {
     loading,
     requestPermission,
     subscribe,
-    unsubscribe
+    unsubscribe,
   };
 }

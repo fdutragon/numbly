@@ -1,19 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { Resend } from 'resend';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { Resend } from "resend";
 import { db } from "@/lib/db";
-import { addSecurityLog } from '@/lib/security';
+import { addSecurityLog } from "@/lib/security";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Schema de validação
 const SendEmailSchema = z.object({
-  to: z.string().email('Email de destino inválido'),
-  subject: z.string().min(1, 'Assunto é obrigatório'),
-  html: z.string().min(1, 'Conteúdo HTML é obrigatório'),
+  to: z.string().email("Email de destino inválido"),
+  subject: z.string().min(1, "Assunto é obrigatório"),
+  html: z.string().min(1, "Conteúdo HTML é obrigatório"),
   scheduledFor: z.string().datetime().optional(),
-  templateType: z.enum(['recovery', 'welcome', 'notification', 'marketing']).optional().default('notification'),
-  userId: z.string().optional()
+  templateType: z
+    .enum(["recovery", "welcome", "notification", "marketing"])
+    .optional()
+    .default("notification"),
+  userId: z.string().optional(),
 });
 
 interface EmailTemplate {
@@ -23,8 +26,8 @@ interface EmailTemplate {
 
 // Templates de email de recuperação
 const RECOVERY_EMAIL_TEMPLATES: Record<string, EmailTemplate> = {
-  '10min_recovery': {
-    subject: '⚡ Você esqueceu de descobrir seus segredos!',
+  "10min_recovery": {
+    subject: "⚡ Você esqueceu de descobrir seus segredos!",
     html: `
       <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <!-- Header -->
@@ -61,10 +64,10 @@ const RECOVERY_EMAIL_TEMPLATES: Record<string, EmailTemplate> = {
           </div>
         </div>
       </div>
-    `
+    `,
   },
-  '24h_recovery': {
-    subject: '🔥 Última chance! Seus segredos numerológicos te esperam',
+  "24h_recovery": {
+    subject: "🔥 Última chance! Seus segredos numerológicos te esperam",
     html: `
       <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <!-- Header -->
@@ -100,10 +103,10 @@ const RECOVERY_EMAIL_TEMPLATES: Record<string, EmailTemplate> = {
           </div>
         </div>
       </div>
-    `
+    `,
   },
-  '48h_recovery': {
-    subject: '💫 Por que você ainda não descobriu seus segredos?',
+  "48h_recovery": {
+    subject: "💫 Por que você ainda não descobriu seus segredos?",
     html: `
       <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <!-- Header -->
@@ -150,10 +153,10 @@ const RECOVERY_EMAIL_TEMPLATES: Record<string, EmailTemplate> = {
           </div>
         </div>
       </div>
-    `
+    `,
   },
-  '72h_recovery': {
-    subject: '😢 Vou sentir sua falta... (último email)',
+  "72h_recovery": {
+    subject: "😢 Vou sentir sua falta... (último email)",
     html: `
       <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <!-- Header -->
@@ -198,76 +201,96 @@ const RECOVERY_EMAIL_TEMPLATES: Record<string, EmailTemplate> = {
           </div>
         </div>
       </div>
-    `
-  }
+    `,
+  },
 };
 
 // Função helper para determinar email de destino baseado no ambiente
 function getTestEmail(originalEmail: string): string {
-  const isDevMode = process.env.NODE_ENV === 'development' || 
-                   (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production');
-  
-  return isDevMode ? 'delivered@resend.dev' : originalEmail;
+  const isDevMode =
+    process.env.NODE_ENV === "development" ||
+    (typeof process !== "undefined" && process.env.NODE_ENV !== "production");
+
+  return isDevMode ? "delivered@resend.dev" : originalEmail;
 }
 
 // Função para personalizar templates
-function personalizeTemplate(template: EmailTemplate, variables: Record<string, string>): EmailTemplate {
+function personalizeTemplate(
+  template: EmailTemplate,
+  variables: Record<string, string>,
+): EmailTemplate {
   let { subject, html } = template;
-  
+
   // Substituir variáveis no assunto e HTML
   Object.entries(variables).forEach(([key, value]) => {
     const placeholder = `{{{${key}}}}`;
-    subject = subject.replace(new RegExp(placeholder, 'g'), value);
-    html = html.replace(new RegExp(placeholder, 'g'), value);
+    subject = subject.replace(new RegExp(placeholder, "g"), value);
+    html = html.replace(new RegExp(placeholder, "g"), value);
   });
-  
+
   return { subject, html };
 }
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-  const userAgent = req.headers.get('user-agent') || 'unknown';
-  
+  const ip =
+    req.headers.get("x-forwarded-for") ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+  const userAgent = req.headers.get("user-agent") || "unknown";
+
   try {
     if (!process.env.RESEND_API_KEY) {
-      addSecurityLog('warn', {
-        ip,
-        userAgent,
-        endpoint: '/api/email/send',
-        method: 'POST'
-      }, 'RESEND_API_KEY não configurada');
-      
-      return NextResponse.json({
-        error: 'Configuração de email não encontrada'
-      }, { status: 500 });
+      addSecurityLog(
+        "warn",
+        {
+          ip,
+          userAgent,
+          endpoint: "/api/email/send",
+          method: "POST",
+        },
+        "RESEND_API_KEY não configurada",
+      );
+
+      return NextResponse.json(
+        {
+          error: "Configuração de email não encontrada",
+        },
+        { status: 500 },
+      );
     }
 
     // Validação da requisição
     const body = await req.json();
     const validatedData = SendEmailSchema.parse(body);
 
-    const { to, subject, html, scheduledFor, templateType, userId } = validatedData;
-    
+    const { to, subject, html, scheduledFor, templateType, userId } =
+      validatedData;
+
     // Log de início
-    addSecurityLog('info', {
-      ip,
-      userAgent,
-      endpoint: '/api/email/send',
-      method: 'POST'
-    }, `Email sending started`, { 
-      to: getTestEmail(to),
-      templateType,
-      userId,
-      hasSchedule: !!scheduledFor
-    });
+    addSecurityLog(
+      "info",
+      {
+        ip,
+        userAgent,
+        endpoint: "/api/email/send",
+        method: "POST",
+      },
+      `Email sending started`,
+      {
+        to: getTestEmail(to),
+        templateType,
+        userId,
+        hasSchedule: !!scheduledFor,
+      },
+    );
 
     // Preparar dados do email
     const emailData: any = {
-      from: 'Numbly <contato@numbly.life>',
+      from: "Numbly <contato@numbly.life>",
       to: getTestEmail(to),
       subject,
-      html
+      html,
     };
 
     // Configurar agendamento se especificado
@@ -279,127 +302,159 @@ export async function POST(req: NextRequest) {
     const { data, error: resendError } = await resend.emails.send(emailData);
 
     if (resendError) {
-      console.error('Erro do Resend:', resendError);
-      
-      addSecurityLog('warn', {
-        ip,
-        userAgent,
-        endpoint: '/api/email/send',  
-        method: 'POST'
-      }, `Email sending failed: ${resendError.message}`, {
-        to: getTestEmail(to),
-        templateType,
-        error: resendError
-      });
-      
-      return NextResponse.json({ 
-        error: 'Falha ao enviar email',
-        details: resendError.message 
-      }, { status: 500 });
+      console.error("Erro do Resend:", resendError);
+
+      addSecurityLog(
+        "warn",
+        {
+          ip,
+          userAgent,
+          endpoint: "/api/email/send",
+          method: "POST",
+        },
+        `Email sending failed: ${resendError.message}`,
+        {
+          to: getTestEmail(to),
+          templateType,
+          error: resendError,
+        },
+      );
+
+      return NextResponse.json(
+        {
+          error: "Falha ao enviar email",
+          details: resendError.message,
+        },
+        { status: 500 },
+      );
     }
 
     // Log de sucesso
     const processingTime = Date.now() - startTime;
-    
-    addSecurityLog('info', {
-      ip,
-      userAgent,
-      endpoint: '/api/email/send',
-      method: 'POST'
-    }, 'Email sent successfully', {
-      emailId: data?.id,
-      to: getTestEmail(to),
-      templateType,
-      userId,
-      processingTime,
-      scheduled: !!scheduledFor
-    });
+
+    addSecurityLog(
+      "info",
+      {
+        ip,
+        userAgent,
+        endpoint: "/api/email/send",
+        method: "POST",
+      },
+      "Email sent successfully",
+      {
+        emailId: data?.id,
+        to: getTestEmail(to),
+        templateType,
+        userId,
+        processingTime,
+        scheduled: !!scheduledFor,
+      },
+    );
 
     console.log(`✅ Email enviado com sucesso:`, {
       id: data?.id,
       to: getTestEmail(to),
       subject: subject.substring(0, 50),
       templateType,
-      processingTime
+      processingTime,
     });
 
     return NextResponse.json({
       success: true,
       emailId: data?.id,
-      message: 'Email enviado com sucesso',
-      processingTime
+      message: "Email enviado com sucesso",
+      processingTime,
     });
-
   } catch (error: any) {
     const processingTime = Date.now() - startTime;
-    
-    console.error('Erro ao enviar email:', error);
-    
-    addSecurityLog('warn', {
-      ip,
-      userAgent,
-      endpoint: '/api/email/send',
-      method: 'POST'
-    }, `Email sending error: ${error.message}`, {
-      error: error.message,
-      stack: error.stack,
-      processingTime
-    });
+
+    console.error("Erro ao enviar email:", error);
+
+    addSecurityLog(
+      "warn",
+      {
+        ip,
+        userAgent,
+        endpoint: "/api/email/send",
+        method: "POST",
+      },
+      `Email sending error: ${error.message}`,
+      {
+        error: error.message,
+        stack: error.stack,
+        processingTime,
+      },
+    );
 
     // Tratamento específico para erros de validação
     if (error instanceof z.ZodError) {
-      return NextResponse.json({
-        error: 'Dados inválidos fornecidos',
-        details: error.errors
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Dados inválidos fornecidos",
+          details: error.errors,
+        },
+        { status: 400 },
+      );
     }
 
-    return NextResponse.json({
-      error: 'Erro interno do servidor',
-      message: 'Falha ao processar envio de email'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Erro interno do servidor",
+        message: "Falha ao processar envio de email",
+      },
+      { status: 500 },
+    );
   }
 }
 
 // GET: Buscar templates disponíveis
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-  const userAgent = req.headers.get('user-agent') || 'unknown';
-  
+  const ip =
+    req.headers.get("x-forwarded-for") ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+  const userAgent = req.headers.get("user-agent") || "unknown";
+
   try {
     const { searchParams } = new URL(req.url);
-    const templateType = searchParams.get('type');
-    
-    if (templateType === 'recovery') {
-      const templates = Object.keys(RECOVERY_EMAIL_TEMPLATES).map(key => ({
+    const templateType = searchParams.get("type");
+
+    if (templateType === "recovery") {
+      const templates = Object.keys(RECOVERY_EMAIL_TEMPLATES).map((key) => ({
         key,
         subject: RECOVERY_EMAIL_TEMPLATES[key].subject,
-        description: `Template de recuperação ${key.replace('_recovery', '')}`
+        description: `Template de recuperação ${key.replace("_recovery", "")}`,
       }));
-      
+
       return NextResponse.json({
         templates,
-        count: templates.length
+        count: templates.length,
       });
     }
-    
+
     return NextResponse.json({
-      message: 'Templates de email disponíveis',
-      types: ['recovery', 'welcome', 'notification', 'marketing'],
-      recoveryTemplates: Object.keys(RECOVERY_EMAIL_TEMPLATES)
+      message: "Templates de email disponíveis",
+      types: ["recovery", "welcome", "notification", "marketing"],
+      recoveryTemplates: Object.keys(RECOVERY_EMAIL_TEMPLATES),
     });
-    
   } catch (error: any) {
-    addSecurityLog('warn', {
-      ip,
-      userAgent,
-      endpoint: '/api/email/send',
-      method: 'GET'
-    }, `Template fetch error: ${error.message}`);
-    
-    return NextResponse.json({
-      error: 'Erro ao buscar templates'
-    }, { status: 500 });
+    addSecurityLog(
+      "warn",
+      {
+        ip,
+        userAgent,
+        endpoint: "/api/email/send",
+        method: "GET",
+      },
+      `Template fetch error: ${error.message}`,
+    );
+
+    return NextResponse.json(
+      {
+        error: "Erro ao buscar templates",
+      },
+      { status: 500 },
+    );
   }
 }
 

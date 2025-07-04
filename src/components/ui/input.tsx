@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface InputProps {
   label?: string;
   error?: string;
-  type?: 'text' | 'email' | 'date' | 'number';
+  type?: "text" | "email" | "date" | "number";
   placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
@@ -17,7 +17,20 @@ interface InputProps {
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, type = 'text', placeholder, value, onChange, className, required, disabled }, ref) => {
+  (
+    {
+      label,
+      error,
+      type = "text",
+      placeholder,
+      value,
+      onChange,
+      className,
+      required,
+      disabled,
+    },
+    ref,
+  ) => {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -38,9 +51,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           onChange={(e) => onChange?.(e.target.value)}
           disabled={disabled}
           className={cn(
-            'w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
-            className
+            "w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
+            error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+            className,
           )}
           whileFocus={{ scale: 1.01 }}
         />
@@ -55,7 +68,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
       </motion.div>
     );
-  }
+  },
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";

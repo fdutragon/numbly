@@ -1,22 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
-    
+    const userId = request.headers.get("x-user-id");
+
     if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'ID do usuário não fornecido' },
-        { status: 401 }
+        { success: false, error: "ID do usuário não fornecido" },
+        { status: 401 },
       );
     }
 
     const data = await request.json();
 
     // Simular salvamento - em produção, usar Prisma
-    console.log('Dados do perfil recebidos:', {
+    console.log("Dados do perfil recebidos:", {
       userId,
-      ...data
+      ...data,
     });
 
     // Simular verificação se nome/data mudaram
@@ -27,18 +27,17 @@ export async function PUT(request: NextRequest) {
       success: true,
       data: {
         user: data,
-        mapaRecalculado
+        mapaRecalculado,
       },
-      message: mapaRecalculado 
-        ? '✨ Perfil atualizado e mapa numerológico recalculado!' 
-        : 'Perfil atualizado com sucesso!'
+      message: mapaRecalculado
+        ? "✨ Perfil atualizado e mapa numerológico recalculado!"
+        : "Perfil atualizado com sucesso!",
     });
-
   } catch (error) {
-    console.error('Erro ao atualizar perfil:', error);
+    console.error("Erro ao atualizar perfil:", error);
     return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
+      { success: false, error: "Erro interno do servidor" },
+      { status: 500 },
     );
   }
 }

@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { User } from "@prisma/client";
 
 // Definindo interface para o Mapa Numerológico
 export interface MapaNumerologico {

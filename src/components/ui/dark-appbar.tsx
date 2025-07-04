@@ -12,9 +12,16 @@ export function DarkAppBar({ title, backHref }: DarkAppBarProps) {
       <div className="flex items-center justify-between max-w-3xl mx-auto">
         <div className="flex items-center gap-3">
           {backHref && (
-            <a href={backHref} className="text-purple-500 hover:text-neutral-100 text-sm font-medium transition-colors">Voltar</a>
+            <a
+              href={backHref}
+              className="text-purple-500 hover:text-neutral-100 text-sm font-medium transition-colors"
+            >
+              Voltar
+            </a>
           )}
-          <h1 className="text-lg font-semibold text-neutral-100 tracking-tight">{title}</h1>
+          <h1 className="text-lg font-semibold text-neutral-100 tracking-tight">
+            {title}
+          </h1>
         </div>
       </div>
     </header>

@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Modal } from '@/components/ui/modal';
-import { 
-  Users, 
-  UserPlus, 
-  Heart, 
-  Star, 
-  MessageCircle, 
-  Share2, 
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
+import {
+  Users,
+  UserPlus,
+  Heart,
+  Star,
+  MessageCircle,
+  Share2,
   Clock,
   Eye,
   Gift,
@@ -24,23 +24,24 @@ import {
   Code,
   Send,
   X,
-  ExternalLink
-} from 'lucide-react';
-import { NavBar } from '@/components/ui/navbar';
-import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+  ExternalLink,
+} from "lucide-react";
+import { NavBar } from "@/components/ui/navbar";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // Modo desenvolvimento - permite testes gratuitos
-const isDevelopment = process.env.NODE_ENV === 'development' || 
-                     typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const isDevelopment =
+  process.env.NODE_ENV === "development" ||
+  (typeof window !== "undefined" && window.location.hostname === "localhost");
 
 interface InviteData {
   id: string;
   code: string;
   invitedName: string;
   relationshipType: string;
-  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED';
+  status: "PENDING" | "ACCEPTED" | "EXPIRED";
   clicks: number;
   createdAt: string;
   expiresAt?: string;
@@ -50,19 +51,68 @@ interface InviteData {
 }
 
 const relationshipOptions = [
-  { value: 'FRIEND', label: 'Amigo(a)', icon: '👫', color: 'from-blue-500 to-blue-600', bg: 'bg-blue-50', text: 'text-blue-700' },
-  { value: 'FAMILY', label: 'Família', icon: '👨‍👩‍👧‍👦', color: 'from-green-500 to-green-600', bg: 'bg-green-50', text: 'text-green-700' },
-  { value: 'ROMANTIC', label: 'Parceiro(a)', icon: '💕', color: 'from-pink-500 to-pink-600', bg: 'bg-pink-50', text: 'text-pink-700' },
-  { value: 'BUSINESS', label: 'Sócio(a)', icon: '🤝', color: 'from-purple-500 to-purple-600', bg: 'bg-purple-50', text: 'text-purple-700' },
-  { value: 'CRUSH', label: 'Paquera', icon: '😍', color: 'from-red-500 to-red-600', bg: 'bg-red-50', text: 'text-red-700' },
-  { value: 'PET', label: 'Pet', icon: '🐾', color: 'from-orange-500 to-orange-600', bg: 'bg-orange-50', text: 'text-orange-700' },
-  { value: 'OTHER', label: 'Outro', icon: '✨', color: 'from-gray-500 to-gray-600', bg: 'bg-gray-50', text: 'text-gray-700' }
+  {
+    value: "FRIEND",
+    label: "Amigo(a)",
+    icon: "👫",
+    color: "from-blue-500 to-blue-600",
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+  },
+  {
+    value: "FAMILY",
+    label: "Família",
+    icon: "👨‍👩‍👧‍👦",
+    color: "from-green-500 to-green-600",
+    bg: "bg-green-50",
+    text: "text-green-700",
+  },
+  {
+    value: "ROMANTIC",
+    label: "Parceiro(a)",
+    icon: "💕",
+    color: "from-pink-500 to-pink-600",
+    bg: "bg-pink-50",
+    text: "text-pink-700",
+  },
+  {
+    value: "BUSINESS",
+    label: "Sócio(a)",
+    icon: "🤝",
+    color: "from-purple-500 to-purple-600",
+    bg: "bg-purple-50",
+    text: "text-purple-700",
+  },
+  {
+    value: "CRUSH",
+    label: "Paquera",
+    icon: "😍",
+    color: "from-red-500 to-red-600",
+    bg: "bg-red-50",
+    text: "text-red-700",
+  },
+  {
+    value: "PET",
+    label: "Pet",
+    icon: "🐾",
+    color: "from-orange-500 to-orange-600",
+    bg: "bg-orange-50",
+    text: "text-orange-700",
+  },
+  {
+    value: "OTHER",
+    label: "Outro",
+    icon: "✨",
+    color: "from-gray-500 to-gray-600",
+    bg: "bg-gray-50",
+    text: "text-gray-700",
+  },
 ];
 
 export default function FriendsPage() {
   const { user, requireAuth } = useAuth();
   const router = useRouter();
-  
+
   // Proteger rota
   requireAuth();
 
@@ -71,51 +121,51 @@ export default function FriendsPage() {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  
+
   // Estados do formulário
   const [formData, setFormData] = useState({
-    invitedName: '',
-    relationshipType: 'FRIEND',
-    customMessage: ''
+    invitedName: "",
+    relationshipType: "FRIEND",
+    customMessage: "",
   });
   const [errors, setErrors] = useState<{ invitedName?: string }>({});
 
   // Dados mockados para desenvolvimento
   const mockInvites: InviteData[] = [
     {
-      id: '1',
-      code: 'ABC123',
-      invitedName: 'Ana Silva',
-      relationshipType: 'FRIEND',
-      status: 'ACCEPTED',
+      id: "1",
+      code: "ABC123",
+      invitedName: "Ana Silva",
+      relationshipType: "FRIEND",
+      status: "ACCEPTED",
       clicks: 5,
       createdAt: new Date().toISOString(),
       isRevealed: true,
-      inviteUrl: 'https://numbly.app/convite/ABC123'
+      inviteUrl: "https://numbly.app/convite/ABC123",
     },
     {
-      id: '2', 
-      code: 'DEF456',
-      invitedName: 'João Santos',
-      relationshipType: 'ROMANTIC',
-      status: 'PENDING',
+      id: "2",
+      code: "DEF456",
+      invitedName: "João Santos",
+      relationshipType: "ROMANTIC",
+      status: "PENDING",
       clicks: 2,
       createdAt: new Date(Date.now() - 86400000).toISOString(),
       isRevealed: false,
-      inviteUrl: 'https://numbly.app/convite/DEF456',
-      customMessage: 'Vamos descobrir nossa compatibilidade! 💕'
+      inviteUrl: "https://numbly.app/convite/DEF456",
+      customMessage: "Vamos descobrir nossa compatibilidade! 💕",
     },
     {
-      id: '3',
-      code: 'GHI789', 
-      invitedName: 'Maria Costa',
-      relationshipType: 'FAMILY',
-      status: 'PENDING',
+      id: "3",
+      code: "GHI789",
+      invitedName: "Maria Costa",
+      relationshipType: "FAMILY",
+      status: "PENDING",
       clicks: 1,
       createdAt: new Date(Date.now() - 172800000).toISOString(),
       isRevealed: false,
-      inviteUrl: 'https://numbly.app/convite/GHI789'
-    }
+      inviteUrl: "https://numbly.app/convite/GHI789",
+    },
   ];
 
   useEffect(() => {
@@ -135,18 +185,18 @@ export default function FriendsPage() {
       }
 
       // Em produção, fazer chamada real para API
-      const response = await fetch('/api/friends/invite', {
+      const response = await fetch("/api/friends/invite", {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setInvites(data.invites || []);
       }
     } catch (error) {
-      console.error('Erro ao carregar convites:', error);
+      console.error("Erro ao carregar convites:", error);
     } finally {
       setLoading(false);
     }
@@ -154,18 +204,18 @@ export default function FriendsPage() {
 
   const validateForm = () => {
     const newErrors: { invitedName?: string } = {};
-    
+
     if (!formData.invitedName.trim()) {
-      newErrors.invitedName = 'Nome é obrigatório';
+      newErrors.invitedName = "Nome é obrigatório";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleCreateInvite = async () => {
     if (!validateForm()) return;
-    
+
     // Verificar premium (exceto em desenvolvimento)
     if (!user?.isPremium && !isDevelopment && invites.length >= 1) {
       setShowPremiumModal(true);
@@ -173,7 +223,7 @@ export default function FriendsPage() {
     }
 
     setLoading(true);
-    
+
     try {
       if (isDevelopment) {
         // Em desenvolvimento, simular criação
@@ -182,17 +232,21 @@ export default function FriendsPage() {
           code: Math.random().toString(36).substring(2, 8).toUpperCase(),
           invitedName: formData.invitedName,
           relationshipType: formData.relationshipType,
-          status: 'PENDING',
+          status: "PENDING",
           clicks: 0,
           createdAt: new Date().toISOString(),
           isRevealed: false,
           inviteUrl: `https://numbly.app/convite/${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-          customMessage: formData.customMessage || undefined
+          customMessage: formData.customMessage || undefined,
         };
-        
+
         setTimeout(() => {
-          setInvites(prev => [newInvite, ...prev]);
-          setFormData({ invitedName: '', relationshipType: 'FRIEND', customMessage: '' });
+          setInvites((prev) => [newInvite, ...prev]);
+          setFormData({
+            invitedName: "",
+            relationshipType: "FRIEND",
+            customMessage: "",
+          });
           setIsModalOpen(false);
           setLoading(false);
         }, 800);
@@ -200,23 +254,27 @@ export default function FriendsPage() {
       }
 
       // Em produção, fazer chamada real
-      const response = await fetch('/api/friends/invite', {
-        method: 'POST',
+      const response = await fetch("/api/friends/invite", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      
+
       if (response.ok) {
         const newInvite = await response.json();
-        setInvites(prev => [newInvite, ...prev]);
-        setFormData({ invitedName: '', relationshipType: 'FRIEND', customMessage: '' });
+        setInvites((prev) => [newInvite, ...prev]);
+        setFormData({
+          invitedName: "",
+          relationshipType: "FRIEND",
+          customMessage: "",
+        });
         setIsModalOpen(false);
       }
     } catch (error) {
-      console.error('Erro ao criar convite:', error);
+      console.error("Erro ao criar convite:", error);
     } finally {
       setLoading(false);
     }
@@ -228,29 +286,40 @@ export default function FriendsPage() {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
-      console.error('Erro ao copiar:', error);
+      console.error("Erro ao copiar:", error);
     }
   };
 
   const getRelationshipOption = (type: string) => {
-    return relationshipOptions.find(opt => opt.value === type) || relationshipOptions[0];
+    return (
+      relationshipOptions.find((opt) => opt.value === type) ||
+      relationshipOptions[0]
+    );
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACCEPTED': return 'text-green-600 bg-green-50 border-green-200';
-      case 'PENDING': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'EXPIRED': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case "ACCEPTED":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "PENDING":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      case "EXPIRED":
+        return "text-red-600 bg-red-50 border-red-200";
+      default:
+        return "text-gray-600 bg-gray-50 border-gray-200";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'ACCEPTED': return 'Aceito';
-      case 'PENDING': return 'Pendente';
-      case 'EXPIRED': return 'Expirado';
-      default: return status;
+      case "ACCEPTED":
+        return "Aceito";
+      case "PENDING":
+        return "Pendente";
+      case "EXPIRED":
+        return "Expirado";
+      default:
+        return status;
     }
   };
 
@@ -281,10 +350,12 @@ export default function FriendsPage() {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Amigos</h1>
-              <p className="text-sm text-gray-500">Convide pessoas para descobrir a compatibilidade</p>
+              <p className="text-sm text-gray-500">
+                Convide pessoas para descobrir a compatibilidade
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             {isDevelopment && (
               <div className="px-2 py-1 bg-green-100 rounded-full flex items-center gap-1">
@@ -319,13 +390,16 @@ export default function FriendsPage() {
             Convide Seus Amigos
           </h2>
           <p className="text-gray-600 leading-relaxed">
-            Crie convites personalizados e descubra a compatibilidade numerológica com pessoas importantes da sua vida.
+            Crie convites personalizados e descubra a compatibilidade
+            numerológica com pessoas importantes da sua vida.
           </p>
           {isDevelopment && (
             <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center justify-center gap-2 text-green-700">
                 <Code className="w-4 h-4" />
-                <span className="text-sm font-medium">Modo Desenvolvimento Ativo</span>
+                <span className="text-sm font-medium">
+                  Modo Desenvolvimento Ativo
+                </span>
               </div>
               <p className="text-xs text-green-600 mt-1">
                 Todos os recursos premium estão liberados para testes
@@ -360,8 +434,10 @@ export default function FriendsPage() {
           ) : (
             <AnimatePresence>
               {invites.map((invite, index) => {
-                const relationshipOption = getRelationshipOption(invite.relationshipType);
-                
+                const relationshipOption = getRelationshipOption(
+                  invite.relationshipType,
+                );
+
                 return (
                   <motion.div
                     key={invite.id}
@@ -372,25 +448,33 @@ export default function FriendsPage() {
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${relationshipOption.bg}`}>
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${relationshipOption.bg}`}
+                        >
                           {relationshipOption.icon}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900">{invite.invitedName}</h3>
+                          <h3 className="font-semibold text-gray-900">
+                            {invite.invitedName}
+                          </h3>
                           <p className={`text-sm ${relationshipOption.text}`}>
                             {relationshipOption.label}
                           </p>
                         </div>
                       </div>
-                      
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(invite.status)}`}>
+
+                      <div
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(invite.status)}`}
+                      >
                         {getStatusText(invite.status)}
                       </div>
                     </div>
 
                     {invite.customMessage && (
                       <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-700 italic">"{invite.customMessage}"</p>
+                        <p className="text-sm text-gray-700 italic">
+                          "{invite.customMessage}"
+                        </p>
                       </div>
                     )}
 
@@ -402,7 +486,11 @@ export default function FriendsPage() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
-                          <span>{new Date(invite.createdAt).toLocaleDateString('pt-BR')}</span>
+                          <span>
+                            {new Date(invite.createdAt).toLocaleDateString(
+                              "pt-BR",
+                            )}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -411,7 +499,9 @@ export default function FriendsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => copyToClipboard(invite.inviteUrl, invite.id)}
+                        onClick={() =>
+                          copyToClipboard(invite.inviteUrl, invite.id)
+                        }
                         className="flex-1"
                       >
                         {copiedId === invite.id ? (
@@ -426,15 +516,15 @@ export default function FriendsPage() {
                           </>
                         )}
                       </Button>
-                      
+
                       <Button
                         size="sm"
                         onClick={() => {
                           if (navigator.share) {
                             navigator.share({
-                              title: 'Convite Numbly',
-                              text: `${user?.name} te convidou para descobrir a compatibilidade numerológica! ${invite.customMessage || ''}`,
-                              url: invite.inviteUrl
+                              title: "Convite Numbly",
+                              text: `${user?.name} te convidou para descobrir a compatibilidade numerológica! ${invite.customMessage || ""}`,
+                              url: invite.inviteUrl,
                             });
                           } else {
                             copyToClipboard(invite.inviteUrl, invite.id);
@@ -459,7 +549,11 @@ export default function FriendsPage() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setFormData({ invitedName: '', relationshipType: 'FRIEND', customMessage: '' });
+          setFormData({
+            invitedName: "",
+            relationshipType: "FRIEND",
+            customMessage: "",
+          });
           setErrors({});
         }}
         title="Criar Novo Convite"
@@ -487,11 +581,15 @@ export default function FriendsPage() {
                 type="text"
                 placeholder="Digite o nome completo..."
                 value={formData.invitedName}
-                onChange={(value) => setFormData(prev => ({ ...prev, invitedName: value }))}
-                className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors ${errors.invitedName ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, invitedName: value }))
+                }
+                className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors ${errors.invitedName ? "border-red-300 focus:border-red-500 focus:ring-red-200" : ""}`}
               />
               {errors.invitedName && (
-                <p className="text-sm text-red-600 mt-1">{errors.invitedName}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.invitedName}
+                </p>
               )}
             </div>
 
@@ -504,16 +602,23 @@ export default function FriendsPage() {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, relationshipType: option.value }))}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        relationshipType: option.value,
+                      }))
+                    }
                     className={`p-3 border rounded-lg text-left transition-all duration-200 ${
                       formData.relationshipType === option.value
                         ? `border-blue-500 ${option.bg} ${option.text}`
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-lg">{option.icon}</span>
-                      <span className="font-medium text-sm">{option.label}</span>
+                      <span className="font-medium text-sm">
+                        {option.label}
+                      </span>
                     </div>
                   </button>
                 ))}
@@ -527,7 +632,12 @@ export default function FriendsPage() {
               <textarea
                 placeholder="Adicione uma mensagem especial..."
                 value={formData.customMessage}
-                onChange={(e) => setFormData(prev => ({ ...prev, customMessage: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    customMessage: e.target.value,
+                  }))
+                }
                 rows={3}
                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors resize-none"
               />
@@ -575,16 +685,16 @@ export default function FriendsPage() {
           <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <Crown className="w-8 h-8 text-white" />
           </div>
-          
+
           <h3 className="text-xl font-semibold mb-4">
             Convites Ilimitados Premium
           </h3>
-          
+
           <p className="text-gray-600 mb-8">
-            Para criar mais convites e acessar recursos avançados, 
-            você precisa do plano Premium.
+            Para criar mais convites e acessar recursos avançados, você precisa
+            do plano Premium.
           </p>
-          
+
           <div className="space-y-3">
             <Button className="w-full" size="lg">
               <Crown className="w-4 h-4 mr-2" />
