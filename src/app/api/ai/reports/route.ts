@@ -409,7 +409,7 @@ export async function GET(req: NextRequest) {
       userAgent,
       endpoint: '/api/ai/reports',
       method: 'GET'
-    }, 'User reports retrieved', { 
+       }, 'User reports retrieved', { 
       userId,
       reportType,
       count: reports.length,

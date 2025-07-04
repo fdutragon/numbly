@@ -16,7 +16,8 @@ import {
   Star,
   Crown,
   Send,
-  Calculator
+  Calculator,
+  Code
 } from 'lucide-react';
 import { NavBar } from '@/components/ui/navbar';
 import Link from 'next/link';
@@ -24,6 +25,10 @@ import { calcularCompatibilidade } from '@/lib/numerologia';
 import { validateDate } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+
+// Modo desenvolvimento - permite testes gratuitos
+const isDevelopment = process.env.NODE_ENV === 'development' || 
+                     typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
 interface CompatibilityResult {
   score: number;
@@ -78,15 +83,24 @@ export default function CompatibilidadePage() {
     setLoading(true);
     
     try {
-      if (!user?.isPremium) {
+      // Verificar se precisa de Premium (exceto em desenvolvimento)
+      if (!user?.isPremium && !isDevelopment) {
         setShowPremiumModal(true);
+        setLoading(false);
         return;
       }
 
+      // Formatar data do usuário de forma segura
+      const userBirthDate = user?.birthDate ? 
+        (typeof user.birthDate === 'string' ? user.birthDate : 
+         user.birthDate instanceof Date ? user.birthDate.toISOString().split('T')[0] : 
+         new Date(user.birthDate).toISOString().split('T')[0]) : 
+        '';
+
       const compatibility = calcularCompatibilidade(
         {
-          nome: user.name || '',
-          dataNascimento: user.birthDate ? user.birthDate.toISOString().split('T')[0] : ''
+          nome: user?.name || 'Usuário',
+          dataNascimento: userBirthDate
         },
         {
           nome: formData.nome,
@@ -97,6 +111,7 @@ export default function CompatibilidadePage() {
       setResult(compatibility);
     } catch (error) {
       console.error('Erro ao calcular compatibilidade:', error);
+      alert('Erro ao calcular compatibilidade. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -152,16 +167,25 @@ export default function CompatibilidadePage() {
               <p className="text-xs text-gray-500">Descubra a afinidade numerológica</p>
             </div>
           </div>
-          {!user?.isPremium && (
-            <Button
-              size="sm"
-              onClick={() => setShowPremiumModal(true)}
-              className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
-            >
-              <Crown className="w-4 h-4 mr-2" />
-              Premium
-            </Button>
-          )}
+          
+          <div className="flex items-center gap-2">
+            {isDevelopment && (
+              <div className="px-2 py-1 bg-green-100 rounded-full flex items-center gap-1">
+                <Code className="w-3 h-3 text-green-600" />
+                <span className="text-xs text-green-700 font-medium">DEV</span>
+              </div>
+            )}
+            {!user?.isPremium && !isDevelopment && (
+              <Button
+                size="sm"
+                onClick={() => setShowPremiumModal(true)}
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Premium
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -178,6 +202,17 @@ export default function CompatibilidadePage() {
               <p className="text-gray-600">
                 Descubra o nível de afinidade entre você e outra pessoa através da numerologia
               </p>
+              {isDevelopment && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-center gap-2 text-green-700">
+                    <Code className="w-4 h-4" />
+                    <span className="text-sm font-medium">Modo Desenvolvimento Ativo</span>
+                  </div>
+                  <p className="text-xs text-green-600 mt-1">
+                    Todos os recursos premium estão liberados para testes
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
@@ -193,7 +228,7 @@ export default function CompatibilidadePage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nome da outra pessoa
                   </label>
                   <Input
@@ -201,7 +236,7 @@ export default function CompatibilidadePage() {
                     placeholder="Digite o nome completo..."
                     value={formData.nome}
                     onChange={(value) => setFormData(prev => ({ ...prev, nome: value }))}
-                    className={errors.nome ? 'border-red-300' : ''}
+                    className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-colors ${errors.nome ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
                   />
                   {errors.nome && (
                     <p className="text-sm text-red-600 mt-1">{errors.nome}</p>
@@ -209,14 +244,14 @@ export default function CompatibilidadePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Data de nascimento
                   </label>
                   <Input
                     type="date"
                     value={formData.dataNascimento}
                     onChange={(value) => setFormData(prev => ({ ...prev, dataNascimento: value }))}
-                    className={errors.dataNascimento ? 'border-red-300' : ''}
+                    className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-colors ${errors.dataNascimento ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
                   />
                   {errors.dataNascimento && (
                     <p className="text-sm text-red-600 mt-1">{errors.dataNascimento}</p>
@@ -226,7 +261,7 @@ export default function CompatibilidadePage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600"
+                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -236,7 +271,7 @@ export default function CompatibilidadePage() {
                   ) : (
                     <>
                       <Calculator className="w-4 h-4 mr-2" />
-                      Calcular Compatibilidade
+                      {isDevelopment ? 'Calcular Compatibilidade (DEV)' : 'Calcular Compatibilidade'}
                     </>
                   )}
                 </Button>
