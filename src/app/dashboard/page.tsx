@@ -27,6 +27,41 @@ export default function DashboardPage() {
     icon: ''
   });
 
+  // Função auxiliar para formatar data de forma segura
+  const formatDateSafely = (date: any): string | undefined => {
+    if (!date) return undefined;
+    
+    try {
+      // Se já é uma string no formato YYYY-MM-DD
+      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) {
+        return date.split('T')[0];
+      }
+      
+      // Se é string, tentar converter para Date
+      if (typeof date === 'string') {
+        const dateObj = new Date(date);
+        if (!isNaN(dateObj.getTime())) {
+          return dateObj.toISOString().split('T')[0];
+        }
+      }
+      
+      // Se é objeto Date
+      if (date instanceof Date && !isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+      
+      // Se tem método toISOString
+      if (date && typeof date.toISOString === 'function') {
+        return date.toISOString().split('T')[0];
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.warn('Erro ao formatar data:', error);
+      return undefined;
+    }
+  };
+
   // Calcular dia pessoal atual
   const diaPessoalAtual = mapa ? (mapa.mesPessoal + new Date().getDate()) % 9 === 0 ? 9 : (mapa.mesPessoal + new Date().getDate()) % 9 : (new Date().getDate() % 9) + 1;
   
@@ -480,11 +515,11 @@ export default function DashboardPage() {
         title={reportModal.title}
         icon={reportModal.icon}
         userData={{
-          user: {
-            name: user.name,
-            firstName: user.name?.split(' ')[0] || 'Usuário'
-          },
-          mapa
+          name: user?.name,
+          firstName: user?.name?.split(' ')[0] || 'Usuário',
+          birthDate: formatDateSafely(user?.birthDate),
+          numerologyData: mapa,
+          userId: user?.id
         }}
       />
 
