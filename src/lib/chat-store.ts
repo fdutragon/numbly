@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ClaraScriptFlow } from './clara-script';
+import { type ClaraState } from './clara-ai-engine';
 
 export type Message = {
   id: string;
@@ -16,7 +16,7 @@ export type ChatThread = {
   messages: Message[];
   createdAt: number;
   updatedAt: number;
-  claraFlow?: ClaraScriptFlow;
+  claraState?: ClaraState;
 };
 
 interface ChatStore {
@@ -34,7 +34,7 @@ interface ChatStore {
   setTyping: (typing: boolean) => void;
   getCurrentThread: () => ChatThread | null;
   deleteThread: (threadId: string) => void;
-  updateClaraFlow: (threadId: string, flow: Partial<ClaraScriptFlow>) => void;
+  updateClaraState: (threadId: string, state: ClaraState) => void;
 }
 
 export const useChatStore = create<ChatStore>()(
@@ -59,11 +59,12 @@ export const useChatStore = create<ChatStore>()(
           messages: [],
           createdAt: timestamp,
           updatedAt: timestamp,
-          claraFlow: {
-            currentStage: 'greeting',
-            userResponses: [],
-            hesitationCount: 0,
-            noResponseCount: 0,
+          claraState: {
+            currentStage: 'intro',
+            conversationHistory: [],
+            userSentiment: 'neutral',
+            objectionCount: 0,
+            engagementLevel: 'medium',
             lastInteraction: timestamp,
           },
         };
@@ -141,17 +142,13 @@ export const useChatStore = create<ChatStore>()(
         }));
       },
 
-      updateClaraFlow: (threadId, flow) => {
-        set((state) => ({
-          threads: state.threads.map((thread) =>
+      updateClaraState: (threadId: string, state: ClaraState) => {
+        set((currentState) => ({
+          threads: currentState.threads.map((thread) =>
             thread.id === threadId
               ? { 
                   ...thread, 
-                  claraFlow: { 
-                    ...thread.claraFlow!,
-                    ...flow,
-                    lastInteraction: typeof window !== 'undefined' ? Date.now() : 0,
-                  },
+                  claraState: state,
                   updatedAt: typeof window !== 'undefined' ? Date.now() : 0,
                 }
               : thread

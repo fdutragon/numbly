@@ -22,6 +22,7 @@ export function Chat() {
     setLoading,
     setTyping,
     getCurrentThread,
+    updateClaraState,
   } = useChatStore();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -113,7 +114,10 @@ export function Chat() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, threadId }),
+        body: JSON.stringify({ 
+          messages, 
+          claraState: getCurrentThread()?.claraState 
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to get response');
@@ -160,6 +164,11 @@ export function Chat() {
                   content: fullContent,
                   isTyping: false,
                 });
+
+                // Update Clara state
+                if (data.claraState) {
+                  updateClaraState(threadId, data.claraState);
+                }
 
                 // Handle payment modal
                 if (data.shouldShowPaymentModal) {
