@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TypewriterText } from '@/components/ui/typewriter';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
+import { CheckoutButton } from '@/components/chat/checkout-button';
 import { Bot, User } from 'lucide-react';
 import type { Message } from '@/lib/chat-store';
 
@@ -75,6 +76,16 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
             <MarkdownRenderer content={message.content} />
           )}
         </div>
+        
+        {/* Checkout Button for payment messages */}
+        {isAssistant && message.content && (
+          message.content.includes('direcionar para o checkout') || 
+          message.content.includes('Vou te direcionar para o checkout')
+        ) && (
+          <CheckoutButton 
+            planType={message.content.includes('Pro') ? 'pro' : 'basic'} 
+          />
+        )}
         
         <div className={`text-xs text-gray-400 dark:text-gray-500 mt-1 ${
           isUser ? 'text-right' : 'text-left'
