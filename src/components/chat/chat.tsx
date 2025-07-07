@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChatMessage } from '@/components/chat/chat-message';
 import { ChatInput } from '@/components/chat/chat-input';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckoutComponent } from '@/components/clara/checkout-component';
 import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { useChatStore } from '@/lib/chat-store';
@@ -27,7 +26,6 @@ export function Chat() {
   } = useChatStore();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentThread = getCurrentThread();
 
@@ -39,7 +37,6 @@ export function Chat() {
   ], []);
   const [introIndex, setIntroIndex] = useState(0);
   const [introChar, setIntroChar] = useState(0);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Estados para funcionalidades de intenção
   const [showCheckout, setShowCheckout] = useState(false);

@@ -14,20 +14,21 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend, isLoading = false, disabled = false, inputRef }: ChatInputProps) {
   const [value, setValue] = useState('');
-  const textareaRef = inputRef || useRef<HTMLTextAreaElement>(null);
+  const internalRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = inputRef || internalRef;
 
   useEffect(() => {
     if (!isLoading && textareaRef.current) {
       textareaRef.current.focus();
     }
-  }, [isLoading]);
+  }, [isLoading, textareaRef]);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
-  }, [value]);
+  }, [value, textareaRef]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -154,7 +154,7 @@ export async function processUserMessage(
     // 2. Processar intenções especiais primeiro
     if (intentionResult.intention === 'payment' && intentionResult.confidence > 0.7) {
       return {
-        content: intentionResponses.payment.success,
+        content: intentionResponses.payment.general,
         shouldShowPaymentModal: true,
         emailSent: false,
         intention: 'payment',
@@ -171,11 +171,11 @@ export async function processUserMessage(
       if (emailRecipient && validateEmail(emailRecipient)) {
         try {
           const emailContent = generateEmailContent();
-          const emailResult = await sendEmailViaResend({
-            to: emailRecipient,
-            subject: 'Clara IA - Automação WhatsApp Profissional',
-            content: emailContent,
-          });
+          const emailResult = await sendEmailViaResend(
+            emailRecipient,
+            'Clara IA - Automação WhatsApp Profissional',
+            emailContent
+          );
           
           return {
             content: emailResult.success ? intentionResponses.email.success : intentionResponses.email.error,
@@ -187,7 +187,7 @@ export async function processUserMessage(
             scriptStage: currentState.currentStage,
             reasoning: `Email ${emailResult.success ? 'enviado com sucesso' : 'falhou'} para ${emailRecipient}`
           };
-        } catch (error) {
+        } catch {
           return {
             content: intentionResponses.email.error,
             shouldShowPaymentModal: false,
@@ -201,7 +201,7 @@ export async function processUserMessage(
         }
       } else {
         return {
-          content: intentionResponses.email.noRecipient,
+          content: intentionResponses.email.request,
           shouldShowPaymentModal: false,
           emailSent: false,
           intention: 'email',

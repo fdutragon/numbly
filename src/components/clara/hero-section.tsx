@@ -47,12 +47,6 @@ export function HeroSection() {
     return () => clearTimeout(timeout);
   }, [displayedText, isTyping, currentPhraseIndex]);
 
-  const scrollToCheckout = () => {
-    document.getElementById('checkout-section')?.scrollIntoView({ 
-      behavior: 'smooth' 
-    });
-  };
-
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 py-20 overflow-hidden">
       {/* Background gradient */}
