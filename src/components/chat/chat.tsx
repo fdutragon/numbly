@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { CheckoutComponent } from '@/components/clara/checkout-component';
 import { useChatStore } from '@/lib/chat-store';
 import { Bot, CheckCircle } from 'lucide-react';
+import { TypingIndicator } from './typing-indicator';
 
 export function Chat() {
   const {
@@ -318,9 +319,7 @@ export function Chat() {
                           exit={{ opacity: 0, y: 10 }}
                           transition={{ duration: 0.2 }}
                         >
-                          {/* Importa o TypingIndicator */}
-                 
-                          {require('./typing-indicator').TypingIndicator()}
+                          <TypingIndicator />
                         </motion.div>
                       </AnimatePresence>
                     </div>
