@@ -109,7 +109,7 @@ export function logSecurityEvent(
   type: SecurityEventType,
   context: SecurityContext,
   message: string,
-  metadata?: any
+  metadata?: unknown
 ): void {
   const logEntry = {
     timestamp: new Date().toISOString(),

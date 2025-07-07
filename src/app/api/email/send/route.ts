@@ -210,7 +210,8 @@ export async function GET() {
       status: 'Email service is running',
       timestamp: new Date().toISOString()
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('Email service error:', error);
     return NextResponse.json(
       { error: 'Erro ao verificar serviço de email' },
       { status: 500 }

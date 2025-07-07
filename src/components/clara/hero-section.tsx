@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Sparkles, MessageCircle, BarChart3, Bot, Calendar, Target, TrendingUp, Clock, Shield } from 'lucide-react';
+import { Sparkles, MessageCircle} from 'lucide-react';
 
 const typewriterPhrases = [
   "Oi! Sou a Clara, sua secretária inteligente 💼",

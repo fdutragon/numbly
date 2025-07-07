@@ -8,7 +8,7 @@ export function addSecurityLog(
     method: string;
   },
   message: string,
-  data?: any
+  data?: unknown
 ) {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] [${level.toUpperCase()}] ${message}`, {

@@ -22,7 +22,7 @@ const groq = new Groq({
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, threadId, claraFlow } = await request.json();
+    const { messages, claraFlow } = await request.json();
     
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: 'Messages array is required' }, { status: 400 });

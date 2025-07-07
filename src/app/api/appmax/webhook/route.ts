@@ -27,8 +27,8 @@ interface WebhookResponse {
 interface PixelResponse {
   success: boolean;
   status?: number;
-  data?: any;
-  error?: any;
+  data?: unknown;
+  error?: unknown;
 }
 
 export const dynamic = 'force-dynamic';
@@ -124,8 +124,10 @@ async function sendTikTokPurchaseEvent(email: string, amount: number = 17): Prom
     } else {
       return { success: false, status: response.status, error: responseBody };
     }
-  } catch (error: any) {
-    return { success: false, status: 0, error: { message: error.message, stack: error.stack } };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    return { success: false, status: 0, error: { message: errorMessage, stack: errorStack } };
   }
 }
 
@@ -181,8 +183,10 @@ async function sendMetaPurchaseEvent(email: string, amount: number = 17): Promis
     } else {
       return { success: false, status: response.status, error: responseBody };
     }
-  } catch (error: any) {
-    return { success: false, status: 0, error: { message: error.message, stack: error.stack } };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    return { success: false, status: 0, error: { message: errorMessage, stack: errorStack } };
   }
 }
 
@@ -240,26 +244,27 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
     // 1. 🛡️ Validação de segurança (mais permissiva para webhooks)
     try {
       securityContext = await authGuard(req);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('Auth guard error:', error);
       securityContext = {
         ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
         userAgent: req.headers.get('user-agent') || '',
-        riskScore: 0,
         timestamp: Date.now(),
-        endpoint: '/api/appmax/webhook',
-        method: 'POST'
+        requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       };
     }
 
     // 2. 🚦 Rate limiting para webhooks
-    const webhookKey = `webhook_appmax_${securityContext.ip}`;
-    if (!checkRateLimit(webhookKey, WEBHOOK_RATE_LIMIT.window, WEBHOOK_RATE_LIMIT.max)) {
-      logSecurityEvent('RATE_LIMITED', securityContext, 'AppMax webhook rate limit exceeded');
-      return NextResponse.json<WebhookResponse>({
-        received: true,
-        error: 'Rate limit excedido',
-        timestamp: new Date().toISOString()
-      }, { status: 429 });
+    if (securityContext) {
+      const webhookKey = `webhook_appmax_${securityContext.ip}`;
+      if (!checkRateLimit(webhookKey, WEBHOOK_RATE_LIMIT.window, WEBHOOK_RATE_LIMIT.max)) {
+        logSecurityEvent('RATE_LIMITED', securityContext, 'AppMax webhook rate limit exceeded');
+        return NextResponse.json<WebhookResponse>({
+          received: true,
+          error: 'Rate limit excedido',
+          timestamp: new Date().toISOString()
+        }, { status: 429 });
+      }
     }
 
     // 3. 📝 Parsear e validar payload
@@ -271,7 +276,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
       validatedData = webhookSchema.parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        logSecurityEvent('SUSPICIOUS', securityContext, `Invalid webhook data: ${error.errors.map(e => e.message).join(', ')}`);
+        if (securityContext) {
+          logSecurityEvent('SUSPICIOUS', securityContext, `Invalid webhook data: ${error.errors.map(e => e.message).join(', ')}`);
+        }
         
         return NextResponse.json<WebhookResponse>({
           received: true,
@@ -342,20 +349,24 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
 
       try {
         pixelResponses.tiktok = await sendTikTokPurchaseEvent(email, orderAmount);
-      } catch (tiktokError: any) {
-        console.error(`[Appmax Webhook] Erro TikTok:`, tiktokError);
-        pixelResponses.tiktok = { success: false, error: tiktokError.message };
+      } catch (tiktokError: unknown) {
+        const errorMessage = tiktokError instanceof Error ? tiktokError.message : 'Unknown error';
+        console.error(`[Appmax Webhook] Erro TikTok:`, errorMessage);
+        pixelResponses.tiktok = { success: false, error: errorMessage };
       }
 
       try {
         pixelResponses.meta = await sendMetaPurchaseEvent(email, orderAmount);
-      } catch (metaError: any) {
-        console.error(`[Appmax Webhook] Erro Meta:`, metaError);
-        pixelResponses.meta = { success: false, error: metaError.message };
+      } catch (metaError: unknown) {
+        const errorMessage = metaError instanceof Error ? metaError.message : 'Unknown error';
+        console.error(`[Appmax Webhook] Erro Meta:`, errorMessage);
+        pixelResponses.meta = { success: false, error: errorMessage };
       }
 
       // 7. ✅ Log de sucesso
-      logSecurityEvent('AUTH_SUCCESS', securityContext, `AppMax payment processed for ${email}`);
+      if (securityContext) {
+        logSecurityEvent('AUTH_SUCCESS', securityContext, `AppMax payment processed for ${email}`);
+      }
 
       return NextResponse.json<WebhookResponse>({
         received: true,
@@ -378,11 +389,12 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
       });
     }
 
-  } catch (error: any) {
-    console.error("[Appmax Webhook] Erro:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("[Appmax Webhook] Erro:", errorMessage);
     
     if (securityContext) {
-      logSecurityEvent('SUSPICIOUS', securityContext, `AppMax webhook error: ${error.message}`);
+      logSecurityEvent('SUSPICIOUS', securityContext, `AppMax webhook error: ${errorMessage}`);
     }
     
     return NextResponse.json<WebhookResponse>({

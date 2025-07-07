@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatMessage } from '@/components/chat/chat-message';
 import { ChatInput } from '@/components/chat/chat-input';
@@ -8,11 +8,10 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckoutComponent } from '@/components/clara/checkout-component';
 import { useChatStore } from '@/lib/chat-store';
-import { MessageSquare, Sparkles, Bot, CheckCircle, Mail } from 'lucide-react';
+import { Bot, CheckCircle } from 'lucide-react';
 
 export function Chat() {
   const {
-    threads,
     currentThreadId,
     isLoading,
     isTyping,
@@ -29,11 +28,11 @@ export function Chat() {
   const currentThread = getCurrentThread();
 
   const [introTyping, setIntroTyping] = useState('');
-  const introPhrases = [
+  const introPhrases = useMemo(() => [
     'Oi! Eu sou a Clara, sua secretária inteligente.',
     'Faço atendimento automático no WhatsApp, organizo agendamentos, gero relatórios e conecto campanhas de marketing.\n',
     'Como posso ajudar você hoje?'
-  ];
+  ], []);
   const [introIndex, setIntroIndex] = useState(0);
   const [introChar, setIntroChar] = useState(0);
 
@@ -176,7 +175,7 @@ export function Chat() {
                   setTimeout(() => setShowSuccessMessage(false), 3000);
                 }
               }
-            } catch (e) {
+            } catch {
               // Ignore parsing errors for incomplete chunks
             }
           }
@@ -192,11 +191,6 @@ export function Chat() {
       setLoading(false);
       setTyping(false);
     }
-  }
-
-  function handleNewChat() {
-    const newThreadId = createThread();
-    setCurrentThread(newThreadId);
   }
 
   const handleCheckoutSuccess = () => {

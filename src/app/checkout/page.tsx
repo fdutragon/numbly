@@ -81,9 +81,13 @@ export default function CheckoutPage() {
     setFormData(prev => ({
       ...prev,
       cardData: {
+        number: '',
+        expiry: '',
+        cvv: '',
+        holder: '',
         ...prev.cardData,
         [field]: value
-      } as any
+      }
     }));
   };
 

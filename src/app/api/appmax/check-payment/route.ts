@@ -7,20 +7,13 @@ const CheckPaymentSchema = z.object({
   userEmail: z.string().email('Email do usuário é obrigatório').optional()
 });
 
-interface AppMaxResponse {
-  data?: {
-    status: string;
-    total: number;
-  };
-  status?: string;
-  total?: number;
-}
+// Removed unused interface
 
 // Simulate payment status for Clara
 const claraPaymentStatuses = new Map<string, string>();
 
 // Função helper para logs com timestamp
-const logWithTransaction = (transactionId: string, message: string, data?: any) => {
+const logWithTransaction = (transactionId: string, message: string, data?: unknown) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] [TXN:${transactionId}] ${message}`, data || '');
 };
@@ -90,13 +83,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-  const userAgent = req.headers.get('user-agent') || 'unknown';
   
   try {
     // Validação da requisição
     const body = await req.json();
     const validatedData = CheckPaymentSchema.parse(body);
-    const { orderId, userEmail } = validatedData;
+    const { orderId } = validatedData;
 
     console.log(`Payment check started for order: ${orderId} from IP: ${ip}`);
     logWithTransaction(transactionId, `[CHECK-PAYMENT] ${orderId} - Verificando pagamento`);
@@ -113,9 +105,10 @@ export async function POST(req: NextRequest) {
       transactionId
     });
 
-  } catch (error: any) {
-    console.error(`Payment check error: ${error.message}`);
-    logWithTransaction(transactionId, `[ERROR] ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Payment check error: ${errorMessage}`);
+    logWithTransaction(transactionId, `[ERROR] ${errorMessage}`);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

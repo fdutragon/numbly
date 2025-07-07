@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TypewriterText } from '@/components/ui/typewriter';
 import { Bot, User } from 'lucide-react';
 import type { Message } from '@/lib/chat-store';

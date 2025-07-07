@@ -172,7 +172,7 @@ RESPONDA APENAS COM JSON VÁLIDO:
 `;
 
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.1-8b-instant', // Modelo atualizado e suportado
+    model: 'llama-3.3-70b-versatile', // Modelo atualizado e suportado
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.1,
     max_tokens: 200,

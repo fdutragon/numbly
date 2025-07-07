@@ -13,19 +13,7 @@ interface ProductConfig {
   CURRENCY: string;
 }
 
-interface PaymentRequest {
-  email: string;
-  name: string;
-  cpf?: string;
-  phone?: string;
-  isPWA?: boolean;
-  cardData?: {
-    number: string;
-    expiry: string;
-    cvv: string;
-    holder: string;
-  };
-}
+// Removed unused interface
 
 interface PaymentResponse {
   success: boolean;
@@ -185,8 +173,9 @@ async function sendTikTokInitiateCheckoutEvent(email: string, isPWA: boolean): P
       console.error('[TikTok Pixel] ❌ Erro ao enviar evento:', response.status, error);
     }
 
-  } catch (error: any) {
-    console.error('[TikTok Pixel] ❌ Erro inesperado:', error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[TikTok Pixel] ❌ Erro inesperado:', errorMessage);
   }
 }
 
@@ -194,7 +183,7 @@ async function sendTikTokInitiateCheckoutEvent(email: string, isPWA: boolean): P
  * 💳 Processar pagamento Clara
  */
 async function processClaraPayment(data: z.infer<typeof claraPaymentSchema>): Promise<PaymentResponse> {
-  const { email, name, amount, product, orderBump } = data;
+  const { email, amount, product, orderBump } = data;
   
   // Generate QR Code for PIX payment
   const paymentId = `clara_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
@@ -243,7 +232,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<PaymentRespon
     // 1. 🛡️ Validação de segurança
     try {
       securityContext = await authGuard(req);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('Security validation error:', error);
       return NextResponse.json<PaymentResponse>({
         success: false,
         error: 'Acesso negado',
@@ -314,7 +304,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<PaymentRespon
       throw error;
     }
 
-    const { email, name, cpf, phone, isPWA, cardData } = validatedData;
+    const { email, isPWA } = validatedData;
 
     // 4. 💰 Calcular preço baseado no tipo (PWA vs Browser)
     const amount = getPrice(isPWA || false);
@@ -359,11 +349,12 @@ export async function POST(req: NextRequest): Promise<NextResponse<PaymentRespon
       }
     });
 
-  } catch (error: any) {
-    console.error("🚨 Erro ao processar pagamento AppMax:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("🚨 Erro ao processar pagamento AppMax:", errorMessage);
     
     if (securityContext) {
-      logSecurityEvent('SUSPICIOUS', securityContext, `AppMax payment error: ${error.message}`);
+      logSecurityEvent('SUSPICIOUS', securityContext, `AppMax payment error: ${errorMessage}`);
     }
     
     return NextResponse.json<PaymentResponse>(

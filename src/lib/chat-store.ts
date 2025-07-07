@@ -28,7 +28,7 @@ interface ChatStore {
   // Actions
   createThread: () => string;
   setCurrentThread: (threadId: string) => void;
-  addMessage: (threadId: string, message: any) => void;
+  addMessage: (threadId: string, message: Omit<Message, 'id' | 'timestamp'>) => void;
   updateMessage: (threadId: string, messageId: string, updates: Partial<Message>) => void;
   setLoading: (loading: boolean) => void;
   setTyping: (typing: boolean) => void;
@@ -80,18 +80,18 @@ export const useChatStore = create<ChatStore>()(
         set({ currentThreadId: threadId });
       },
 
-      addMessage: (threadId, message: any) => {
+      addMessage: (threadId, message: Omit<Message, 'id' | 'timestamp'>) => {
         // Use client-safe ID generation
-        const messageId = message.id || (typeof window !== 'undefined' 
+        const messageId = typeof window !== 'undefined' 
           ? `msg_${crypto.randomUUID()}` 
-          : `msg_temp_${Math.random().toString(36).substr(2, 9)}`);
+          : `msg_temp_${Math.random().toString(36).substr(2, 9)}`;
         
         const timestamp = typeof window !== 'undefined' ? Date.now() : 0;
         
-        const messageWithMeta = {
+        const messageWithMeta: Message = {
           ...message,
           id: messageId,
-          timestamp: message.timestamp || timestamp,
+          timestamp,
         };
 
         set((state) => ({

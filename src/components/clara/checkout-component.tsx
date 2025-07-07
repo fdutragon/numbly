@@ -21,6 +21,13 @@ interface CheckoutFormData {
   };
 }
 
+interface CardData {
+  number: string;
+  expiry: string;
+  cvv: string;
+  holder: string;
+}
+
 interface PaymentResult {
   success: boolean;
   data?: {
@@ -88,13 +95,17 @@ export function CheckoutComponent({
     }));
   };
 
-  const handleCardDataChange = (field: string, value: string) => {
+  const handleCardDataChange = (field: keyof CardData, value: string) => {
     setFormData(prev => ({
       ...prev,
       cardData: {
+        number: '',
+        expiry: '',
+        cvv: '',
+        holder: '',
         ...prev.cardData,
         [field]: value
-      } as any
+      }
     }));
   };
 
