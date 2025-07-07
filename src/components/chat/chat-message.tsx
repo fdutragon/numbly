@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TypewriterText } from '@/components/ui/typewriter';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { Bot, User } from 'lucide-react';
 import type { Message } from '@/lib/chat-store';
 
@@ -47,7 +48,7 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
                 {[0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
-                    className="w-1.5 h-1.5 bg-gray-400 rounded-full"
+                    className="w-1.5 h-1.5 bg-violet-400 rounded-full"
                     animate={{
                       scale: [1, 1.2, 1],
                       opacity: [0.5, 1, 0.5],
@@ -60,18 +61,19 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
                   />
                 ))}
               </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Digitando...</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Clara está pensando...</span>
             </div>
           ) : isAssistant && isLatest && message.isTyping && message.content ? (
-            <TypewriterText 
-              text={message.content}
-              speed={20}
-              className="block"
-            />
+            <div className="typewriter-container">
+              <TypewriterText 
+                text={message.content}
+                speed={20}
+                className="block"
+                renderContent={(text) => <MarkdownRenderer content={text} />}
+              />
+            </div>
           ) : (
-            <span className="block whitespace-pre-wrap break-words">
-              {message.content}
-            </span>
+            <MarkdownRenderer content={message.content} />
           )}
         </div>
         

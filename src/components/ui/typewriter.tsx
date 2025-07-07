@@ -7,6 +7,7 @@ interface TypewriterProps {
   onComplete?: () => void;
   className?: string;
   startDelay?: number;
+  renderContent?: (text: string) => React.ReactNode;
 }
 
 export function TypewriterText({ 
@@ -14,7 +15,8 @@ export function TypewriterText({
   speed = 30, 
   onComplete, 
   className = '',
-  startDelay = 0
+  startDelay = 0,
+  renderContent
 }: TypewriterProps) {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -64,7 +66,7 @@ export function TypewriterText({
 
   return (
     <span className={className}>
-      {displayText}
+      {renderContent ? renderContent(displayText) : displayText}
       {showCursor && (
         <motion.span 
           className="inline-block ml-1"
