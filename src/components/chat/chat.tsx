@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChatMessage } from '@/components/chat/chat-message';
 import { ChatInput } from '@/components/chat/chat-input';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckoutComponent } from '@/components/clara/checkout-component';
+import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { useChatStore } from '@/lib/chat-store';
 import { Bot, CheckCircle } from 'lucide-react';
-import { TypingIndicator } from './typing-indicator';
 
 export function Chat() {
   const {
@@ -26,6 +27,8 @@ export function Chat() {
   } = useChatStore();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentThread = getCurrentThread();
 
   const [introTyping, setIntroTyping] = useState('');
@@ -36,6 +39,7 @@ export function Chat() {
   ], []);
   const [introIndex, setIntroIndex] = useState(0);
   const [introChar, setIntroChar] = useState(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Estados para funcionalidades de intenção
   const [showCheckout, setShowCheckout] = useState(false);
@@ -58,8 +62,56 @@ export function Chat() {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll para última mensagem quando há novas mensagens ou typing
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest'
+      });
+    };
+    
+    // Delay pequeno para garantir que o DOM foi atualizado
+    const timer = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timer);
   }, [currentThread?.messages, isTyping]);
+
+  // Handle viewport changes (keyboard open/close)
+  useEffect(() => {
+    const handleResize = () => {
+      // Força scroll para baixo quando viewport muda (teclado abre/fecha)
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end' 
+        });
+      }, 300);
+    };
+
+    const handleVisualViewportChange = () => {
+      // Para navegadores que suportam Visual Viewport API
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end' 
+        });
+      }, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    // Visual Viewport API para melhor suporte a teclado virtual
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportChange);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportChange);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (currentThread?.messages.length) return;
@@ -85,6 +137,24 @@ export function Chat() {
       setIntroTyping(prev => prev + '');
     }
   }, [introIndex, introChar, introPhrases.length]);
+
+  const handleSendMessage = async (content: string) => {
+    // Fecha o teclado imediatamente após envio
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
+    
+    // Força scroll para baixo após fechar teclado
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end' 
+      });
+    }, 100);
+
+    // Chama a função original handleSend
+    return handleSend(content);
+  };
 
   async function handleSend(content: string) {
     if (!currentThreadId) {
@@ -225,12 +295,12 @@ export function Chat() {
 
   return (
     <>
-      <div className="flex flex-col h-screen w-full bg-background">
-        {/* Header */}
+      <div className="flex flex-col h-screen w-full bg-background relative">
+        {/* Header - Fixo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between px-6 py-4 bg-background backdrop-blur-sm border-b border-border"
+          className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border sticky top-0 z-10"
         >
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -253,9 +323,10 @@ export function Chat() {
           </div>
           <ThemeToggle />
         </motion.div>
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-          <div className="max-w-2xl mx-auto space-y-6">
+        
+        {/* Messages - Área flexível */}
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="max-w-2xl mx-auto space-y-6 pb-4">
             <AnimatePresence initial={false}>
               {currentThread?.messages.length === 0 ? (
                 <motion.div
@@ -292,7 +363,7 @@ export function Chat() {
                           whileTap={{ scale: 0.99 }}
                           type="button"
                           className="w-full px-4 py-2.5 rounded-lg bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors text-left"
-                          onClick={() => handleSend(q)}
+                          onClick={() => handleSendMessage(q)}
                         >
                           {q}
                         </motion.button>
@@ -301,39 +372,24 @@ export function Chat() {
                   )}
                 </motion.div>
               ) : (
-                <>
-                  {currentThread?.messages.map((message, index) => (
-                    <ChatMessage
-                      key={message.id}
-                      message={message}
-                      isLatest={index === (currentThread?.messages.length ?? 0) - 1}
-                    />
-                  ))}
-                  {/* Typing indicator global, se necessário */}
-                  {isTyping && !currentThread?.messages.some(m => m.role === 'assistant' && m.isTyping) && (
-                    <div className="pl-10">
-                      <AnimatePresence>
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <TypingIndicator />
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </>
+                currentThread?.messages.map((message, index) => (
+                  <ChatMessage
+                    key={message.id}
+                    message={message}
+                    isLatest={index === (currentThread?.messages.length ?? 0) - 1}
+                  />
+                ))
               )}
+              {isTyping && <TypingIndicator />}
             </AnimatePresence>
             <div ref={messagesEndRef} />
           </div>
         </div>
-        {/* Input */}
-        <div className="bg-background backdrop-blur-sm border-t border-border px-4 py-3">
+        
+        {/* Input - Fixo no bottom */}
+        <div className="bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3 sticky bottom-0 z-10" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
           <div className="max-w-2xl mx-auto">
-            <ChatInput onSend={handleSend} isLoading={isLoading} />
+            <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
           </div>
         </div>
       </div>
@@ -363,23 +419,3 @@ export function Chat() {
     </>
   );
 }
-
-/*
-Adicione o seguinte CSS global (ex: em src/app/globals.css):
-
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(124,58,237,0.3) rgba(0,0,0,0.05);
-}
-.custom-scrollbar::-webkit-scrollbar {
-  width: 7px;
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(120deg, rgba(124,58,237,0.25), rgba(139,92,246,0.18));
-  border-radius: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-*/

@@ -9,11 +9,12 @@ interface ChatInputProps {
   onSend: (content: string) => void;
   isLoading?: boolean;
   disabled?: boolean;
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
-export function ChatInput({ onSend, isLoading = false, disabled = false }: ChatInputProps) {
+export function ChatInput({ onSend, isLoading = false, disabled = false, inputRef }: ChatInputProps) {
   const [value, setValue] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = inputRef || useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!isLoading && textareaRef.current) {
