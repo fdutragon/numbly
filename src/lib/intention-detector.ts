@@ -4,7 +4,8 @@ export interface IntentionResult {
   extractedData?: {
     email?: string;
     planType?: 'basic' | 'pro';
-    [key: string]: any;
+    objectionType?: 'price' | 'trust' | 'timing';
+    [key: string]: string | undefined;
   };
 }
 
@@ -83,7 +84,7 @@ export async function sendEmailViaResend(to: string, subject: string, content: s
     }
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Erro de rede ao enviar email' };
   }
 }
