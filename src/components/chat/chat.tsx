@@ -214,33 +214,29 @@ export function Chat() {
     console.log('Chat component rendered');
   });
 
-  useEffect(() => {
-    console.log('Theme state changed:', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-  }, []);
-
   return (
     <>
-      <div className="flex flex-col h-screen w-full bg-gray-100 dark:bg-gray-900">
+      <div className="flex flex-col h-screen w-full bg-background">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between px-6 py-4 bg-gray-100 dark:bg-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800"
+          className="flex items-center justify-between px-6 py-4 bg-background backdrop-blur-sm border-b border-border"
         >
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
                 <Bot className="w-4 h-4 text-white" />
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-gray-100 dark:border-gray-900">
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
                 <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
               </div>
             </div>
             <div>
-              <h1 className="font-medium text-gray-900 dark:text-white text-base">
+              <h1 className="font-medium text-foreground text-base">
                 Clara
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <span className="w-1 h-1 bg-green-500 rounded-full"></span>
                 Online
               </p>
@@ -261,11 +257,11 @@ export function Chat() {
                   <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
                     <Bot className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     Clara
                   </h3>
                   <div className="min-h-[2rem] mb-6">
-                    <p className="text-gray-600 dark:text-gray-400 max-w-sm mx-auto whitespace-pre-line text-sm leading-relaxed">
+                    <p className="text-muted-foreground max-w-sm mx-auto whitespace-pre-line text-sm leading-relaxed">
                       {introTyping}
                       <span className="animate-pulse text-violet-500">|</span>
                     </p>
@@ -286,7 +282,7 @@ export function Chat() {
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.99 }}
                           type="button"
-                          className="w-full px-4 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                          className="w-full px-4 py-2.5 rounded-lg bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors text-left"
                           onClick={() => handleSend(q)}
                         >
                           {q}
@@ -309,7 +305,7 @@ export function Chat() {
           </div>
         </ScrollArea>
         {/* Input */}
-        <div className="bg-gray-100 dark:bg-gray-900 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 px-4 py-3">
+        <div className="bg-background backdrop-blur-sm border-t border-border px-4 py-3">
           <div className="max-w-2xl mx-auto">
             <ChatInput onSend={handleSend} isLoading={isLoading} />
           </div>

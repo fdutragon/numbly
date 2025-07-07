@@ -182,13 +182,29 @@ RESPONDA APENAS COM JSON VÁLIDO:
   const response = completion.choices[0]?.message?.content;
   
   try {
-    const result = JSON.parse(response || '{}');
+    // Limpar resposta da AI removendo markdown e caracteres extras
+    let cleanResponse = response || '{}';
+    
+    // Remove markdown code blocks
+    cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    
+    // Remove espaços em branco extras
+    cleanResponse = cleanResponse.trim();
+    
+    // Tentar encontrar JSON válido na resposta
+    const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanResponse = jsonMatch[0];
+    }
+    
+    const result = JSON.parse(cleanResponse);
     return {
       intention: result.intention || 'general',
       confidence: Math.max(0.1, Math.min(1.0, result.confidence || 0.5)) // Garantir range válido
     };
   } catch (error) {
     console.error('Failed to parse AI response:', error);
+    console.error('Raw response:', response);
     return { intention: 'general', confidence: 0.5 };
   }
 }

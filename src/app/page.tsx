@@ -1,9 +1,22 @@
-import { Chat } from "@/components/chat/chat";
+'use client';
 
-export default function Home() {
+import dynamic from 'next/dynamic';
+
+const Chat = dynamic(() => import('@/components/chat/chat').then(mod => ({ default: mod.Chat })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+    </div>
+  )
+});
+
+export function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
+    <main className="min-h-screen">
       <Chat />
     </main>
   );
 }
+
+export default Home;

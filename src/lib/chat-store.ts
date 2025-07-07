@@ -81,29 +81,29 @@ export const useChatStore = create<ChatStore>()(
       },
 
       addMessage: (threadId, message: Omit<Message, 'id' | 'timestamp'>) => {
-        // Use client-safe ID generation
-        const messageId = typeof window !== 'undefined' 
-          ? `msg_${crypto.randomUUID()}` 
-          : `msg_temp_${Math.random().toString(36).substr(2, 9)}`;
-        
-        const timestamp = typeof window !== 'undefined' ? Date.now() : 0;
-        
+        // Geração de ID e timestamp só no cliente
+        let messageId = '';
+        let timestamp = 0;
+        if (typeof window !== 'undefined') {
+          messageId = `msg_${crypto.randomUUID()}`;
+          timestamp = Date.now();
+        } else {
+          // SSR: use valores fixos para evitar mismatch
+          messageId = 'ssr-msg';
+          timestamp = 0;
+        }
         const messageWithMeta: Message = {
           ...message,
           id: messageId,
           timestamp,
         };
-
         set((state) => ({
           threads: state.threads.map((thread) =>
             thread.id === threadId
               ? {
                   ...thread,
                   messages: [...thread.messages, messageWithMeta],
-                  updatedAt: typeof window !== 'undefined' ? Date.now() : 0,
-                  title: thread.messages.length === 0 
-                    ? message.content.slice(0, 50) + (message.content.length > 50 ? '...' : '')
-                    : thread.title,
+                  updatedAt: Date.now(),
                 }
               : thread
           ),
