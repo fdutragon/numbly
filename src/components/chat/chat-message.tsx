@@ -69,7 +69,6 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
                 text={message.content}
                 speed={20}
                 className="block"
-                renderContent={(text) => <MarkdownRenderer content={text} />}
               />
             </div>
           ) : (
