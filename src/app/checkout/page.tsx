@@ -2,12 +2,10 @@
 
 import { CheckoutComponent } from '@/components/clara/checkout-component';
 
-export function CheckoutPage() {
+export default function Page() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <CheckoutComponent isOpen={true} onClose={() => {}} plan="pro" />
     </div>
   );
 }
-
-export default CheckoutPage;
