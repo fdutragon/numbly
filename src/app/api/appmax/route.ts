@@ -52,11 +52,6 @@ interface OrderPayload {
   customer_id: string;
 }
 
-interface RateLimitResult {
-  status?: number;
-  headers?: Record<string, string>;
-}
-
 // Função para fazer hash SHA-256 do email
 function hashEmail(email: string): string {
   return crypto.createHash('sha256').update(email.toLowerCase().trim()).digest('hex');
@@ -452,7 +447,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       
       // Sistema de retry para erros temporários
       let ccRes: Response;
-      let ccData: any;
+      let ccData: Record<string, unknown>;
       let attempts = 0;
       const maxAttempts = 1;
       
@@ -483,7 +478,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
         
         // Se o pedido foi cancelado, tentar recriar (apenas uma vez)
-        if (ccData.text?.includes('Order is Cancelled') && attempts === 1) {
+        if (typeof ccData.text === 'string' && ccData.text.includes('Order is Cancelled') && attempts === 1) {
           console.log("[APPMAX] Pedido cancelado, tentando recriar...");
           
           // Recriar o pedido
@@ -520,7 +515,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           ccData.text ||
           ccData.error ||
           ccData.message ||
-          ccData.data?.message ||
+          (ccData.data && typeof ccData.data === 'object' && 'message' in ccData.data ? (ccData.data as { message?: string }).message : undefined) ||
           (ccData.errors && Array.isArray(ccData.errors) ? ccData.errors.join(', ') : undefined) ||
           `Erro no pagamento (${ccRes.status})`;
 
@@ -691,8 +686,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 }
               }
             }
-          } catch (error: any) {
-            console.warn("Erro no agendamento de emails:", error.message);
+          } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            console.warn("Erro no agendamento de emails:", errMsg);
           }
         });
       } else {
@@ -715,12 +711,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       return response;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[APPMAX] ❌ Erro não capturado:", error);
-    
     // Garantir que sempre retornamos uma estrutura válida
-    const errorMessage = error.message || "Erro interno do servidor";
-    
+    const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor";
     return NextResponse.json({
       success: false,
       error: errorMessage,
@@ -758,9 +752,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         scheduledEmailIds: []
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
-      error: error.message || "Erro desconhecido",
+      error: error instanceof Error ? error.message : "Erro desconhecido",
       debug: error
     }, { status: 500 });
   }
