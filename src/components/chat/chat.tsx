@@ -142,19 +142,11 @@ export function Chat() {
   }, [introIndex, introChar, introPhrases.length]);
 
   const handleSendMessage = async (content: string) => {
-    // Fecha o teclado imediatamente após envio
+    // Fecha o teclado após envio da mensagem
     if (inputRef.current) {
       inputRef.current.blur();
     }
     
-    // Força scroll para baixo após fechar teclado
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'end' 
-      });
-    }, 100);
-
     // Chama a função original handleSend
     return handleSend(content);
   };
@@ -336,8 +328,8 @@ export function Chat() {
         </motion.div>
         
         {/* Messages - Área com scroll */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar" style={{ minHeight: 0 }}>
-          <div className="p-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)' }}>
+          <div className="p-4 pb-0">
             <div className="max-w-2xl mx-auto space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
@@ -394,13 +386,13 @@ export function Chat() {
                 )}
                 {isTyping && <TypingIndicator />}
               </AnimatePresence>
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} className="h-4" />
             </div>
           </div>
         </div>
         
         {/* Input - Fixo no bottom */}
-        <div className="bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3 flex-shrink-0 sticky bottom-0 z-40" style={{ position: 'sticky', bottom: 0, zIndex: 40 }}>
+        <div className="bg-background border-t border-border px-4 py-3 flex-shrink-0" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40 }}>
           <div className="max-w-2xl mx-auto">
             <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
           </div>
