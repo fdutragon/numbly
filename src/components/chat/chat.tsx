@@ -299,16 +299,19 @@ export function Chat() {
   return (
     <>
       <div 
-        className="flex flex-col w-full bg-background"
+        className="flex flex-col w-full bg-background h-screen max-h-screen overflow-hidden"
         style={{ 
-          height: viewportHeight > 0 ? `${viewportHeight}px` : '100vh'
+          height: '100vh',
+          maxHeight: '100vh',
+          overflow: 'hidden'
         }}
       >
         {/* Header - Fixo no topo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
+          className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0 sticky top-0 z-40"
+          style={{ position: 'sticky', top: 0, zIndex: 40 }}
         >
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -333,7 +336,7 @@ export function Chat() {
         </motion.div>
         
         {/* Messages - Área com scroll */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar" style={{ minHeight: 0 }}>
           <div className="p-4">
             <div className="max-w-2xl mx-auto space-y-6">
               <AnimatePresence initial={false}>
@@ -397,7 +400,7 @@ export function Chat() {
         </div>
         
         {/* Input - Fixo no bottom */}
-        <div className="bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3 flex-shrink-0">
+        <div className="bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3 flex-shrink-0 sticky bottom-0 z-40" style={{ position: 'sticky', bottom: 0, zIndex: 40 }}>
           <div className="max-w-2xl mx-auto">
             <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
           </div>

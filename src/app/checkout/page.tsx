@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, Smartphone, Copy, CheckCircle, QrCode } from 'lucide-react';
+import { ArrowLeft, CreditCard, Copy, CheckCircle, QrCode, MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -17,14 +17,20 @@ export default function CheckoutPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
 
-  // Form states
+  // Customer data
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerCpf, setCustomerCpf] = useState('');
+
+  // Card data
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [phone, setPhone] = useState('');
 
   useEffect(() => {
     // Get plan from URL params
@@ -34,37 +40,6 @@ export default function CheckoutPage() {
       setPlan(planParam);
     }
   }, []);
-
-  // Regenerate QR code when theme changes
-  useEffect(() => {
-    if (pixCode) {
-      const isDark = document.documentElement.classList.contains('dark');
-      const bgColor = isDark ? '000000' : 'ffffff';
-      const fgColor = isDark ? 'ffffff' : '000000';
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixCode)}&bgcolor=${bgColor}&color=${fgColor}`;
-      setQrCodeUrl(qrUrl);
-    }
-  }, [pixCode]);
-
-  useEffect(() => {
-    // Listen for theme changes
-    const observer = new MutationObserver(() => {
-      if (pixCode) {
-        const isDark = document.documentElement.classList.contains('dark');
-        const bgColor = isDark ? '000000' : 'ffffff';
-        const fgColor = isDark ? 'ffffff' : '000000';
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixCode)}&bgcolor=${bgColor}&color=${fgColor}`;
-        setQrCodeUrl(qrUrl);
-      }
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-
-    return () => observer.disconnect();
-  }, [pixCode]);
 
   const planDetails = {
     basic: {
@@ -81,17 +56,110 @@ export default function CheckoutPage() {
     }
   };
 
-  const generatePixCode = () => {
-    // Generate a fake PIX code for demo
-    const code = `00020126580014br.gov.bcb.pix01367890-1234-5678-9012-123456789012520400005303986540${plan === 'pro' ? '99.00' : '49.00'}5802BR5925Clara AI Assistente6009SAO PAULO62070503***630445F2`;
-    setPixCode(code);
-    
-    // Generate QR code URL with dark theme support
-    const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = isDark ? '000000' : 'ffffff';
-    const fgColor = isDark ? 'ffffff' : '000000';
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(code)}&bgcolor=${bgColor}&color=${fgColor}`;
-    setQrCodeUrl(qrUrl);
+  const safeParseJson = async (response: Response) => {
+    try {
+      const data = await response.json();
+      if (data && typeof data === 'object') return data;
+      return {};
+    } catch {
+      return {};
+    }
+  };
+
+  const isErroDeFluxo = (msg: string) => {
+    if (!msg) return false;
+    return (
+      msg.includes('Transação não autorizada') ||
+      msg.includes('Order is Cancelled') ||
+      msg.includes('Cartão recusado') ||
+      msg.includes('Erro no processamento') ||
+      msg.includes('Pedido foi cancelado') ||
+      msg.includes('Cartão recusado pelo banco') ||
+      msg.includes('Erro interno do gateway') ||
+      msg.includes('Pedido não encontrado')
+    );
+  };
+
+  const generatePixCode = async () => {
+    if (!customerName || !customerEmail || !customerPhone || !customerCpf) {
+      alert('Por favor, preencha todos os dados do cliente');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      console.log('🔄 Iniciando geração de PIX...');
+      const response = await fetch('/api/appmax', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: customerEmail,
+          name: customerName,
+          document: customerCpf.replace(/\D/g, ''), // Enviar como 'document'
+          telephone: customerPhone.replace(/\D/g, ''), // Enviar como 'telephone'
+          paymentMethod: 'pix',
+        }),
+      });
+
+      const result = await safeParseJson(response);
+      if (result.success) {
+        setPaymentData(result);
+        
+        // Use os dados retornados pela API AppMax (estrutura correta)
+        if (result.pix_emv) {
+          setPixCode(result.pix_emv);
+          console.log('✅ PIX Code recebido:', result.pix_emv.substring(0, 50) + '...');
+        }
+        if (result.qr_code_img) {
+          setQrCodeUrl(result.qr_code_img);
+          console.log('✅ QR Code URL recebido:', result.qr_code_img);
+        }
+        
+        console.log('✅ PIX gerado com sucesso:', {
+          orderId: result.order_id,
+          customerId: result.customer_id,
+          qrCodeBase64: result.qr_code_base64,
+          checkoutUrl: result.checkout_url
+        });
+      } else {
+        let errorMessage = 'Erro ao gerar PIX';
+        if (result.error) {
+          errorMessage = result.error;
+        } else if (result.message) {
+          errorMessage = result.message;
+        } else if (response.status === 400) {
+          errorMessage = 'Dados inválidos para gerar PIX';
+        } else if (response.status === 500) {
+          errorMessage = 'Erro interno do servidor';
+        } else if (!result || Object.keys(result).length === 0) {
+          errorMessage = 'Erro de comunicação com o servidor. Tente novamente.';
+        }
+        // Só loga erro inesperado
+        if (!isErroDeFluxo(errorMessage)) {
+          console.error('❌ Erro na resposta:', errorMessage);
+        }
+        alert(errorMessage);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao gerar PIX:', error);
+      
+      // Melhorar mensagem de erro baseada no tipo
+      let errorMessage = 'Erro ao conectar com servidor';
+      
+      if (error instanceof SyntaxError) {
+        // Erro de parsing JSON - servidor pode ter retornado HTML/texto
+        errorMessage = 'Erro de comunicação com o servidor. Tente novamente.';
+      } else if (error instanceof TypeError) {
+        // Erro de rede/conectividade
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const copyPixCode = () => {
@@ -100,12 +168,97 @@ export default function CheckoutPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleCardPayment = () => {
-    // Simulate payment processing
-    setShowSuccess(true);
-    setTimeout(() => {
-      router.push('/?success=true');
-    }, 2000);
+  const handleCardPayment = async () => {
+    if (!customerName || !customerEmail || !customerPhone || !customerCpf || 
+        !cardNumber || !cardName || !cardExpiry || !cardCvv) {
+      alert('Por favor, preencha todos os dados');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      console.log('🔄 Iniciando pagamento com cartão...');
+      const response = await fetch('/api/appmax', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: customerEmail,
+          name: customerName,
+          document: customerCpf.replace(/\D/g, ''), // Enviar como 'document'
+          telephone: customerPhone.replace(/\D/g, ''), // Enviar como 'telephone'
+          paymentMethod: 'credit-card',
+          creditCard: {
+            number: cardNumber.replace(/\s/g, ''),
+            name: cardName,
+            month: cardExpiry.split('/')[0],
+            year: cardExpiry.split('/')[1],
+            cvv: cardCvv,
+            document_number: customerCpf.replace(/\D/g, ''),
+          },
+        }),
+      });
+
+      const result = await safeParseJson(response);
+      if (result.success) {
+        console.log('✅ Pagamento processado com sucesso:', {
+          orderId: result.order_id,
+          customerId: result.customer_id,
+          creditCard: result.credit_card
+        });
+        
+        setShowSuccess(true);
+        setTimeout(() => {
+          router.push('/?success=true');
+        }, 2000);
+      } else {
+        let errorMessage = 'Erro no pagamento';
+        if (result.error) {
+          errorMessage = result.error;
+        } else if (result.message) {
+          errorMessage = result.message;
+        } else if (!result || Object.keys(result).length === 0) {
+          errorMessage = 'Erro de comunicação com o servidor. Tente novamente.';
+        } else {
+          switch (response.status) {
+            case 400:
+              errorMessage = 'Dados do cartão inválidos';
+              break;
+            case 422:
+              errorMessage = 'Cartão recusado ou dados incorretos';
+              break;
+            case 500:
+              errorMessage = 'Erro interno do servidor - tente novamente';
+              break;
+            default:
+              errorMessage = 'Erro desconhecido';
+          }
+        }
+        // Só loga erro inesperado
+        if (!isErroDeFluxo(errorMessage)) {
+          console.error('❌ Erro na resposta:', errorMessage);
+        }
+        alert(errorMessage);
+      }
+    } catch (error) {
+      console.error('❌ Erro no pagamento:', error);
+      
+      // Melhorar mensagem de erro baseada no tipo
+      let errorMessage = 'Erro ao conectar com servidor';
+      
+      if (error instanceof SyntaxError) {
+        // Erro de parsing JSON - servidor pode ter retornado HTML/texto
+        errorMessage = 'Erro de comunicação com o servidor. Tente novamente.';
+      } else if (error instanceof TypeError) {
+        // Erro de rede/conectividade
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const formatCardNumber = (value: string) => {
@@ -125,13 +278,40 @@ export default function CheckoutPage() {
 
   const formatCpf = (value: string) => {
     const v = value.replace(/\D/g, '');
-    return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    const formatted = v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    return formatted;
   };
 
   const formatPhone = (value: string) => {
     const v = value.replace(/\D/g, '');
     return v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
   };
+
+  // Persistência dos dados do cliente
+  useEffect(() => {
+    // Restaurar dados ao carregar
+    const saved = localStorage.getItem('clara_checkout_customer');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.name) setCustomerName(parsed.name);
+        if (parsed.email) setCustomerEmail(parsed.email);
+        if (parsed.phone) setCustomerPhone(parsed.phone);
+        if (parsed.cpf) setCustomerCpf(parsed.cpf);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    // Salvar sempre que algum campo mudar
+    const data = {
+      name: customerName,
+      email: customerEmail,
+      phone: customerPhone,
+      cpf: customerCpf
+    };
+    localStorage.setItem('clara_checkout_customer', JSON.stringify(data));
+  }, [customerName, customerEmail, customerPhone, customerCpf]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -171,6 +351,82 @@ export default function CheckoutPage() {
               <div className="text-right">
                 <p className="text-lg font-bold">{planDetails[plan].price}</p>
                 <p className="text-xs text-muted-foreground">/mês</p>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Customer Data */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-4"
+        >
+          <Card className="p-4">
+            <h3 className="text-sm font-medium mb-3">Dados do Cliente</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Nome Completo
+                </label>
+                <Input
+                  type="text"
+                  placeholder="João Silva"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="joao@email.com"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                    Telefone
+                  </label>
+                  <Input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="(11) 99999-9999"
+                    value={customerPhone}
+                    onChange={(e) => {
+                      const formatted = formatPhone(e.target.value);
+                      setCustomerPhone(formatted);
+                    }}
+                    className="h-9 text-sm"
+                    maxLength={15}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                    CPF
+                  </label>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="123.456.789-00"
+                    value={customerCpf}
+                    onChange={(e) => {
+                      const formatted = formatCpf(e.target.value);
+                      setCustomerCpf(formatted);
+                    }}
+                    className="h-9 text-sm"
+                    maxLength={14}
+                  />
+                </div>
               </div>
             </div>
           </Card>
@@ -260,44 +516,18 @@ export default function CheckoutPage() {
                       />
                     </div>
                   </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                      CPF
-                    </label>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="123.456.789-00"
-                      value={cpf}
-                      onChange={(e) => setCpf(formatCpf(e.target.value))}
-                      className="h-9 text-sm"
-                      maxLength={14}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                      Telefone
-                    </label>
-                    <Input
-                      type="tel"
-                      inputMode="numeric"
-                      placeholder="(11) 99999-9999"
-                      value={phone}
-                      onChange={(e) => setPhone(formatPhone(e.target.value))}
-                      className="h-9 text-sm"
-                      maxLength={15}
-                    />
-                  </div>
                 </div>
               </Card>
 
               <Button
                 onClick={handleCardPayment}
                 className="w-full h-10 text-sm"
-                disabled={!cardNumber || !cardName || !cardExpiry || !cardCvv || !cpf || !phone}
+                disabled={processing || !customerName || !customerEmail || !customerPhone || !customerCpf || 
+                         !cardNumber || !cardName || !cardExpiry || !cardCvv}
               >
+                {processing ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
                 Pagar {planDetails[plan].price}
               </Button>
             </TabsContent>
@@ -310,29 +540,36 @@ export default function CheckoutPage() {
                     <p className="text-sm text-muted-foreground mb-3">
                       Clique no botão abaixo para gerar o código PIX
                     </p>
-                    <Button onClick={generatePixCode} className="h-9 text-sm">
+                    <Button
+                      onClick={generatePixCode}
+                      className="h-9 text-sm"
+                      disabled={processing || !customerName || !customerEmail || !customerPhone || !customerCpf}
+                    >
+                      {processing ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
                       Gerar PIX
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="text-center">
-                      <img 
-                        src={qrCodeUrl} 
-                        alt="QR Code PIX" 
-                        className="mx-auto rounded-lg"
-                      />
-                    </div>
-                    
+                    {qrCodeUrl && (
+                      <div className="text-center">
+                        <img 
+                          src={qrCodeUrl} 
+                          alt="QR Code PIX" 
+                          className="mx-auto rounded-lg max-w-64"
+                        />
+                      </div>
+                    )}
                     <div className="text-center">
                       <p className="text-xs text-muted-foreground mb-2">
-                        Escaneie o QR Code ou copie o código PIX
+                        {qrCodeUrl ? 'Escaneie o QR Code ou copie o código PIX' : 'Copie o código PIX abaixo'}
                       </p>
-                      <div className="bg-muted rounded-lg p-2 text-xs font-mono break-all">
+                      <div className="bg-muted rounded-lg p-2 text-xs font-mono break-all max-h-24 overflow-y-auto">
                         {pixCode}
                       </div>
                     </div>
-
                     <Button
                       onClick={copyPixCode}
                       variant="outline"
@@ -350,14 +587,26 @@ export default function CheckoutPage() {
                         </>
                       )}
                     </Button>
-
                     <div className="text-center">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground mb-3">
                         Após o pagamento, você receberá um email de confirmação
                       </p>
                     </div>
                   </div>
                 )}
+              </Card>
+              {/* Card separado para o botão de ajuda */}
+              <Card className="p-4 mt-2">
+                <div className="text-center">
+                  <Button
+                    onClick={() => window.open('https://wa.me/5511999999999?text=Olá! Preciso de ajuda com minha assinatura Clara AI', '_blank')}
+                    variant="outline"
+                    className="w-full h-9 text-sm"
+                  >
+                    <MessageCircle className="h-3 w-3 mr-1" />
+                    Ajuda via WhatsApp
+                  </Button>
+                </div>
               </Card>
             </TabsContent>
           </Tabs>
