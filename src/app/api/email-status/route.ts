@@ -11,19 +11,6 @@ declare global {
   var emailIdsCache: Map<string, EmailCacheData> | undefined;
 }
 
-// Função para notificar que os IDs de email estão prontos
-export function notifyEmailIdsReady(orderId: string, scheduledEmailIds: string[]): boolean {
-  try {
-    // Verificar se existe um callback ou sistema de notificação
-    // Por enquanto, apenas loggar
-    console.log(`[EMAIL STATUS] IDs prontos para order ${orderId}:`, scheduledEmailIds);
-    return true;
-  } catch (error) {
-    console.error('[EMAIL STATUS] Erro ao notificar IDs prontos:', error);
-    return false;
-  }
-}
-
 // Endpoint para verificar status dos emails
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);

@@ -1,8 +1,8 @@
 import crypto from "crypto";
 
-// Configuração de criptografia
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "default-key-32-characters-long!!";
-const ALGORITHM = 'aes-256-gcm';
+// Configuração de criptografia (não usadas no desenvolvimento)
+// const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "default-key-32-characters-long!!";
+// const ALGORITHM = 'aes-256-gcm';
 
 export interface EncryptedPayload {
   iv: string;
@@ -37,7 +37,7 @@ export function validateEncryptedPayload(payload: unknown): payload is Encrypted
 }
 
 // Função para descriptografar dados do cartão (versão simplificada)
-export async function decryptCardData(encryptedPayload: EncryptedPayload): Promise<CreditCardData> {
+export async function decryptCardData(): Promise<CreditCardData> {
   try {
     // Para desenvolvimento, vamos simular uma descriptografia bem-sucedida
     // Em produção, implementar criptografia real

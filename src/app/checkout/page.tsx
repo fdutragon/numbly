@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -7,15 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
-
-interface PaymentData {
-  success: boolean;
-  message?: string;
-  error?: string;
-  qr_code_img?: string;
-  pix_emv?: string;
-  [key: string]: unknown;
-}
 
 export default function CheckoutPage() {
   const router = useRouter();

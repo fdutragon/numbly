@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 // Rate limiting simples em memória
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();

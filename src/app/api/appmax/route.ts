@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { notifyEmailIdsReady } from "../email-status/route";
+import { notifyEmailIdsReady } from "@/lib/email-status";
 import crypto from "crypto";
 
 // Configurações centralizadas do produto
