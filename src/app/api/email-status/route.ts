@@ -10,7 +10,7 @@ declare global {
 }
 
 // Função para notificar que os IDs de email estão prontos
-export function notifyEmailIdsReady(orderId: string, scheduledEmailIds: string[], email: string): boolean {
+export function notifyEmailIdsReady(orderId: string, scheduledEmailIds: string[]): boolean {
   try {
     // Verificar se existe um callback ou sistema de notificação
     // Por enquanto, apenas loggar
@@ -50,9 +50,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         scheduledEmailIds: []
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
-      error: error.message || "Erro desconhecido",
+      error: error instanceof Error ? error.message : "Erro desconhecido",
       debug: error
     }, { status: 500 });
   }

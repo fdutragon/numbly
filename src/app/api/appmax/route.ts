@@ -674,11 +674,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               const resendData = await resendRes.json();
 
               if (resendData.scheduledEmailIds && Array.isArray(resendData.scheduledEmailIds)) {
-                const notified = notifyEmailIdsReady(orderId, resendData.scheduledEmailIds, body.email);
+                const notified = notifyEmailIdsReady(orderId, resendData.scheduledEmailIds);
 
                 if (!notified) {
-                  if (!(global as any).emailIdsCache) (global as any).emailIdsCache = new Map();
-                  (global as any).emailIdsCache.set(orderId, {
+                  const globalCache = global as { emailIdsCache?: Map<string, unknown> };
+                  if (!globalCache.emailIdsCache) globalCache.emailIdsCache = new Map();
+                  globalCache.emailIdsCache.set(orderId, {
                     scheduledEmailIds: resendData.scheduledEmailIds,
                     timestamp: Date.now(),
                     email: sanitizedData.email
@@ -735,9 +736,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Verificar se há dados de email em cache para este orderId
-    if ((global as any).emailIdsCache && (global as any).emailIdsCache.has(orderId)) {
-      const cachedData = (global as any).emailIdsCache.get(orderId);
-      (global as any).emailIdsCache.delete(orderId);
+    const globalCache = global as { emailIdsCache?: Map<string, unknown> };
+    if (globalCache.emailIdsCache && globalCache.emailIdsCache.has(orderId)) {
+      const cachedData = globalCache.emailIdsCache.get(orderId) as {
+        scheduledEmailIds: string[];
+        timestamp: number;
+        email: string;
+      };
+      globalCache.emailIdsCache.delete(orderId);
 
       return NextResponse.json({
         success: true,
