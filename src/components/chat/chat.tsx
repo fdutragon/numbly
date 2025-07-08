@@ -31,7 +31,6 @@ export function Chat() {
   const currentThread = getCurrentThread();
 
   const [introTyping, setIntroTyping] = useState('');
-  const [viewportHeight, setViewportHeight] = useState(0);
   const introPhrases = useMemo(() => [
     'Oi! Eu sou a Clara, sua secretária inteligente.',
     'Faço atendimento automático no WhatsApp, organizo agendamentos, gero relatórios e conecto campanhas de marketing.\n',
@@ -57,7 +56,8 @@ export function Chat() {
   useEffect(() => {
     const setInitialViewportHeight = () => {
       if (typeof window !== 'undefined') {
-        setViewportHeight(window.innerHeight);
+        // Não precisamos mais armazenar o viewport height
+        console.log('Initial viewport height:', window.innerHeight);
       }
     };
     
@@ -65,7 +65,7 @@ export function Chat() {
     
     const handleViewportChange = () => {
       const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      setViewportHeight(currentHeight);
+      console.log('Viewport height changed to:', currentHeight);
       
       // Scroll para última mensagem após mudança do viewport
       setTimeout(() => {

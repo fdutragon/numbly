@@ -22,13 +22,17 @@ export interface CreditCardData {
 }
 
 // Função para validar payload criptografado
-export function validateEncryptedPayload(payload: any): payload is EncryptedPayload {
+export function validateEncryptedPayload(payload: unknown): payload is EncryptedPayload {
   return (
-    payload &&
+    payload !== null &&
     typeof payload === 'object' &&
-    typeof payload.iv === 'string' &&
-    typeof payload.encryptedData === 'string' &&
-    typeof payload.authTag === 'string'
+    payload !== undefined &&
+    'iv' in payload &&
+    'encryptedData' in payload &&
+    'authTag' in payload &&
+    typeof (payload as EncryptedPayload).iv === 'string' &&
+    typeof (payload as EncryptedPayload).encryptedData === 'string' &&
+    typeof (payload as EncryptedPayload).authTag === 'string'
   );
 }
 
@@ -50,8 +54,9 @@ export async function decryptCardData(encryptedPayload: EncryptedPayload): Promi
       installments: 1,
       soft_descriptor: "NUMEROLOGICA"
     };
-  } catch (error: any) {
-    throw new Error(`Erro na descriptografia: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    throw new Error(`Erro na descriptografia: ${errorMessage}`);
   }
 }
 
@@ -68,7 +73,8 @@ export function encryptCardData(cardData: CreditCardData): EncryptedPayload {
       encryptedData: encrypted,
       authTag: authTag.toString('base64')
     };
-  } catch (error: any) {
-    throw new Error(`Erro na criptografia: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    throw new Error(`Erro na criptografia: ${errorMessage}`);
   }
 }

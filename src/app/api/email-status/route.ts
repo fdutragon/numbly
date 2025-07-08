@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Cache global para email IDs
+interface EmailCacheData {
+  scheduledEmailIds: string[];
+  timestamp: number;
+  email: string;
+}
+
 declare global {
-  var emailIdsCache: Map<string, {
-    scheduledEmailIds: string[];
-    timestamp: number;
-    email: string;
-  }> | undefined;
+  var emailIdsCache: Map<string, EmailCacheData> | undefined;
 }
 
 // Função para notificar que os IDs de email estão prontos
@@ -33,23 +35,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Verificar se há dados de email em cache para este orderId
-    if (global.emailIdsCache && global.emailIdsCache.has(orderId)) {
-      const cachedData = global.emailIdsCache.get(orderId);
-      global.emailIdsCache.delete(orderId);
+    const emailCache = global.emailIdsCache;
+    if (emailCache && emailCache.has(orderId)) {
+      const cachedData = emailCache.get(orderId);
+      emailCache.delete(orderId);
 
-      return NextResponse.json({
-        success: true,
-        scheduledEmailIds: cachedData?.scheduledEmailIds || [],
-        timestamp: cachedData?.timestamp || Date.now(),
-        email: cachedData?.email || ''
-      });
-    } else {
-      return NextResponse.json({
-        success: false,
-        message: "IDs ainda não disponíveis",
-        scheduledEmailIds: []
-      });
+      if (cachedData) {
+        return NextResponse.json({
+          success: true,
+          scheduledEmailIds: cachedData.scheduledEmailIds,
+          timestamp: cachedData.timestamp,
+          email: cachedData.email
+        });
+      }
     }
+    
+    return NextResponse.json({
+      success: false,
+      message: "IDs ainda não disponíveis",
+      scheduledEmailIds: []
+    });
   } catch (error: unknown) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : "Erro desconhecido",

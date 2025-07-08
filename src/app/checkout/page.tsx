@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -8,6 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Image from 'next/image';
+
+interface PaymentData {
+  success: boolean;
+  message?: string;
+  error?: string;
+  qr_code_img?: string;
+  pix_emv?: string;
+  [key: string]: unknown;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -18,7 +26,6 @@ export default function CheckoutPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [paymentData, setPaymentData] = useState<any>(null);
 
   // Customer data
   const [customerName, setCustomerName] = useState('');
@@ -105,8 +112,6 @@ export default function CheckoutPage() {
 
       const result = await safeParseJson(response);
       if (result.success) {
-        setPaymentData(result);
-        
         // Use os dados retornados pela API AppMax (estrutura correta)
         if (result.pix_emv) {
           setPixCode(result.pix_emv);
@@ -555,10 +560,12 @@ export default function CheckoutPage() {
                   <div className="space-y-3">
                     {qrCodeUrl && (
                       <div className="text-center">
-                        <img 
+                        <Image 
                           src={qrCodeUrl} 
                           alt="QR Code PIX" 
-                          className="mx-auto rounded-lg max-w-64"
+                          width={256}
+                          height={256}
+                          className="mx-auto rounded-lg"
                         />
                       </div>
                     )}

@@ -31,6 +31,16 @@ interface SanitizedData {
   skipPixelsAndEmails: boolean;
 }
 
+interface EmailCacheData {
+  scheduledEmailIds: string[];
+  timestamp: number;
+  email: string;
+}
+
+interface GlobalCache {
+  emailIdsCache?: Map<string, EmailCacheData>;
+}
+
 interface CustomerPayload {
   "access-token": string;
   firstname: string;
@@ -677,7 +687,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 const notified = notifyEmailIdsReady(orderId, resendData.scheduledEmailIds);
 
                 if (!notified) {
-                  const globalCache = global as { emailIdsCache?: Map<string, unknown> };
+                  const globalCache = global as GlobalCache;
                   if (!globalCache.emailIdsCache) globalCache.emailIdsCache = new Map();
                   globalCache.emailIdsCache.set(orderId, {
                     scheduledEmailIds: resendData.scheduledEmailIds,
@@ -736,28 +746,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Verificar se há dados de email em cache para este orderId
-    const globalCache = global as { emailIdsCache?: Map<string, unknown> };
+    const globalCache = global as GlobalCache;
     if (globalCache.emailIdsCache && globalCache.emailIdsCache.has(orderId)) {
-      const cachedData = globalCache.emailIdsCache.get(orderId) as {
-        scheduledEmailIds: string[];
-        timestamp: number;
-        email: string;
-      };
+      const cachedData = globalCache.emailIdsCache.get(orderId);
       globalCache.emailIdsCache.delete(orderId);
 
-      return NextResponse.json({
-        success: true,
-        scheduledEmailIds: cachedData.scheduledEmailIds,
-        timestamp: cachedData.timestamp,
-        email: cachedData.email
-      });
-    } else {
-      return NextResponse.json({
-        success: false,
-        message: "IDs ainda não disponíveis",
-        scheduledEmailIds: []
-      });
+      if (cachedData) {
+        return NextResponse.json({
+          success: true,
+          scheduledEmailIds: cachedData.scheduledEmailIds,
+          timestamp: cachedData.timestamp,
+          email: cachedData.email
+        });
+      }
     }
+    
+    return NextResponse.json({
+      success: false,
+      message: "IDs ainda não disponíveis",
+      scheduledEmailIds: []
+    });
   } catch (error: unknown) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : "Erro desconhecido",
