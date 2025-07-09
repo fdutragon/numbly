@@ -312,6 +312,21 @@ export function Chat() {
     };
   }, []);
 
+  // Estado para controlar alinhamento dinâmico
+  const [shouldAlignBottom, setShouldAlignBottom] = useState(false);
+
+  // Detecta se precisa alinhar ao bottom (quando overflow)
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    // Timeout para garantir renderização
+    const timer = setTimeout(() => {
+      if (!container) return;
+      setShouldAlignBottom(container.scrollHeight > container.clientHeight + 8); // margem de segurança
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentThread?.messages, isTyping]);
+
   return (
     <>
       <div 
@@ -354,9 +369,16 @@ export function Chat() {
         </motion.div>
         
         {/* Messages - Área com scroll */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)', transition: 'padding-bottom 0.2s' }}>
-          <div className="p-4 pb-0">
-            <div className="max-w-2xl mx-auto space-y-6">
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto custom-scrollbar pb-4"
+          style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)', transition: 'padding-bottom 0.2s' }}
+        >
+          <div className="p-4 pb-0 h-full">
+            <div
+              className={`max-w-2xl mx-auto space-y-6 flex flex-col ${shouldAlignBottom ? 'justify-end' : 'justify-start'} h-full`}
+              style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+            >
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
                   <motion.div
