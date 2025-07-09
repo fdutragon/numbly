@@ -5,6 +5,21 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowUp, Loader2 } from 'lucide-react';
 
+// Utilitários para compatibilidade com dispositivos antigos
+const isOldDevice = () => {
+  const userAgent = navigator.userAgent;
+  return /Android [1-4]/.test(userAgent) || /iPhone OS [1-9]_/.test(userAgent);
+};
+
+const handleViewportResize = () => {
+  // Força recalculo da altura da viewport em dispositivos antigos
+  if (isOldDevice()) {
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 300);
+  }
+};
+
 interface ChatInputProps {
   onSend: (content: string) => void;
   isLoading?: boolean;
@@ -20,16 +35,39 @@ export function ChatInput({ onSend, isLoading = false, disabled = false, inputRe
 
   useEffect(() => {
     if (!isLoading && textareaRef.current) {
-      textareaRef.current.focus();
+      // Delay focus em dispositivos antigos para evitar problemas de layout
+      const delay = isOldDevice() ? 300 : 0;
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, delay);
     }
   }, [isLoading, textareaRef]);
 
+  // Escuta mudanças na viewport para dispositivos antigos
+  useEffect(() => {
+    if (isOldDevice()) {
+      window.addEventListener('resize', handleViewportResize);
+      return () => window.removeEventListener('resize', handleViewportResize);
+    }
+  }, []);
+
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.rows = 1;
-      textareaRef.current.style.overflowY = 'hidden';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      try {
+        const textarea = textareaRef.current;
+        textarea.style.height = 'auto';
+        textarea.rows = 1;
+        textarea.style.overflowY = 'hidden';
+        
+        // Aguarda o próximo frame para calcular altura corretamente
+        requestAnimationFrame(() => {
+          if (textarea.scrollHeight > 0) {
+            textarea.style.height = `${textarea.scrollHeight}px`;
+          }
+        });
+      } catch (error) {
+        console.warn('Height adjustment failed:', error);
+      }
     }
   }, [value, textareaRef]);
 
@@ -39,6 +77,11 @@ export function ChatInput({ onSend, isLoading = false, disabled = false, inputRe
     
     onSend(value.trim());
     setValue('');
+    
+    // Gerencia viewport em dispositivos antigos
+    if (isOldDevice()) {
+      handleViewportResize();
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -46,11 +89,33 @@ export function ChatInput({ onSend, isLoading = false, disabled = false, inputRe
       e.preventDefault();
       handleSubmit(e);
     }
+    
+    // Força blur do teclado em dispositivos móveis antigos após envio
+    if (e.key === 'Enter' && !e.shiftKey && textareaRef.current) {
+      setTimeout(() => {
+        textareaRef.current?.blur();
+      }, 100);
+    }
   }
 
   function handleTextareaFocus(e: React.FocusEvent<HTMLTextAreaElement>) {
     // Garante scrollIntoView ao focar, para máxima compatibilidade
-    textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    // Usa setTimeout para garantir que o DOM esteja pronto
+    setTimeout(() => {
+      try {
+        if (textareaRef.current) {
+          // Fallback para dispositivos antigos que não suportam scrollIntoView com opções
+          if (textareaRef.current.scrollIntoView) {
+            textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          } else {
+            textareaRef.current.scrollIntoView();
+          }
+        }
+      } catch (error) {
+        // Fallback silencioso para dispositivos muito antigos
+        console.warn('ScrollIntoView failed:', error);
+      }
+    }, 100);
     if (onFocus) onFocus();
   }
 
@@ -75,7 +140,17 @@ export function ChatInput({ onSend, isLoading = false, disabled = false, inputRe
             disabled={isLoading || disabled}
             className="flex-1 bg-transparent border-0 outline-none resize-none px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm leading-relaxed min-h-[44px] max-h-[120px]"
             rows={1}
-            style={{ height: 'auto', overflowY: 'hidden' }}
+            style={{ 
+              height: 'auto', 
+              overflowY: 'hidden',
+              // Otimizações para dispositivos antigos
+              WebkitTransform: 'translate3d(0,0,0)',
+              transform: 'translate3d(0,0,0)',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              WebkitPerspective: 1000,
+              perspective: 1000
+            }}
           />
           
           <div className="flex items-end p-2">

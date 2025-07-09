@@ -62,11 +62,27 @@ export function Chat() {
   // Sempre scrolla para o final ao adicionar mensagem ou typing
   useEffect(() => {
     const scrollToBottom = () => {
-      messagesEndRef.current?.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'end',
-        inline: 'end'
-      });
+      try {
+        if (messagesEndRef.current) {
+          // Tenta scrollIntoView com opções modernas primeiro
+          if (messagesEndRef.current.scrollIntoView) {
+            messagesEndRef.current.scrollIntoView({ 
+              behavior: 'smooth',
+              block: 'end',
+              inline: 'end'
+            });
+          } else {
+            // Fallback para dispositivos antigos
+            messagesEndRef.current.scrollIntoView();
+          }
+        }
+      } catch (error) {
+        // Fallback manual para scroll
+        console.warn('ScrollIntoView failed, using manual scroll:', error);
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }
     };
     const timer = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timer);
@@ -98,9 +114,19 @@ export function Chat() {
   }, [introIndex, introChar, introPhrases.length]);
 
   const handleSendMessage = async (content: string) => {
-    // Fecha o teclado após envio da mensagem
-    if (inputRef.current) {
-      inputRef.current.blur();
+    // Fecha o teclado após envio da mensagem com compatibilidade para dispositivos antigos
+    try {
+      if (inputRef.current) {
+        inputRef.current.blur();
+        // Força o blur em dispositivos antigos
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.blur();
+          }
+        }, 200);
+      }
+    } catch (error) {
+      console.warn('Blur failed:', error);
     }
     
     // Chama a função original handleSend
@@ -123,6 +149,18 @@ export function Chat() {
 
     setLoading(true);
     setTyping(true);
+    
+    // Timeout para evitar loading infinito em dispositivos antigos
+    const loadingTimeout = setTimeout(() => {
+      if (isLoading) {
+        setLoading(false);
+        setTyping(false);
+        addMessage(threadId, {
+          role: 'assistant',
+          content: 'Desculpe, houve um problema de conexão. Tente novamente.',
+        });
+      }
+    }, 30000); // 30 segundos timeout
 
     try {
       const messages = getCurrentThread()?.messages.map(msg => ({
@@ -215,9 +253,11 @@ export function Chat() {
       console.error('Error sending message:', error);
       addMessage(threadId, {
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: 'Desculpe, houve um erro. Tente novamente em alguns instantes.',
       });
     } finally {
+      // Limpa o timeout
+      clearTimeout(loadingTimeout);
       setLoading(false);
       setTyping(false);
     }
@@ -253,21 +293,40 @@ export function Chat() {
     let ticking = false;
     const handleScroll = () => {
       if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const st = container.scrollTop;
-          if (st > lastScrollTop.current + 8) {
-            setShowHeader(false);
-          } else if (st < lastScrollTop.current - 8) {
-            setShowHeader(true);
+        // Usa requestAnimationFrame se disponível, senão setTimeout
+        const scheduleUpdate = window.requestAnimationFrame || ((fn: () => void) => setTimeout(fn, 16));
+        scheduleUpdate(() => {
+          try {
+            const st = container.scrollTop;
+            if (st > lastScrollTop.current + 8) {
+              setShowHeader(false);
+            } else if (st < lastScrollTop.current - 8) {
+              setShowHeader(true);
+            }
+            lastScrollTop.current = st;
+          } catch (error) {
+            console.warn('Scroll handling failed:', error);
           }
-          lastScrollTop.current = st;
           ticking = false;
         });
         ticking = true;
       }
     };
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
+    
+    try {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+    } catch (error) {
+      // Fallback para navegadores muito antigos
+      container.addEventListener('scroll', handleScroll, false);
+    }
+    
+    return () => {
+      try {
+        container.removeEventListener('scroll', handleScroll);
+      } catch (error) {
+        console.warn('Failed to remove scroll listener:', error);
+      }
+    };
   }, []);
 
   // Atualiza altura do header dinamicamente
@@ -281,79 +340,47 @@ export function Chat() {
     return () => window.removeEventListener('resize', updateHeaderHeight);
   }, []);
 
-  // Estado para padding do input (altura do teclado)
-  const [inputPadding, setInputPadding] = useState(0);
-  useEffect(() => {
-    function handleVisualViewportResize() {
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        // Se teclado está aberto, viewportHeight < windowHeight
-        const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
-        setInputPadding(keyboardHeight > 80 ? keyboardHeight : 0);
-      } else {
-        setInputPadding(0);
-      }
-    }
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
-      handleVisualViewportResize();
-    }
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
-      }
-    };
-  }, []);
-
   useEffect(() => {
     console.log('Chat component rendered');
   });
 
   return (
     <>
-      <div 
-        className="flex flex-col w-full bg-background h-screen max-h-screen overflow-hidden"
-        style={{ 
-          height: '100dvh',
-          maxHeight: '100dvh',
-          overflow: 'hidden',
-          position: 'relative',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
+      <div className="flex flex-col w-full bg-background h-screen max-h-screen overflow-hidden">
         {/* Header fixo sempre visível */}
         <div
-          className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
+          className="flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
           style={{ position: 'sticky', top: 0, zIndex: 40 }}
         >
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
-                <Bot className="w-4 h-4 text-white" />
+          <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
+                  <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
+                </div>
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
-                <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
+              <div>
+                <h1 className="font-medium text-foreground text-base">
+                  Clara
+                </h1>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="w-1 h-1 bg-green-500 rounded-full"></span>
+                  Online
+                </p>
               </div>
             </div>
-            <div>
-              <h1 className="font-medium text-foreground text-base">
-                Clara
-              </h1>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="w-1 h-1 bg-green-500 rounded-full"></span>
-                Online
-              </p>
-            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
         </div>
         
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar"
-          style={{ minHeight: 0, paddingBottom: '72px' }} // paddingBottom igual ou maior que a altura do input
+          style={{ paddingBottom: 96 }} // paddingBottom igual ou maior que a altura do input fixo
         >
           <div className="p-4 pb-0">
             <div className="max-w-2xl mx-auto space-y-6">
@@ -412,7 +439,7 @@ export function Chat() {
                 )}   
                 {isTyping && <TypingIndicator />}
               </AnimatePresence>
-              <div ref={messagesEndRef} className="h-4" />
+              <div ref={messagesEndRef} className="h-4" style={{ paddingBottom: 20 }} />
             </div>
           </div>
         </div>
