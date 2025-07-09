@@ -291,11 +291,21 @@ export function Chat() {
       // Tenta detectar altura do teclado via visualViewport
       const viewport = window.visualViewport;
       if (viewport) {
+        // Em alguns browsers, o teclado só "empurra" a viewport, não o layout
+        // Força o scroll para o final e ajusta o bottom do input
         const diff = window.innerHeight - viewport.height;
         el.style.paddingBottom = diff > 0 ? `${diff + 80}px` : '80px';
+        const inputBar = document.getElementById('chat-input-bar');
+        if (inputBar) {
+          inputBar.style.bottom = diff > 0 ? `${diff}px` : '0px';
+        }
       } else {
         // Fallback para browsers antigos
         el.style.paddingBottom = '80px';
+        const inputBar = document.getElementById('chat-input-bar');
+        if (inputBar) {
+          inputBar.style.bottom = '0px';
+        }
       }
     }
     updatePaddingForKeyboard();
@@ -414,6 +424,7 @@ export function Chat() {
         
         {/* Input - Fixo no bottom, sempre visível mesmo com teclado */}
         <div
+          id="chat-input-bar"
           className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
           style={{
             position: 'fixed',
@@ -421,12 +432,12 @@ export function Chat() {
             right: 0,
             bottom: 0,
             zIndex: 100,
-            // Garante que o input fique acima do teclado virtual em mobile
             touchAction: 'none',
             WebkitTransform: 'translateZ(0)',
             willChange: 'transform',
             width: '100vw',
             maxWidth: '100vw',
+            transition: 'bottom 0.2s',
           }}
         >
           <div className="max-w-2xl mx-auto">
