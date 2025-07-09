@@ -438,31 +438,29 @@ export function Chat() {
             </div>
           </div>
         </div>
-        
-        {/* Input - Fixo no bottom, sempre visível mesmo com teclado */}
-        <div
-          id="chat-input-bar"
-          className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
-          style={{
-            position: 'fixed',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 100,
-            touchAction: 'none',
-            WebkitTransform: 'translateZ(0)',
-            willChange: 'transform',
-            width: '100vw',
-            maxWidth: '100vw',
-            transition: 'bottom 0.2s',
-          }}
-        >
-          <div className="max-w-2xl mx-auto">
-            <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
-          </div>
+      </div>
+      {/* Input - Fixo no bottom, sempre visível mesmo com teclado */}
+      <div
+        id="chat-input-bar"
+        className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 100,
+          touchAction: 'none',
+          WebkitTransform: 'translateZ(0)',
+          willChange: 'transform',
+          width: '100vw',
+          maxWidth: '100vw',
+          transition: 'bottom 0.2s',
+        }}
+      >
+        <div className="max-w-2xl mx-auto">
+          <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
         </div>
       </div>
-
       {/* Checkout Modal */}
       <CheckoutComponent
         isOpen={showCheckout}
