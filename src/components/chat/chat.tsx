@@ -290,7 +290,8 @@ export function Chat() {
         style={{ 
           height: '100vh',
           maxHeight: '100vh',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative'
         }}
       >
         {/* Header - Fixo no topo */}
@@ -387,7 +388,7 @@ export function Chat() {
         </div>
         
         {/* Input - Fixo no bottom */}
-        <div className="bg-background border-t border-border px-4 py-3 flex-shrink-0" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40 }}>
+        <div className="bg-background border-t border-border px-4 py-3 flex-shrink-0" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100 }}>
           <div className="max-w-2xl mx-auto">
             <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
           </div>
