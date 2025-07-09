@@ -354,9 +354,9 @@ export function Chat() {
         </motion.div>
         
         {/* Messages - Área com scroll */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)', transition: 'padding-bottom 0.2s', display: 'flex', flexDirection: 'column-reverse' }}>
-          <div className="p-4 pb-0" style={{ display: 'flex', flexDirection: 'column-reverse' }}>
-            <div className="max-w-2xl mx-auto space-y-6" style={{ display: 'flex', flexDirection: 'column-reverse' }}>
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)', transition: 'padding-bottom 0.2s' }}>
+          <div className="p-4 pb-0">
+            <div className="max-w-2xl mx-auto space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
                   <motion.div
@@ -402,11 +402,11 @@ export function Chat() {
                     )}
                   </motion.div>
                 ) : (
-                  [...(currentThread?.messages || [])].reverse().map((message, index) => (
+                  (currentThread?.messages || []).map((message, index) => (
                     <ChatMessage
                       key={message.id}
                       message={message}
-                      isLatest={index === 0}
+                      isLatest={index === (currentThread?.messages.length ?? 0) - 1}
                     />
                   ))
                 )}   
