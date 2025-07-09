@@ -52,45 +52,6 @@ export function Chat() {
     'Clara, envie informações para meu@email.com'
   ];
 
-  // Inicialização e gerenciamento do viewport
-  useEffect(() => {
-    const setInitialViewportHeight = () => {
-      if (typeof window !== 'undefined') {
-        // Não precisamos mais armazenar o viewport height
-        console.log('Initial viewport height:', window.innerHeight);
-      }
-    };
-    setInitialViewportHeight();
-    const handleViewportChange = () => {
-      const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      console.log('Viewport height changed to:', currentHeight);
-      
-      // Scroll para última mensagem após mudança do viewport
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'end',
-          inline: 'end'
-        });
-      }, 100);
-    };
-
-    // Listener para mudanças no viewport (principalmente teclado virtual)
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportChange);
-    } else {
-      window.addEventListener('resize', handleViewportChange);
-    }
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportChange);
-      } else {
-        window.removeEventListener('resize', handleViewportChange);
-      }
-    };
-  }, []);
-
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
     const newThreadId = createThread();
@@ -361,130 +322,119 @@ export function Chat() {
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {/* Header - Fixo no topo, some ao rolar para baixo */}
-        {showHeader && (
-          <motion.div
-            ref={headerRef}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.25 }}
-            className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
-            style={{ position: 'sticky', top: 0, zIndex: 40 }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
-                  <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
-                </div>
+        {/* Header fixo sempre visível */}
+        <div
+          className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
+          style={{ position: 'sticky', top: 0, zIndex: 40 }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
+                <Bot className="w-4 h-4 text-white" />
               </div>
-              <div>
-                <h1 className="font-medium text-foreground text-base">
-                  Clara
-                </h1>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <span className="w-1 h-1 bg-green-500 rounded-full"></span>
-                  Online
-                </p>
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
+                <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
               </div>
             </div>
-            <ThemeToggle />
-          </motion.div>
-        )}
-        
-        {/* Messages - Área com scroll, ocupa todo espaço disponível */}
-        <div
-          ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar pb-4"
-          style={{
-            minHeight: 0,
-            maxHeight: `calc(100vh - ${showHeader ? headerHeight : 0}px)`
-          }}
-        >
-          <div className="p-4 pb-0">
-            <div className="max-w-2xl mx-auto space-y-6">
-              <AnimatePresence initial={false}>
-                {currentThread?.messages.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-12"
-                  >
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
-                      <Bot className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-lg font-medium text-foreground mb-2">
-                      Clara
-                    </h3>
-                    <div className="min-h-[2rem] mb-6">
-                      <p className="text-muted-foreground max-w-sm mx-auto whitespace-pre-line text-sm leading-relaxed">
-                        {introTyping}
-                        <span className="animate-pulse text-violet-500">|</span>
-                      </p>
-                    </div>
-                    {isIntroFinished && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="space-y-2"
-                      >
-                        {suggestionQuestions.map((q, i) => (
-                          <motion.button
-                            key={i}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
-                            type="button"
-                            className="w-full px-4 py-2.5 rounded-lg bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors text-left"
-                            onClick={() => handleSendMessage(q)}
-                          >
-                            {q}
-                          </motion.button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </motion.div>
-                ) : (
-                  currentThread?.messages.map((message, index) => (
-                    <ChatMessage
-                      key={message.id}
-                      message={message}
-                      isLatest={index === (currentThread?.messages.length ?? 0) - 1}
-                    />
-                  ))
-                )}   
-                {isTyping && <TypingIndicator />}
-              </AnimatePresence>
-              <div ref={messagesEndRef} className="h-4" />
+            <div>
+              <h1 className="font-medium text-foreground text-base">
+                Clara
+              </h1>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="w-1 h-1 bg-green-500 rounded-full"></span>
+                Online
+              </p>
             </div>
           </div>
+          <ThemeToggle />
         </div>
         
-        {/* Input - Fixo no bottom, sempre visível mesmo com teclado */}
-        <div
-          className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
-          style={{
-            position: 'fixed',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 100,
-            touchAction: 'none',
-            WebkitTransform: 'translateZ(0)',
-            willChange: 'transform',
-            width: '100vw',
-            maxWidth: '100vw',
-            paddingBottom: inputPadding ? inputPadding : undefined,
-          }}
-        >
-          <div className="max-w-2xl mx-auto">
-            <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
+        {/* Wrapper para separar mensagens e input */}
+        <div className="flex flex-col flex-1 min-h-0 w-full">
+          {/* Messages - Área com scroll */}
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto custom-scrollbar"
+            style={{ minHeight: 0 }}
+          >
+            <div className="p-4 pb-0">
+              <div className="max-w-2xl mx-auto space-y-6">
+                <AnimatePresence initial={false}>
+                  {currentThread?.messages.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="text-center py-12"
+                    >
+                      <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+                        <Bot className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-medium text-foreground mb-2">
+                        Clara
+                      </h3>
+                      <div className="min-h-[2rem] mb-6">
+                        <p className="text-muted-foreground max-w-sm mx-auto whitespace-pre-line text-sm leading-relaxed">
+                          {introTyping}
+                          <span className="animate-pulse text-violet-500">|</span>
+                        </p>
+                      </div>
+                      {isIntroFinished && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5 }}
+                          className="space-y-2"
+                        >
+                          {suggestionQuestions.map((q, i) => (
+                            <motion.button
+                              key={i}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.1 }}
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.99 }}
+                              type="button"
+                              className="w-full px-4 py-2.5 rounded-lg bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors text-left"
+                              onClick={() => handleSendMessage(q)}
+                            >
+                              {q}
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ) : (
+                    currentThread?.messages.map((message, index) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        isLatest={index === (currentThread?.messages.length ?? 0) - 1}
+                      />
+                    ))
+                  )}   
+                  {isTyping && <TypingIndicator />}
+                </AnimatePresence>
+                <div ref={messagesEndRef} className="h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Input - Fixo no bottom, fora do fluxo das mensagens */}
+          <div
+            className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
+            style={{
+              position: 'sticky',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 100,
+              width: '100%',
+              maxWidth: '100vw',
+            }}
+          >
+            <div className="max-w-2xl mx-auto">
+              <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
+            </div>
           </div>
         </div>
       </div>
