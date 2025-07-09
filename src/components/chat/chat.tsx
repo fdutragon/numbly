@@ -337,13 +337,12 @@ export function Chat() {
   return (
     <>
       <div 
-        className="flex flex-col w-full bg-background h-screen max-h-screen overflow-hidden"
-        style={{ 
-          height: '100dvh',
-          maxHeight: '100dvh',
+        className="flex flex-col w-full bg-background overflow-hidden"
+        style={{
+          height: '100%',
           overflow: 'hidden',
           position: 'relative',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {/* Header - Fixo no topo */}
@@ -379,7 +378,7 @@ export function Chat() {
         <div
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar pb-4"
-          style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)', transition: 'padding-bottom 0.2s' }}
+          style={{ minHeight: 0, transition: 'padding-bottom 0.2s' }}
         >
           <div className="p-4 pb-0 h-full">
             <div
