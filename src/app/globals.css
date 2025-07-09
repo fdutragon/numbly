@@ -1,3 +1,44 @@
+/* Estilo adicional para suporte teclado mobile */
+@media (max-width: 600px) {
+  html {
+    height: 100vh; /* Corrige o viewport em mobile */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transform: translate3d(0, 0, 0); /* Força aceleração de hardware */
+  }
+
+  #__next {
+    height: auto; /* Permite crescimento conforme input e teclado */
+  }
+
+  /* Corrige elemento fixo na parte inferior */
+  .fixed-bottom {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background: white;
+    border-top: 1px solid #ddd;
+    transition: bottom 0.3s ease-in-out;
+  }
+}
+
+/* Corrige safari view quando teclado é aberto */
+@supports (-webkit-touch-callout: none) {
+  body.safari-view {
+    height: 100vh;
+    overflow: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 @import "tailwindcss";
 @import "tw-animate-css";
 

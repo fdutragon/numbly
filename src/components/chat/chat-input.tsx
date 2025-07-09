@@ -7,8 +7,14 @@ import { ArrowUp, Loader2 } from 'lucide-react';
 
 // Utilitários para compatibilidade com dispositivos antigos
 const isOldDevice = () => {
+  if (typeof window === 'undefined') return false;
   const userAgent = navigator.userAgent;
   return /Android [1-4]/.test(userAgent) || /iPhone OS [1-9]_/.test(userAgent);
+};
+
+const isMobile = () => {
+  if (typeof window === 'undefined') return false;
+  return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
 const handleViewportResize = () => {
@@ -16,6 +22,26 @@ const handleViewportResize = () => {
   if (isOldDevice()) {
     setTimeout(() => {
       window.scrollTo(0, 0);
+    }, 300);
+  }
+};
+
+// Função para lidar com foco do input em mobile
+const handleMobileFocus = (element: HTMLElement) => {
+  if (isMobile()) {
+    // Aguarda o teclado abrir
+    setTimeout(() => {
+      try {
+        element.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      } catch (error) {
+        console.warn('ScrollIntoView failed:', error);
+        // Fallback para dispositivos muito antigos
+        element.scrollIntoView();
+      }
     }, 300);
   }
 };
@@ -99,24 +125,13 @@ export function ChatInput({ onSend, isLoading = false, disabled = false, inputRe
   }
 
   function handleTextareaFocus() {
-    // Garante scrollIntoView ao focar, para máxima compatibilidade
-    // Usa setTimeout para garantir que o DOM esteja pronto
-    setTimeout(() => {
-      try {
-        if (textareaRef.current) {
-          // Fallback para dispositivos antigos que não suportam scrollIntoView com opções
-          if (textareaRef.current.scrollIntoView) {
-            textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-          } else {
-            textareaRef.current.scrollIntoView();
-          }
-        }
-      } catch (error) {
-        // Fallback silencioso para dispositivos muito antigos
-        console.warn('ScrollIntoView failed:', error);
-      }
-    }, 100);
+    // Chama a função onFocus se fornecida
     if (onFocus) onFocus();
+    
+    // Lidar com foco em dispositivos mobile
+    if (textareaRef.current) {
+      handleMobileFocus(textareaRef.current);
+    }
   }
 
   const canSend = value.trim() && !isLoading && !disabled;

@@ -26,7 +26,29 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Detecta Safari
+              if (/Safari/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent)) {
+                document.body.classList.add('safari-view');
+              }
+              
+              // Configura altura real da viewport
+              function setVH() {
+                const vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', vh + 'px');
+              }
+              
+              setVH();
+              window.addEventListener('resize', setVH);
+              window.addEventListener('orientationchange', function() {
+                setTimeout(setVH, 500);
+              });
+            `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

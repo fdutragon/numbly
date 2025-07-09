@@ -29,6 +29,12 @@ export function Chat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const currentThread = getCurrentThread();
+  
+  // Estados para lidar com teclado em dispositivos antigos
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const [initialViewportHeight, setInitialViewportHeight] = useState(0);
 
   const [introTyping, setIntroTyping] = useState('');
   const introPhrases = useMemo(() => [
@@ -51,6 +57,69 @@ export function Chat() {
     'Quero contratar o plano Pro',
     'Clara, envie informações para meu@email.com'
   ];
+
+  // Detecta mudanças na viewport para lidar com teclado
+  useEffect(() => {
+    const handleResize = () => {
+      const currentHeight = window.innerHeight;
+      
+      // Salva a altura inicial na primeira execução
+      if (initialViewportHeight === 0) {
+        setInitialViewportHeight(currentHeight);
+        setViewportHeight(currentHeight);
+        return;
+      }
+      
+      setViewportHeight(currentHeight);
+      
+      // Detecta se o teclado está aberto (altura diminuiu significativamente)
+      const heightDifference = initialViewportHeight - currentHeight;
+      const isKeyboardVisible = heightDifference > 150; // 150px é o threshold
+      
+      setIsKeyboardOpen(isKeyboardVisible);
+      setKeyboardHeight(isKeyboardVisible ? heightDifference : 0);
+      
+      // Força scroll para o input quando o teclado abre
+      if (isKeyboardVisible && inputRef.current) {
+        setTimeout(() => {
+          try {
+            inputRef.current?.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          } catch (error) {
+            console.warn('ScrollIntoView failed:', error);
+            // Fallback manual
+            if (messagesContainerRef.current) {
+              messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+            }
+          }
+        }, 300);
+      }
+    };
+    
+    // Eventos para detectar mudanças na viewport
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(handleResize, 500); // Delay para aguardar orientação
+    });
+    
+    // Visual Viewport API para dispositivos modernos
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
+    
+    // Inicializa
+    handleResize();
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+    };
+  }, [initialViewportHeight]);
 
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
@@ -123,14 +192,43 @@ export function Chat() {
           if (inputRef.current) {
             inputRef.current.blur();
           }
+          // Força o fechamento do teclado
+          const activeElement = document.activeElement as HTMLElement;
+          if (activeElement && typeof activeElement.blur === 'function') {
+            activeElement.blur();
+          }
         }, 200);
       }
     } catch (error) {
       console.warn('Blur failed:', error);
     }
     
+    // Força scroll para mensagens após envio
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }, 100);
+    
     // Chama a função original handleSend
     return handleSend(content);
+  };
+  
+  // Função para focar no input com segurança
+  const handleInputFocus = () => {
+    // Aguarda um pouco antes de fazer scroll para garantir que o teclado abriu
+    setTimeout(() => {
+      if (inputRef.current && isKeyboardOpen) {
+        try {
+          inputRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        } catch (error) {
+          console.warn('ScrollIntoView on focus failed:', error);
+        }
+      }
+    }, 300);
   };
 
   async function handleSend(content: string) {
@@ -350,7 +448,13 @@ export function Chat() {
 
   return (
     <>
-      <div className="flex flex-col w-full bg-background h-screen max-h-screen overflow-hidden">
+      <div 
+        className="flex flex-col w-full bg-background overflow-hidden"
+        style={{ 
+          height: isKeyboardOpen ? `${viewportHeight}px` : '100vh',
+          maxHeight: isKeyboardOpen ? `${viewportHeight}px` : '100vh'
+        }}
+      >
         {/* Header fixo sempre visível */}
         <div
           className="flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
@@ -384,7 +488,10 @@ export function Chat() {
         <div
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar"
-          style={{ paddingBottom: 96 }} // paddingBottom igual ou maior que a altura do input fixo
+          style={{ 
+            paddingBottom: isKeyboardOpen ? 20 : 96,
+            height: isKeyboardOpen ? `calc(${viewportHeight}px - 160px)` : 'auto'
+          }}
         >
           <div className="p-4 pb-0">
             <div className="max-w-2xl mx-auto space-y-6">
@@ -455,14 +562,21 @@ export function Chat() {
             position: 'fixed',
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: isKeyboardOpen ? `${keyboardHeight}px` : 0,
             zIndex: 100,
             width: '100vw',
             maxWidth: '100vw',
+            transform: isKeyboardOpen ? 'translateY(0)' : 'translateY(0)',
+            transition: 'bottom 0.3s ease-in-out, transform 0.3s ease-in-out'
           }}
         >
           <div className="max-w-2xl mx-auto">
-            <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
+            <ChatInput 
+              onSend={handleSendMessage} 
+              isLoading={isLoading} 
+              inputRef={inputRef} 
+              onFocus={handleInputFocus}
+            />
           </div>
         </div>
       </div>
