@@ -10,9 +10,10 @@ interface ChatInputProps {
   isLoading?: boolean;
   disabled?: boolean;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
+  onFocus?: () => void;
 }
 
-export function ChatInput({ onSend, isLoading = false, disabled = false, inputRef }: ChatInputProps) {
+export function ChatInput({ onSend, isLoading = false, disabled = false, inputRef, onFocus }: ChatInputProps) {
   const [value, setValue] = useState('');
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || internalRef;
@@ -47,6 +48,12 @@ export function ChatInput({ onSend, isLoading = false, disabled = false, inputRe
     }
   }
 
+  function handleTextareaFocus(e: React.FocusEvent<HTMLTextAreaElement>) {
+    // Garante scrollIntoView ao focar, para máxima compatibilidade
+    textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (onFocus) onFocus();
+  }
+
   const canSend = value.trim() && !isLoading && !disabled;
 
   return (
@@ -63,6 +70,7 @@ export function ChatInput({ onSend, isLoading = false, disabled = false, inputRe
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={handleTextareaFocus}
             placeholder={isLoading ? "Clara está pensando..." : "Digite sua mensagem..."}
             disabled={isLoading || disabled}
             className="flex-1 bg-transparent border-0 outline-none resize-none px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm leading-relaxed min-h-[44px] max-h-[120px]"
