@@ -349,15 +349,14 @@ export function Chat() {
           <ThemeToggle />
         </div>
         
-        {/* Wrapper para separar mensagens e input */}
-        <div className="flex flex-col flex-1 min-h-0 w-full">
-          {/* Messages - Área com scroll apenas na lista de mensagens */}
-          <div className="p-4 pb-0 flex-1 min-h-0">
-            <div
-              className="max-w-2xl mx-auto space-y-6 h-full overflow-y-auto custom-scrollbar"
-              style={{ minHeight: 0 }}
-              ref={messagesContainerRef}
-            >
+        {/* Messages - Área com scroll */}
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto custom-scrollbar"
+          style={{ minHeight: 0, paddingBottom: '72px' }} // paddingBottom igual ou maior que a altura do input
+        >
+          <div className="p-4 pb-0">
+            <div className="max-w-2xl mx-auto space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
                   <motion.div
@@ -416,23 +415,23 @@ export function Chat() {
               <div ref={messagesEndRef} className="h-4" />
             </div>
           </div>
-
-          {/* Input - Fixo no bottom, fora do fluxo das mensagens */}
-          <div
-            className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
-            style={{
-              position: 'sticky',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 100,
-              width: '100%',
-              maxWidth: '100vw',
-            }}
-          >
-            <div className="max-w-2xl mx-auto">
-              <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
-            </div>
+        </div>
+        
+        {/* Input - Fixo no bottom */}
+        <div
+          className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
+          style={{
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 100,
+            width: '100vw',
+            maxWidth: '100vw',
+          }}
+        >
+          <div className="max-w-2xl mx-auto">
+            <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
           </div>
         </div>
       </div>
