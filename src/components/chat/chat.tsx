@@ -287,25 +287,20 @@ export function Chat() {
   useEffect(() => {
     function updatePaddingForKeyboard() {
       const el = messagesContainerRef.current;
-      if (!el) return;
+      const inputBar = document.getElementById('chat-input-bar');
+      if (!el || !inputBar) return;
+      // Detecta altura real do input
+      const inputHeight = inputBar.offsetHeight;
       // Tenta detectar altura do teclado via visualViewport
       const viewport = window.visualViewport;
       if (viewport) {
-        // Em alguns browsers, o teclado só "empurra" a viewport, não o layout
-        // Força o scroll para o final e ajusta o bottom do input
         const diff = window.innerHeight - viewport.height;
-        el.style.paddingBottom = diff > 0 ? `${diff + 80}px` : '80px';
-        const inputBar = document.getElementById('chat-input-bar');
-        if (inputBar) {
-          inputBar.style.bottom = diff > 0 ? `${diff}px` : '0px';
-        }
+        // paddingBottom = altura do input + espaço do teclado
+        el.style.paddingBottom = diff > 0 ? `${diff + inputHeight}px` : `${inputHeight}px`;
+        inputBar.style.bottom = diff > 0 ? `${diff}px` : '0px';
       } else {
-        // Fallback para browsers antigos
-        el.style.paddingBottom = '80px';
-        const inputBar = document.getElementById('chat-input-bar');
-        if (inputBar) {
-          inputBar.style.bottom = '0px';
-        }
+        el.style.paddingBottom = `${inputHeight}px`;
+        inputBar.style.bottom = '0px';
       }
     }
     updatePaddingForKeyboard();
@@ -359,9 +354,9 @@ export function Chat() {
         </motion.div>
         
         {/* Messages - Área com scroll */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)', transition: 'padding-bottom 0.2s' }}>
-          <div className="p-4 pb-0">
-            <div className="max-w-2xl mx-auto space-y-6">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)', transition: 'padding-bottom 0.2s', display: 'flex', flexDirection: 'column-reverse' }}>
+          <div className="p-4 pb-0" style={{ display: 'flex', flexDirection: 'column-reverse' }}>
+            <div className="max-w-2xl mx-auto space-y-6" style={{ display: 'flex', flexDirection: 'column-reverse' }}>
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
                   <motion.div
@@ -407,11 +402,11 @@ export function Chat() {
                     )}
                   </motion.div>
                 ) : (
-                  currentThread?.messages.map((message, index) => (
+                  [...(currentThread?.messages || [])].reverse().map((message, index) => (
                     <ChatMessage
                       key={message.id}
                       message={message}
-                      isLatest={index === (currentThread?.messages.length ?? 0) - 1}
+                      isLatest={index === 0}
                     />
                   ))
                 )}   
