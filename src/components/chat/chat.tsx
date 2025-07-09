@@ -341,8 +341,8 @@ export function Chat() {
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar pb-4"
-          style={{ minHeight: 0, transition: 'padding-bottom 0.2s' }}
+          className="flex-1 overflow-y-auto custom-scrollbar"
+          style={{ minHeight: 0 }}
         >
           <div className="p-4 pb-0 h-full">
             <div
@@ -404,27 +404,21 @@ export function Chat() {
                 )}   
                 {isTyping && <TypingIndicator />}
               </AnimatePresence>
-              <div ref={messagesEndRef} className="h-4" />
+              <div ref={messagesEndRef} className="h-10" /> {/* padding de 40px após a última mensagem */}
             </div>
           </div>
         </div>
       </div>
-      {/* Input - Fixo no bottom, sempre visível mesmo com teclado */}
+      {/* Input - Sticky bottom */}
       <div
         id="chat-input-bar"
-        className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
+        className="bg-background border-t border-border px-4 py-3 flex-shrink-0 sticky bottom-0"
         style={{
-          position: 'fixed',
           left: 0,
           right: 0,
-          bottom: 0,
           zIndex: 100,
-          touchAction: 'none',
-          WebkitTransform: 'translateZ(0)',
-          willChange: 'transform',
           width: '100vw',
           maxWidth: '100vw',
-          transition: 'bottom 0.2s',
         }}
       >
         <div className="max-w-2xl mx-auto">
