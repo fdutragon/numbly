@@ -283,6 +283,30 @@ export function Chat() {
     console.log('Chat component rendered');
   });
 
+  // Ajusta padding do container para garantir que o input nunca seja coberto pelo teclado virtual
+  useEffect(() => {
+    function updatePaddingForKeyboard() {
+      const el = messagesContainerRef.current;
+      if (!el) return;
+      // Tenta detectar altura do teclado via visualViewport
+      const viewport = window.visualViewport;
+      if (viewport) {
+        const diff = window.innerHeight - viewport.height;
+        el.style.paddingBottom = diff > 0 ? `${diff + 80}px` : '80px';
+      } else {
+        // Fallback para browsers antigos
+        el.style.paddingBottom = '80px';
+      }
+    }
+    updatePaddingForKeyboard();
+    window.visualViewport?.addEventListener('resize', updatePaddingForKeyboard);
+    window.addEventListener('resize', updatePaddingForKeyboard);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updatePaddingForKeyboard);
+      window.removeEventListener('resize', updatePaddingForKeyboard);
+    };
+  }, []);
+
   return (
     <>
       <div 
@@ -325,7 +349,7 @@ export function Chat() {
         </motion.div>
         
         {/* Messages - Área com scroll */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)' }}>
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)', transition: 'padding-bottom 0.2s' }}>
           <div className="p-4 pb-0">
             <div className="max-w-2xl mx-auto space-y-6">
               <AnimatePresence initial={false}>
