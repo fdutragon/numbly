@@ -298,9 +298,16 @@ export function Chat() {
         // paddingBottom = altura do input + espaço do teclado
         el.style.paddingBottom = diff > 0 ? `${diff + inputHeight}px` : `${inputHeight}px`;
         inputBar.style.bottom = diff > 0 ? `${diff}px` : '0px';
+        inputBar.style.width = '100vw';
+        inputBar.style.left = '0';
+        inputBar.style.right = '0';
       } else {
+        // Fallback para browsers antigos
         el.style.paddingBottom = `${inputHeight}px`;
         inputBar.style.bottom = '0px';
+        inputBar.style.width = '100vw';
+        inputBar.style.left = '0';
+        inputBar.style.right = '0';
       }
     }
     updatePaddingForKeyboard();
