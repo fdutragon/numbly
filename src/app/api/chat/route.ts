@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   processUserMessage, 
   updateClaraState, 
-  createInitialClaraState,
-  type ClaraState 
+  createInitialClaraState
 } from '@/lib/clara-ai-engine';
 import { aiTools } from '@/lib/ai-tools';
+import { type ClaraState } from '@/lib/chat-store';
 
 export async function POST(request: NextRequest) {
   try {

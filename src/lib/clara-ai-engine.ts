@@ -8,9 +8,13 @@ import {
   type IntentionResult
 } from '@/lib/intention-detector';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+// Initialize Groq client only on the server side
+let groq;
+if (typeof window === 'undefined') {
+  groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY,
+  });
+}
 
 export interface ClaraResponse {
   content: string;
@@ -37,37 +41,8 @@ export interface ClaraResponse {
   };
 }
 
-export interface ClaraState {
-  currentStage: 'intro' | 'qualifying' | 'pain_point' | 'solution' | 'social_proof' | 'pricing' | 'urgency' | 'closing' | 'objection_handling' | 'follow_up';
-  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string; timestamp: number }>;
-  userSentiment: 'positive' | 'negative' | 'hesitant' | 'neutral' | 'excited' | 'skeptical';
-  objectionCount: number;
-  engagementLevel: 'low' | 'medium' | 'high';
-  lastInteraction: number;
-  userData: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    company?: string;
-    painPoints?: string[];
-    budget?: string;
-    timeline?: string;
-    leadSource?: string;
-  };
-  salesMetrics: {
-    stageProgress: number;
-    conversionProbability: number;
-    objectionTypes: string[];
-    touchPoints: number;
-    lastActiveTime: number;
-  };
-  contextMemory: {
-    mentionedFeatures: string[];
-    askedQuestions: string[];
-    shownInterest: string[];
-    concerns: string[];
-  };
-}
+// Import ClaraState type from chat-store
+import { type ClaraState } from '@/lib/chat-store';
 
 // Scripts otimizados para automação WhatsApp
 interface ScriptStage {
@@ -363,6 +338,11 @@ Responda como Clara:
 `;
 
   try {
+    // Ensure groq is initialized (server-side only)
+    if (!groq) {
+      throw new Error('Groq client not initialized - this should only run on server side');
+    }
+
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
