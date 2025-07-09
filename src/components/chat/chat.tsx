@@ -285,6 +285,11 @@ export function Chat() {
 
   // Garante scroll automático ao focar o input
   const handleInputFocus = () => {
+    // Força scroll do container de mensagens para o final
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+    // Garante que o último elemento esteja visível
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
 
