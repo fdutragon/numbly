@@ -60,9 +60,7 @@ export function Chat() {
         console.log('Initial viewport height:', window.innerHeight);
       }
     };
-    
     setInitialViewportHeight();
-    
     const handleViewportChange = () => {
       const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       console.log('Viewport height changed to:', currentHeight);
@@ -71,7 +69,8 @@ export function Chat() {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ 
           behavior: 'smooth',
-          block: 'end' 
+          block: 'end',
+          inline: 'end'
         });
       }, 100);
     };
@@ -99,19 +98,15 @@ export function Chat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sempre scrolla para o final ao adicionar mensagem ou typing
   useEffect(() => {
-    // Scroll para última mensagem quando há novas mensagens ou typing
     const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'end',
-          inline: 'nearest'
-        });
-      }
+      messagesEndRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'end'
+      });
     };
-    
-    // Delay pequeno para garantir que o DOM foi atualizado
     const timer = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timer);
   }, [currentThread?.messages, isTyping]);
@@ -383,7 +378,7 @@ export function Chat() {
                       isLatest={index === (currentThread?.messages.length ?? 0) - 1}
                     />
                   ))
-                )}
+                )}   
                 {isTyping && <TypingIndicator />}
               </AnimatePresence>
               <div ref={messagesEndRef} className="h-4" />
