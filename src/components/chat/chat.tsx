@@ -266,29 +266,26 @@ export function Chat() {
         const h = window.visualViewport
           ? window.visualViewport.height
           : window.innerHeight;
-        document.documentElement.style.setProperty("--vh", `${h * 0.01}px`);
+        document.documentElement.style.setProperty('--vh', `${h * 0.01}px`);
       }, 50);
     }
-    window.addEventListener("resize", updateVh);
+    window.addEventListener('resize', updateVh);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", updateVh);
+      window.visualViewport.addEventListener('resize', updateVh);
     }
     updateVh();
     return () => {
       if (timeout) clearTimeout(timeout);
-      window.removeEventListener("resize", updateVh);
+      window.removeEventListener('resize', updateVh);
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", updateVh);
+        window.visualViewport.removeEventListener('resize', updateVh);
       }
     };
   }, []);
 
   // Garante scroll automático ao focar o input
   const handleInputFocus = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
 
   useEffect(() => {
@@ -300,12 +297,10 @@ export function Chat() {
       className="chat-wrapper"
       ref={messagesContainerRef}
       style={{
-        height: "calc(var(--vh, 1vh) * 100)",
-        height: "100dvh",
-        height: "-webkit-fill-available",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
+        height: 'calc(var(--vh, 1vh) * 100)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
       }}
     >
       {/* Header - Fixo no topo */}
@@ -313,7 +308,7 @@ export function Chat() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0 sticky top-0 z-40"
-        style={{ position: "sticky", top: 0, zIndex: 40 }}
+        style={{ position: 'sticky', top: 0, zIndex: 40 }}
       >
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -336,14 +331,11 @@ export function Chat() {
       </motion.div>
 
       {/* Messages - Área com scroll */}
-      <div
-        className="messages flex-1 overflow-y-auto custom-scrollbar pb-4"
-        style={{ minHeight: 0 }}
-      >
+      <div className="messages flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0 }}>
         <div className="p-4 pb-0 h-full">
           <div
             className={`max-w-2xl mx-auto space-y-6 flex flex-col h-full`}
-            style={{ display: "flex", flexDirection: "column", height: "100%" }}
+            style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
           >
             <AnimatePresence initial={false}>
               {currentThread?.messages.length === 0 ? (
@@ -410,13 +402,7 @@ export function Chat() {
       <div
         id="chat-input-bar"
         className="input-wrapper bg-background border-t border-border px-4 py-3 flex-shrink-0"
-        style={{
-          position: "sticky",
-          bottom: 0,
-          zIndex: 100,
-          boxShadow: "0 -2px 5px rgba(0,0,0,0.07)",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
+        style={{ position: 'sticky', bottom: 0, zIndex: 100, boxShadow: '0 -2px 5px rgba(0,0,0,0.07)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="max-w-2xl mx-auto">
           <ChatInput
