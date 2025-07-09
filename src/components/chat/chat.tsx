@@ -288,10 +288,11 @@ export function Chat() {
       <div 
         className="flex flex-col w-full bg-background h-screen max-h-screen overflow-hidden"
         style={{ 
-          height: '100vh',
-          maxHeight: '100vh',
+          height: '100dvh',
+          maxHeight: '100dvh',
           overflow: 'hidden',
-          position: 'relative'
+          position: 'relative',
+          WebkitOverflowScrolling: 'touch'
         }}
       >
         {/* Header - Fixo no topo */}
@@ -387,8 +388,23 @@ export function Chat() {
           </div>
         </div>
         
-        {/* Input - Fixo no bottom */}
-        <div className="bg-background border-t border-border px-4 py-3 flex-shrink-0" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100 }}>
+        {/* Input - Fixo no bottom, sempre visível mesmo com teclado */}
+        <div
+          className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
+          style={{
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 100,
+            // Garante que o input fique acima do teclado virtual em mobile
+            touchAction: 'none',
+            WebkitTransform: 'translateZ(0)',
+            willChange: 'transform',
+            width: '100vw',
+            maxWidth: '100vw',
+          }}
+        >
           <div className="max-w-2xl mx-auto">
             <ChatInput onSend={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
           </div>
