@@ -203,7 +203,7 @@ export async function processUserMessage(
     }
     
     if (intentionResult.intention === 'email' && intentionResult.confidence > 0.7) {
-      const emailRecipient = intentionResult.extractedData?.emailRecipient;
+      const emailRecipient = intentionResult.extractedData?.email;
       
       if (emailRecipient && validateEmail(emailRecipient)) {
         try {
@@ -407,18 +407,29 @@ export function updateClaraState(
   userMessage: string,
   claraResponse: ClaraResponse
 ): ClaraState {
+  const now = Date.now();
+  
   return {
     ...currentState,
     currentStage: claraResponse.scriptStage as ClaraState['currentStage'],
     conversationHistory: [
       ...currentState.conversationHistory,
-      { role: 'user', content: userMessage },
-      { role: 'assistant', content: claraResponse.content }
+      { role: 'user', content: userMessage, timestamp: now },
+      { role: 'assistant', content: claraResponse.content, timestamp: now }
     ],
     userSentiment: detectSentiment(userMessage),
     objectionCount: claraResponse.intention === 'objection' ? currentState.objectionCount + 1 : currentState.objectionCount,
     engagementLevel: calculateEngagementLevel(userMessage, claraResponse.confidence),
-    lastInteraction: Date.now()
+    lastInteraction: now,
+    salesMetrics: {
+      ...currentState.salesMetrics,
+      lastActiveTime: now,
+      touchPoints: currentState.salesMetrics.touchPoints + 1,
+      conversionProbability: claraResponse.confidence,
+      objectionTypes: claraResponse.intention === 'objection' 
+        ? [...currentState.salesMetrics.objectionTypes, claraResponse.intention]
+        : currentState.salesMetrics.objectionTypes,
+    },
   };
 }
 
@@ -459,6 +470,29 @@ export function createInitialClaraState(): ClaraState {
     userSentiment: 'neutral',
     objectionCount: 0,
     engagementLevel: 'medium',
-    lastInteraction: Date.now()
+    lastInteraction: Date.now(),
+    userData: {
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      painPoints: [],
+      budget: '',
+      timeline: '',
+      leadSource: '',
+    },
+    salesMetrics: {
+      stageProgress: 0,
+      conversionProbability: 0,
+      objectionTypes: [],
+      touchPoints: 0,
+      lastActiveTime: Date.now(),
+    },
+    contextMemory: {
+      mentionedFeatures: [],
+      askedQuestions: [],
+      shownInterest: [],
+      concerns: [],
+    },
   };
 }

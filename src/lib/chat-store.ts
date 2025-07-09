@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { type ClaraState } from './clara-ai-engine';
+import { type ClaraState, createInitialClaraState } from './clara-ai-engine';
 
 export type Message = {
   id: string;
@@ -60,12 +60,12 @@ export const useChatStore = create<ChatStore>()(
           createdAt: timestamp,
           updatedAt: timestamp,
           claraState: {
-            currentStage: 'intro',
-            conversationHistory: [],
-            userSentiment: 'neutral',
-            objectionCount: 0,
-            engagementLevel: 'medium',
+            ...createInitialClaraState(),
             lastInteraction: timestamp,
+            salesMetrics: {
+              ...createInitialClaraState().salesMetrics,
+              lastActiveTime: timestamp,
+            },
           },
         };
 
