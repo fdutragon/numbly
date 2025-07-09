@@ -283,42 +283,6 @@ export function Chat() {
     console.log('Chat component rendered');
   });
 
-  // Ajusta padding do container para garantir que o input nunca seja coberto pelo teclado virtual
-  useEffect(() => {
-    function updatePaddingForKeyboard() {
-      const el = messagesContainerRef.current;
-      const inputBar = document.getElementById('chat-input-bar');
-      if (!el || !inputBar) return;
-      // Detecta altura real do input
-      const inputHeight = inputBar.offsetHeight;
-      // Tenta detectar altura do teclado via visualViewport
-      const viewport = window.visualViewport;
-      if (viewport) {
-        const diff = window.innerHeight - viewport.height;
-        // paddingBottom = altura do input + espaço do teclado
-        el.style.paddingBottom = diff > 0 ? `${diff + inputHeight}px` : `${inputHeight}px`;
-        inputBar.style.bottom = diff > 0 ? `${diff}px` : '0px';
-        inputBar.style.width = '100vw';
-        inputBar.style.left = '0';
-        inputBar.style.right = '0';
-      } else {
-        // Fallback para browsers antigos
-        el.style.paddingBottom = `${inputHeight}px`;
-        inputBar.style.bottom = '0px';
-        inputBar.style.width = '100vw';
-        inputBar.style.left = '0';
-        inputBar.style.right = '0';
-      }
-    }
-    updatePaddingForKeyboard();
-    window.visualViewport?.addEventListener('resize', updatePaddingForKeyboard);
-    window.addEventListener('resize', updatePaddingForKeyboard);
-    return () => {
-      window.visualViewport?.removeEventListener('resize', updatePaddingForKeyboard);
-      window.removeEventListener('resize', updatePaddingForKeyboard);
-    };
-  }, []);
-
   // Estado para controlar alinhamento dinâmico
   const [shouldAlignBottom, setShouldAlignBottom] = useState(false);
 
