@@ -281,6 +281,8 @@ export function Chat() {
 
   // Estado para controlar visibilidade do header
   const [showHeader, setShowHeader] = useState(true);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const headerRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
 
   // Esconde header ao rolar para baixo, exibe ao rolar para cima
@@ -307,6 +309,42 @@ export function Chat() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Atualiza altura do header dinamicamente
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const updateHeaderHeight = () => {
+      setHeaderHeight(headerRef.current?.offsetHeight || 0);
+    };
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+    return () => window.removeEventListener('resize', updateHeaderHeight);
+  }, []);
+
+  // Estado para padding do input (altura do teclado)
+  const [inputPadding, setInputPadding] = useState(0);
+  useEffect(() => {
+    function handleVisualViewportResize() {
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        // Se teclado está aberto, viewportHeight < windowHeight
+        const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
+        setInputPadding(keyboardHeight > 80 ? keyboardHeight : 0);
+      } else {
+        setInputPadding(0);
+      }
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+      handleVisualViewportResize();
+    }
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     console.log('Chat component rendered');
   });
@@ -320,41 +358,52 @@ export function Chat() {
           maxHeight: '100dvh',
           overflow: 'hidden',
           position: 'relative',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {/* Header - Fixo no topo, some ao rolar para baixo */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: showHeader ? 1 : 0, y: showHeader ? 0 : -40 }}
-          transition={{ duration: 0.25 }}
-          className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0 sticky top-0 z-40"
-          style={{ position: 'sticky', top: 0, zIndex: 40, pointerEvents: showHeader ? 'auto' : 'none' }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
-                <Bot className="w-4 h-4 text-white" />
+        {showHeader && (
+          <motion.div
+            ref={headerRef}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.25 }}
+            className="flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
+            style={{ position: 'sticky', top: 0, zIndex: 40 }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
+                  <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
+                </div>
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
-                <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
+              <div>
+                <h1 className="font-medium text-foreground text-base">
+                  Clara
+                </h1>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="w-1 h-1 bg-green-500 rounded-full"></span>
+                  Online
+                </p>
               </div>
             </div>
-            <div>
-              <h1 className="font-medium text-foreground text-base">
-                Clara
-              </h1>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="w-1 h-1 bg-green-500 rounded-full"></span>
-                Online
-              </p>
-            </div>
-          </div>
-          <ThemeToggle />
-        </motion.div>
+            <ThemeToggle />
+          </motion.div>
+        )}
         
-        {/* Messages - Área com scroll */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto custom-scrollbar pb-4" style={{ minHeight: 0, maxHeight: 'calc(100vh - 140px)' }}>
+        {/* Messages - Área com scroll, ocupa todo espaço disponível */}
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto custom-scrollbar pb-4"
+          style={{
+            minHeight: 0,
+            maxHeight: `calc(100vh - ${showHeader ? headerHeight : 0}px)`
+          }}
+        >
           <div className="p-4 pb-0">
             <div className="max-w-2xl mx-auto space-y-6">
               <AnimatePresence initial={false}>
@@ -426,12 +475,12 @@ export function Chat() {
             right: 0,
             bottom: 0,
             zIndex: 100,
-            // Garante que o input fique acima do teclado virtual em mobile
             touchAction: 'none',
             WebkitTransform: 'translateZ(0)',
             willChange: 'transform',
             width: '100vw',
             maxWidth: '100vw',
+            paddingBottom: inputPadding ? inputPadding : undefined,
           }}
         >
           <div className="max-w-2xl mx-auto">
