@@ -98,7 +98,7 @@ export function ChatInput({ onSend, isLoading = false, disabled = false, inputRe
     }
   }
 
-  function handleTextareaFocus(e: React.FocusEvent<HTMLTextAreaElement>) {
+  function handleTextareaFocus() {
     // Garante scrollIntoView ao focar, para máxima compatibilidade
     // Usa setTimeout para garantir que o DOM esteja pronto
     setTimeout(() => {

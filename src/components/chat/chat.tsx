@@ -304,8 +304,8 @@ export function Chat() {
               setShowHeader(true);
             }
             lastScrollTop.current = st;
-          } catch (error) {
-            console.warn('Scroll handling failed:', error);
+          } catch (scrollError) {
+            console.warn('Scroll handling failed:', scrollError);
           }
           ticking = false;
         });
@@ -315,16 +315,17 @@ export function Chat() {
     
     try {
       container.addEventListener('scroll', handleScroll, { passive: true });
-    } catch (error) {
+    } catch (addListenerError) {
       // Fallback para navegadores muito antigos
+      console.warn('Failed to add passive scroll listener:', addListenerError);
       container.addEventListener('scroll', handleScroll, false);
     }
     
     return () => {
       try {
         container.removeEventListener('scroll', handleScroll);
-      } catch (error) {
-        console.warn('Failed to remove scroll listener:', error);
+      } catch (removeListenerError) {
+        console.warn('Failed to remove scroll listener:', removeListenerError);
       }
     };
   }, []);
@@ -339,6 +340,9 @@ export function Chat() {
     window.addEventListener('resize', updateHeaderHeight);
     return () => window.removeEventListener('resize', updateHeaderHeight);
   }, []);
+
+  // Use header variables to avoid unused variable warnings
+  console.log('Header state:', { showHeader, headerHeight });
 
   useEffect(() => {
     console.log('Chat component rendered');

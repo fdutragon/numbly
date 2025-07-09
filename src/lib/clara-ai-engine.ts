@@ -7,9 +7,10 @@ import {
   intentionResponses,
   type IntentionResult
 } from '@/lib/intention-detector';
+import { type ClaraState } from '@/lib/chat-store';
 
 // Initialize Groq client only on the server side
-let groq;
+let groq: Groq | undefined;
 if (typeof window === 'undefined') {
   groq = new Groq({
     apiKey: process.env.GROQ_API_KEY,
@@ -41,8 +42,6 @@ export interface ClaraResponse {
   };
 }
 
-// Import ClaraState type from chat-store
-import { type ClaraState } from '@/lib/chat-store';
 
 // Scripts otimizados para automação WhatsApp
 interface ScriptStage {
