@@ -1,11 +1,14 @@
 export interface IntentionResult {
-  intention: 'payment' | 'email' | 'question' | 'greeting' | 'objection' | 'other';
+  intention: 'payment' | 'email' | 'question' | 'greeting' | 'objection' | 'qualify' | 'urgency' | 'contact' | 'other';
   confidence: number;
   extractedData?: {
     email?: string;
     planType?: 'basic' | 'pro';
-    objectionType?: 'price' | 'trust' | 'timing';
-    [key: string]: string | undefined;
+    objectionType?: 'price' | 'trust' | 'timing' | 'need';
+    name?: string;
+    phone?: string;
+    painPoints?: string[];
+    [key: string]: unknown;
   };
 }
 
@@ -139,6 +142,28 @@ export function detectIntention(message: string): IntentionResult {
     };
   }
   
+  // Detecta qualificação do lead
+  if (lowerMessage.includes('nome') || lowerMessage.includes('telefone') ||
+      lowerMessage.includes('empresa') || lowerMessage.includes('pontos fracos')) {
+    return {
+      intention: 'qualify',
+      confidence: 0.8,
+      extractedData: {
+        name: lowerMessage.includes('nome') ? 'nome detectado' : undefined,
+        phone: lowerMessage.includes('telefone') ? 'telefone detectado' : undefined,
+      }
+    };
+  }
+
+  // Detecta urgência 
+  if (lowerMessage.includes('preciso agora') || lowerMessage.includes('urgente') ||
+      lowerMessage.includes('imediato') || lowerMessage.includes('hoje')) {
+    return {
+      intention: 'urgency',
+      confidence: 0.9
+    };
+  }
+
   // Detecta saudação
   if (lowerMessage.includes('oi') || lowerMessage.includes('olá') || 
       lowerMessage.includes('boa') || lowerMessage.includes('tchau')) {

@@ -5,6 +5,7 @@ import {
   createInitialClaraState,
   type ClaraState 
 } from '@/lib/clara-ai-engine';
+import { aiTools } from '@/lib/ai-tools';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +18,40 @@ export async function POST(request: NextRequest) {
     // Get user input
     const lastUserMessage = messages[messages.length - 1];
     const userInput = lastUserMessage?.content || '';
-    
+
+    // Verifica se o usuário está chamando uma AI Tool
+    const toolMatch = aiTools.find(tool => {
+      const trigger = `/tool ${tool.id}`;
+      return userInput.trim().toLowerCase().startsWith(trigger);
+    });
+
+    if (toolMatch) {
+      // Extrai o input após o comando
+      const input = userInput.replace(`/tool ${toolMatch.id}`, '').trim();
+      const toolResult = await toolMatch.run(input);
+      const encoder = new TextEncoder();
+      const readable = new ReadableStream({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({
+              done: true,
+              content: toolResult,
+              claraState: claraState || null,
+              tool: toolMatch.id,
+            })}\n\n`)
+          );
+          controller.close();
+        },
+      });
+      return new Response(readable, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
     // Initialize or get Clara state
     const currentState: ClaraState = claraState || createInitialClaraState();
     

@@ -18,18 +18,55 @@ export interface ClaraResponse {
   emailSent: boolean;
   intention: string;
   confidence: number;
-  nextAction?: 'wait' | 'advance' | 'checkout' | 'email' | 'objection';
+  nextAction?: 'wait' | 'advance' | 'checkout' | 'email' | 'objection' | 'qualify' | 'urgency';
   scriptStage: string;
   reasoning: string;
+  userData?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    company?: string;
+    painPoints?: string[];
+    budget?: string;
+    timeline?: string;
+  };
+  metrics?: {
+    responseTime: number;
+    conversionProbability: number;
+    engagementScore: number;
+  };
 }
 
 export interface ClaraState {
-  currentStage: 'intro' | 'pain_point' | 'solution' | 'pricing' | 'closing' | 'objection_handling';
-  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>;
-  userSentiment: 'positive' | 'negative' | 'hesitant' | 'neutral';
+  currentStage: 'intro' | 'qualifying' | 'pain_point' | 'solution' | 'social_proof' | 'pricing' | 'urgency' | 'closing' | 'objection_handling' | 'follow_up';
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string; timestamp: number }>;
+  userSentiment: 'positive' | 'negative' | 'hesitant' | 'neutral' | 'excited' | 'skeptical';
   objectionCount: number;
   engagementLevel: 'low' | 'medium' | 'high';
   lastInteraction: number;
+  userData: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    company?: string;
+    painPoints?: string[];
+    budget?: string;
+    timeline?: string;
+    leadSource?: string;
+  };
+  salesMetrics: {
+    stageProgress: number;
+    conversionProbability: number;
+    objectionTypes: string[];
+    touchPoints: number;
+    lastActiveTime: number;
+  };
+  contextMemory: {
+    mentionedFeatures: string[];
+    askedQuestions: string[];
+    shownInterest: string[];
+    concerns: string[];
+  };
 }
 
 // Scripts otimizados para automação WhatsApp
