@@ -4,18 +4,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
-  MessageCircle, 
   Bell, 
   Download, 
-  Smartphone, 
-  Star, 
-  Zap,
-  ShoppingCart,
   Clock,
   TrendingUp,
-  Users,
   Gift,
-  Target,
   Rocket,
   Crown,
   Play,
@@ -23,6 +16,7 @@ import {
 } from 'lucide-react';
 import { usePWA } from '@/lib/pwa-manager';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DEMO_STEPS } from '@/lib/sales-copy';
 
 interface SalesFlowDemoProps {
   isVisible: boolean;
@@ -39,53 +33,24 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
     showInstallPrompt
   } = usePWA();
 
-  const features = [
-    {
-      icon: <MessageCircle className="w-8 h-8" />,
-      title: "💬 Chat Inteligente 24/7",
-      description: "Atendimento automático que nunca dorme",
-      benefits: ["Resposta em segundos", "Qualificação automática", "Follow-up inteligente"],
-      color: "blue"
-    },
-    {
-      icon: <Bell className="w-8 h-8" />,
-      title: "🔔 Notificações Push",
-      description: "Seus clientes recebem ofertas direto no celular",
-      benefits: ["Aumento de 40% nas vendas", "Engagement constante", "Lembretes automáticos"],
-      color: "purple"
-    },
-    {
-      icon: <ShoppingCart className="w-8 h-8" />,
-      title: "🛒 Recuperação de Carrinho",
-      description: "5 notificações estratégicas recuperam vendas perdidas",
-      benefits: ["60% dos carrinhos recuperados", "Automático e inteligente", "Sem banco de dados"],
-      color: "green"
-    },
-    {
-      icon: <Smartphone className="w-8 h-8" />,
-      title: "📱 App Nativo do Cliente",
-      description: "Seu chat vira um app no celular dos clientes",
-      benefits: ["Presença constante", "Acesso instantâneo", "Funciona offline"],
-      color: "indigo"
-    }
-  ];
+  const currentStepData = DEMO_STEPS[`step${currentStep}` as keyof typeof DEMO_STEPS];
 
   const steps = [
     {
-      title: "🎯 Demonstração Interativa",
-      subtitle: "Veja como a Donna AI revoluciona suas vendas"
+      title: DEMO_STEPS.step1.title,
+      subtitle: DEMO_STEPS.step1.subtitle
     },
     {
-      title: "🔔 Teste as Notificações",
-      subtitle: "Experimente como seus clientes receberão suas ofertas"
+      title: DEMO_STEPS.step2.title,
+      subtitle: DEMO_STEPS.step2.subtitle
     },
     {
-      title: "📱 Instale como App",
-      subtitle: "Transforme em um app nativo no seu dispositivo"
+      title: DEMO_STEPS.step3.title,
+      subtitle: DEMO_STEPS.step3.subtitle
     },
     {
-      title: "🚀 Pronto para Vender!",
-      subtitle: "Agora você tem superpoderes de vendas"
+      title: DEMO_STEPS.step4.title,
+      subtitle: DEMO_STEPS.step4.subtitle
     }
   ];
 
@@ -184,60 +149,87 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
+                className="space-y-8"
               >
-                <div className="text-center mb-8">
-                  <Target className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {steps[currentStep - 1].title}
+                <div className="text-center">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="inline-flex items-center gap-2 bg-red-500/10 text-red-600 px-4 py-2 rounded-full text-sm font-medium mb-4"
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    ALERTA: Você está perdendo dinheiro agora
+                  </motion.div>
+                  
+                  <h2 className="text-3xl font-bold text-foreground mb-3">
+                    {DEMO_STEPS.step1.title}
                   </h2>
-                  <p className="text-gray-600">
-                    {steps[currentStep - 1].subtitle}
+                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {DEMO_STEPS.step1.subtitle}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {features.map((feature, index) => (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {DEMO_STEPS.step1.cards.map((card, index) => (
                     <motion.div
                       key={index}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 30 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <Card className={`hover:shadow-lg transition-all duration-300 border-l-4 border-${feature.color}-500`}>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="flex items-center gap-3 text-lg">
-                            <div className={`p-2 bg-${feature.color}-100 rounded-lg`}>
-                              {feature.icon}
+                      <Card className="hover:shadow-lg transition-all duration-300 elevation-2 border-thin">
+                        <CardHeader className="pb-4">
+                          <div className="flex items-start gap-4">
+                            <div className="text-4xl">{card.icon}</div>
+                            <div className="flex-1">
+                              <CardTitle className="text-lg font-semibold text-foreground mb-2">
+                                {card.title}
+                              </CardTitle>
+                              <p className="text-muted-foreground text-sm leading-relaxed">
+                                {card.description}
+                              </p>
                             </div>
-                            {feature.title}
-                          </CardTitle>
-                          <p className="text-gray-600 text-sm">{feature.description}</p>
+                          </div>
                         </CardHeader>
                         <CardContent>
-                          <ul className="space-y-2">
-                            {feature.benefits.map((benefit, i) => (
-                              <li key={i} className="flex items-center gap-2 text-sm">
-                                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                {benefit}
-                              </li>
+                          <div className="space-y-2">
+                            {card.results.map((result, i) => (
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: (index * 0.1) + (i * 0.05) }}
+                                className="flex items-center gap-2"
+                              >
+                                <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                                <span className="text-sm font-medium text-foreground">{result}</span>
+                              </motion.div>
                             ))}
-                          </ul>
+                          </div>
                         </CardContent>
                       </Card>
                     </motion.div>
                   ))}
                 </div>
 
-                <div className="text-center mt-8">
-                  <Button
-                    onClick={handleNextStep}
-                    size="lg"
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8"
+                <div className="text-center pt-4">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
                   >
-                    <Play className="w-5 h-5 mr-2" />
-                    Começar Demonstração
-                  </Button>
+                    <Button
+                      onClick={handleNextStep}
+                      size="lg"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-lg font-semibold elevation-2"
+                    >
+                      <Play className="w-5 h-5 mr-2" />
+                      Ver Como Funciona na Prática
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      ⚡ Demonstração completa em 2 minutos
+                    </p>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -247,38 +239,62 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center space-y-6"
+                className="space-y-8"
               >
-                <div className="max-w-md mx-auto">
-                  <Bell className="w-20 h-20 text-purple-600 mx-auto mb-6" />
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {steps[currentStep - 1].title}
+                <div className="text-center">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6"
+                  >
+                    <Bell className="w-10 h-10 text-primary" />
+                  </motion.div>
+                  
+                  <h2 className="text-3xl font-bold text-foreground mb-3">
+                    {DEMO_STEPS.step2.title}
                   </h2>
-                  <p className="text-gray-600 mb-8">
-                    {steps[currentStep - 1].subtitle}
+                  <p className="text-lg text-muted-foreground mb-8">
+                    {DEMO_STEPS.step2.subtitle}
                   </p>
+                </div>
 
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-200 mb-6">
-                    <h3 className="font-semibold text-purple-900 mb-3">
-                      💼 Imagine seus clientes recebendo:
+                <div className="max-w-lg mx-auto">
+                  <div className="bg-card border border-thin rounded-2xl p-6 elevation-2 mb-6">
+                    <h3 className="font-semibold text-foreground mb-4 text-center">
+                      📱 Exemplos de notificações que seus clientes receberão:
                     </h3>
-                    <ul className="text-sm text-purple-800 space-y-2">
-                      <li>🎯 "Nova oferta especial só para você!"</li>
-                      <li>🔥 "Últimas horas de desconto!"</li>
-                      <li>⭐ "Produto que você estava vendo está disponível!"</li>
-                    </ul>
+                    <div className="space-y-3">
+                      {DEMO_STEPS.step2.examples.map((example, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
+                          <p className="text-sm text-foreground font-medium">{example}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="text-center mb-6">
+                    <p className="text-muted-foreground italic">
+                      {DEMO_STEPS.step2.impact}
+                    </p>
                   </div>
 
                   <Button
                     onClick={handleTryNotification}
                     disabled={isPlaying}
                     size="lg"
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold elevation-2"
                   >
                     {isPlaying ? (
                       <>
                         <Gift className="w-5 h-5 mr-2 animate-bounce" />
-                        Enviando Notificação...
+                        Enviando para você agora...
                       </>
                     ) : hasSeenNotification ? (
                       <>
@@ -288,19 +304,24 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
                     ) : (
                       <>
                         <Bell className="w-5 h-5 mr-2" />
-                        Receber Notificação Demonstrativa
+                        TESTAR NOTIFICAÇÃO AGORA
                       </>
                     )}
                   </Button>
 
                   {hasSeenNotification && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-green-600 text-sm mt-4"
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-center"
                     >
-                      ✅ Perfeito! Você viu como funciona. Seus clientes receberão assim!
-                    </motion.p>
+                      <p className="text-green-600 font-medium mb-2">
+                        ✅ Perfeito! Você sentiu o poder das notificações push!
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Agora imagine isso chegando para TODOS os seus clientes automaticamente...
+                      </p>
+                    </motion.div>
                   )}
                 </div>
               </motion.div>
@@ -311,65 +332,70 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center space-y-6"
+                className="space-y-8"
               >
-                <div className="max-w-md mx-auto">
-                  <Download className="w-20 h-20 text-green-600 mx-auto mb-6" />
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {steps[currentStep - 1].title}
+                <div className="text-center">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6"
+                  >
+                    <Download className="w-10 h-10 text-primary" />
+                  </motion.div>
+                  
+                  <h2 className="text-3xl font-bold text-foreground mb-3">
+                    {DEMO_STEPS.step3.title}
                   </h2>
-                  <p className="text-gray-600 mb-8">
-                    {steps[currentStep - 1].subtitle}
+                  <p className="text-lg text-muted-foreground mb-8">
+                    {DEMO_STEPS.step3.subtitle}
                   </p>
+                </div>
 
-                  <div className="grid grid-cols-1 gap-4 mb-6">
-                    <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg">
-                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                        <Zap className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <h4 className="font-semibold text-green-900">Acesso Instantâneo</h4>
-                        <p className="text-sm text-green-700">Abra com um toque na tela inicial</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
-                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <h4 className="font-semibold text-blue-900">Funciona Offline</h4>
-                        <p className="text-sm text-blue-700">Sempre disponível, mesmo sem internet</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-lg">
-                      <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
-                        <Users className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <h4 className="font-semibold text-purple-900">Experiência Nativa</h4>
-                        <p className="text-sm text-purple-700">Como um app de verdade</p>
-                      </div>
-                    </div>
+                <div className="max-w-lg mx-auto">
+                  <div className="grid gap-4 mb-8">
+                    {DEMO_STEPS.step3.benefits.map((benefit, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex items-center gap-4 p-4 bg-card border border-thin rounded-xl elevation-1"
+                      >
+                        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                          <span className="text-2xl">{benefit.icon}</span>
+                        </div>
+                        <div className="flex-1 text-left">
+                          <h4 className="font-semibold text-foreground">{benefit.title}</h4>
+                          <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
 
-                  <Button
-                    onClick={handleInstallApp}
-                    size="lg"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Download className="w-5 h-5 mr-2" />
-                    Instalar Como App
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleInstallApp}
+                      size="lg"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold elevation-2"
+                    >
+                      <Download className="w-5 h-5 mr-2" />
+                      INSTALAR COMO APP AGORA
+                    </Button>
 
-                  <Button
-                    onClick={handleNextStep}
-                    variant="ghost"
-                    className="w-full mt-2"
-                  >
-                    Continuar sem instalar
-                  </Button>
+                    <Button
+                      onClick={handleNextStep}
+                      variant="ghost"
+                      className="w-full text-muted-foreground hover:text-foreground"
+                    >
+                      Continuar sem instalar
+                    </Button>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg text-center">
+                    <p className="text-sm text-blue-600 font-medium">
+                      📱 Você pode instalar depois. O importante é ver o poder que terá!
+                    </p>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -379,60 +405,98 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center space-y-6"
+                className="space-y-8"
               >
-                <div className="max-w-2xl mx-auto">
-                  <Rocket className="w-24 h-24 text-indigo-600 mx-auto mb-6" />
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    🚀 Parabéns! Você tem superpoderes!
+                <div className="text-center">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-24 h-24 bg-gradient-to-br from-green-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 elevation-3"
+                  >
+                    <Rocket className="w-12 h-12 text-white" />
+                  </motion.div>
+                  
+                  <h2 className="text-4xl font-bold text-foreground mb-4">
+                    {DEMO_STEPS.step4.title}
                   </h2>
-                  <p className="text-gray-600 text-lg mb-8">
-                    Agora você pode oferecer uma experiência única que nenhum concorrente tem
+                  <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                    {DEMO_STEPS.step4.subtitle}
                   </p>
+                </div>
 
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-8 rounded-xl border border-indigo-200 mb-8">
-                    <h3 className="text-xl font-bold text-indigo-900 mb-6">
-                      💼 Seu Diferencial Competitivo Exclusivo:
+                <div className="max-w-3xl mx-auto">
+                  <div className="bg-gradient-to-r from-green-500/10 to-blue-600/10 border border-green-500/20 rounded-2xl p-8 elevation-2 mb-8">
+                    <h3 className="text-2xl font-bold text-foreground mb-6 text-center">
+                      💪 Seus Novos Superpoderes de Vendas:
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <TrendingUp className="w-5 h-5 text-green-600" />
-                          <span className="text-sm font-medium">+60% mais vendas com cart recovery</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Bell className="w-5 h-5 text-purple-600" />
-                          <span className="text-sm font-medium">Notificações push personalizadas</span>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <Smartphone className="w-5 h-5 text-blue-600" />
-                          <span className="text-sm font-medium">App nativo para cada cliente</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Star className="w-5 h-5 text-yellow-600" />
-                          <span className="text-sm font-medium">Presença 24/7 no bolso dos clientes</span>
-                        </div>
-                      </div>
+                    <div className="grid gap-4">
+                      {DEMO_STEPS.step4.competitive_advantages.map((advantage, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center gap-3 p-3 bg-card/50 rounded-lg"
+                        >
+                          <span className="text-lg">{advantage}</span>
+                        </motion.div>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <Button
-                      onClick={handleStartSelling}
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-lg py-4"
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {DEMO_STEPS.step4.metrics.map((metric, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 + (index * 0.1) }}
+                        className="text-center p-4 bg-card border border-thin rounded-xl elevation-1"
+                      >
+                        <div className="text-2xl font-bold text-primary mb-1">
+                          {metric.split(' ')[0]}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {metric.split(' ').slice(1).join(' ')}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 1 }}
+                      className="space-y-6"
                     >
-                      <Rocket className="w-6 h-6 mr-2" />
-                      Começar a Vender com Superpoderes!
-                    </Button>
-                    
-                    <p className="text-sm text-gray-500">
-                      🎯 Agora você pode converter visitantes em clientes como nunca antes!
-                    </p>
+                      <div className="inline-flex items-center gap-2 bg-red-500/10 text-red-600 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                        <Clock className="w-4 h-4" />
+                        OFERTA EXPIRA EM 48 HORAS
+                      </div>
+                      
+                      <Button
+                        onClick={handleStartSelling}
+                        size="lg"
+                        className="w-full max-w-md bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white text-xl py-6 font-bold elevation-3"
+                      >
+                        <Rocket className="w-6 h-6 mr-3" />
+                        QUERO DOMINAR MEU MERCADO
+                      </Button>
+                      
+                      <div className="space-y-2">
+                        <p className="text-lg font-semibold text-foreground">
+                          💰 APENAS R$ 47/mês (valor normal R$ 497)
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          🔒 30 dias de garantia total + configuração em 48h
+                        </p>
+                        <p className="text-xs text-red-600 font-medium">
+                          ⚡ Restam apenas 47 vagas para esta oferta
+                        </p>
+                      </div>
+                    </motion.div>
                   </div>
                 </div>
               </motion.div>
