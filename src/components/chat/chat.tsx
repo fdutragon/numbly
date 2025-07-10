@@ -47,20 +47,11 @@ export function Chat() {
   const [checkoutPlan, setCheckoutPlan] = useState<'basic' | 'pro'>('basic');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   
-  // Estados para controle do header e pull to refresh
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [isPullingToRefresh, setIsPullingToRefresh] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [cardsClicked, setCardsClicked] = useState<Set<number>>(new Set());
-  
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
     const newThreadId = createThread();
     setCurrentThread(newThreadId);
     // Garante que o header esteja visível no carregamento
-    setIsHeaderVisible(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -123,93 +114,7 @@ export function Chat() {
     }
   }, [introIndex, introChar, introPhrases.length]);
 
-  // Função para controlar a visibilidade do header baseado no scroll
-  const handleScroll = useCallback(() => {
-    if (!messagesContainerRef.current) return;
-    
-    const currentScrollY = messagesContainerRef.current.scrollTop;
-    const scrollDirection = currentScrollY > lastScrollY ? 'down' : 'up';
-    
-    // Mostra header quando scrolling para cima ou no topo
-    if (scrollDirection === 'up' || currentScrollY < 50) {
-      setIsHeaderVisible(true);
-    } else if (scrollDirection === 'down' && currentScrollY > 100) {
-      setIsHeaderVisible(false);
-    }
-    
-    setLastScrollY(currentScrollY);
-  }, [lastScrollY]);
-
-  // Variável para armazenar a posição inicial do touch
-  const touchStartY = useRef(0);
-  
-  // Função para lidar com pull to refresh
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (messagesContainerRef.current?.scrollTop === 0) {
-      const touch = e.touches[0];
-      touchStartY.current = touch.clientY;
-      setPullDistance(0);
-      setIsPullingToRefresh(true);
-    }
-  }, []);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isPullingToRefresh || !messagesContainerRef.current) return;
-    
-    const touch = e.touches[0];
-    const currentY = touch.clientY;
-    
-    if (messagesContainerRef.current.scrollTop === 0) {
-      const distance = Math.max(0, currentY - touchStartY.current);
-      setPullDistance(Math.min(distance, 120));
-      
-      if (distance > 0) {
-        e.preventDefault();
-      }
-    }
-  }, [isPullingToRefresh]);
-
-  const handleTouchEnd = useCallback(() => {
-    if (isPullingToRefresh && pullDistance > 80) {
-      setIsRefreshing(true);
-      // Simula refresh - recarrega a conversa
-      setTimeout(() => {
-        const newThreadId = createThread();
-        setCurrentThread(newThreadId);
-        setIsRefreshing(false);
-        setIsPullingToRefresh(false);
-        setPullDistance(0);
-      }, 1000);
-    } else {
-      setIsPullingToRefresh(false);
-      setPullDistance(0);
-    }
-  }, [isPullingToRefresh, pullDistance, createThread, setCurrentThread]);
-
-  // Event listeners para scroll e touch
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [handleScroll, handleTouchStart, handleTouchMove, handleTouchEnd]);
-
-  const handleSendMessage = async (content: string, cardIndex?: number) => {
-    // Marca o card como clicado se for um card de sugestão
-    if (cardIndex !== undefined) {
-      setCardsClicked(prev => new Set(prev).add(cardIndex));
-    }
-    
+  const handleSendMessage = async (content: string) => {
     // Chama a função original handleSend
     await handleSend(content);
     
@@ -408,13 +313,8 @@ export function Chat() {
   return (
     <>
       <div className="fixed inset-0 flex flex-col bg-background h-screen overflow-hidden">
-        {/* Header com visibilidade dinâmica */}
-        <motion.div 
-          initial={{ y: 0 }}
-          animate={{ y: isHeaderVisible ? 0 : -100 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50"
-        >
+        {/* Header fixo sempre visível no topo */}
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50">
           <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -435,32 +335,13 @@ export function Chat() {
             </div>
             <ThemeToggle />
           </div>
-        </motion.div>
+        </div>
 
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain"
-          style={{ transform: `translateY(${isPullingToRefresh ? pullDistance : 0}px)` }}
         >
-          {/* Pull to refresh indicator */}
-          {isPullingToRefresh && (
-            <div className="absolute top-0 left-0 right-0 flex items-center justify-center py-4 bg-background/90 backdrop-blur-sm z-40">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {isRefreshing ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Atualizando...</span>
-                  </>
-                ) : pullDistance > 80 ? (
-                  <span className="text-violet-500">Solte para atualizar</span>
-                ) : (
-                  <span>Puxe para atualizar</span>
-                )}
-              </div>
-            </div>
-          )}
-          
           <div className="p-4">
             <div className="max-w-2xl mx-auto w-full space-y-6">
               <AnimatePresence initial={false}>
@@ -498,12 +379,8 @@ export function Chat() {
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
                             type="button"
-                            className={`w-full px-4 py-2.5 rounded-lg text-sm text-left transition-colors ${
-                              cardsClicked.has(i) 
-                                ? 'bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800' 
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }`}
-                            onClick={() => handleSendMessage(q, i)}
+                            className="w-full px-4 py-2.5 rounded-lg text-sm text-left transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+                            onClick={() => handleSendMessage(q)}
                           >
                             {q}
                           </motion.button>
