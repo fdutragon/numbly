@@ -100,20 +100,14 @@ export function Chat() {
   };
 
   // Função para focar no input com segurança
-  // Garantido: nunca dá foco automático, nunca abre teclado sozinho
+  // Sempre rola para o final da tela ao focar o input
   const handleInputFocus = () => {
     setTimeout(() => {
-      if (inputRef.current) {
-        try {
-          inputRef.current.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-          });
-        } catch (error) {
-          // Silencia qualquer erro
-        }
+      if (messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        container.scrollTop = container.scrollHeight;
       }
-    }, 300);
+    }, 100);
   };
 
   async function handleSend(content: string) {
