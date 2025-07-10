@@ -124,53 +124,61 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        className="modal-overlay z-modal"
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto shadow-2xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          className="modal-content z-modal-content elevation-5"
         >
           {/* Header */}
-          <div className="relative p-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-2xl">
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-white/80 hover:text-white text-2xl font-bold"
-            >
-              ×
-            </button>
-            
-            <div className="text-center">
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="flex items-center justify-center gap-3 mb-4"
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-thin border-border/50">
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <Crown className="w-6 h-6 text-primary" />
+                <div>
+                  <h1 className="text-xl font-semibold text-foreground">Donna AI</h1>
+                  <p className="text-sm text-muted-foreground">Demonstração Exclusiva</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={onClose}
+                className="w-10 h-10 rounded-full hover:bg-muted/50 transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
               >
-                <Crown className="w-8 h-8 text-yellow-300" />
-                <h1 className="text-3xl font-bold">Donna AI - Demonstração Exclusiva</h1>
-                <Crown className="w-8 h-8 text-yellow-300" />
-              </motion.div>
-              
-              <p className="text-blue-100 text-lg">
-                Veja como transformar seu negócio em uma máquina de vendas 24/7
-              </p>
-              
-              {/* Progress Bar */}
-              <div className="mt-6 flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="px-4 pb-4">
+              <div className="flex items-center gap-1">
                 {steps.map((_, index) => (
                   <div
                     key={index}
-                    className={`h-2 w-12 rounded-full transition-all duration-300 ${
-                      index + 1 <= currentStep ? 'bg-yellow-300' : 'bg-white/30'
+                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                      index + 1 <= currentStep 
+                        ? 'bg-primary' 
+                        : 'bg-muted/30'
                     }`}
                   />
                 ))}
               </div>
+              <div className="mt-2 text-center">
+                <p className="text-sm font-medium text-foreground">
+                  {steps[currentStep - 1]?.title}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {steps[currentStep - 1]?.subtitle}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
             {/* Step 1: Overview */}
             {currentStep === 1 && (
               <motion.div

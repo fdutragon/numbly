@@ -172,22 +172,118 @@ html, body {
   }
 }
 
+/* Material Design Elevation Shadows */
+.elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+.elevation-2 {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+.elevation-3 {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+.elevation-4 {
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.05);
+}
+.elevation-5 {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme elevations */
+.dark .elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.dark .elevation-2 {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.dark .elevation-3 {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+.dark .elevation-4 {
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4), 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+.dark .elevation-5 {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Material Design Backdrop */
+.material-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.85);
+}
+.dark .material-backdrop {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+/* Modal fullscreen overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.2s ease-out;
+}
+.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Modal container */
+.modal-container {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Modal content */
+.modal-content {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  background: hsl(var(--background));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Thin borders */
+.border-thin {
+  border-width: 0.5px;
+}
+
+/* Glassmorphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.dark .glass {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Scrollbar custom para chat elegante */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(124, 58, 237, 0.3) rgba(0, 0, 0, 0.05);
 }
 .custom-scrollbar::-webkit-scrollbar {
-  width: 7px;
+  width: 6px;
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    120deg,
-    rgba(124, 58, 237, 0.25),
-    rgba(139, 92, 246, 0.18)
-  );
-  border-radius: 8px;
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 3px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
@@ -197,6 +293,49 @@ html, body {
 .smooth-scroll {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Animações Material */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Z-index hierarchy */
+.z-modal {
+  z-index: 9999;
+}
+.z-modal-content {
+  z-index: 10000;
+}
+.z-tooltip {
+  z-index: 10001;
 }
 
 /* Estilo para elementos fixos em mobile */
