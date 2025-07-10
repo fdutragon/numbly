@@ -318,7 +318,7 @@ export function Chat() {
 
   return (
     <>
-      <div className="flex flex-col h-screen w-full bg-background overflow-hidden">
+      <div className="flex flex-col h-screen w-full bg-background">
         {/* Header fixo sempre visível no topo */}
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0">
           <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
