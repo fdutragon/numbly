@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Domínio verificado para envio
-    const fromEmail = from || 'clara@numbly.com.br';
+    const fromEmail = from || 'donna@numbly.com.br';
 
     // Criar HTML do email
     const htmlContent = `
@@ -94,46 +94,36 @@ export async function POST(request: NextRequest) {
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🤖 Clara IA</div>
-            <div class="tagline">Sua Assistente de Vendas Inteligente</div>
+            <div class="logo">🤖 Donna IA</div>
+            <div class="tagline">Sua Vendedora Digital 24/7</div>
         </div>
         
         <div class="content">
             <h2>Olá! 👋</h2>
-            <p>Aqui estão as informações sobre a <span class="highlight">Clara IA</span> que você solicitou:</p>
+            <p>Aqui estão as informações sobre a <span class="highlight">Donna IA</span> que você solicitou:</p>
             
-            <h3>🤖 O que é a Clara IA?</h3>
-            <p>Clara é uma assistente de IA especializada em automação de vendas e marketing. Ela trabalha <strong>24 horas por dia</strong> para converter seus leads em clientes pagantes.</p>
+            <h3>🤖 O que é a Donna IA?</h3>
+            <p>Donna é uma vendedora digital especializada em automação de WhatsApp. Ela trabalha <strong>24 horas por dia</strong> para converter seus leads em clientes pagantes.</p>
             
             <div class="features">
-                <h3>🎯 Por que escolher a Clara?</h3>
-                <div class="feature">Automação completa de vendas</div>
+                <h3>🎯 Por que escolher a Donna?</h3>
+                <div class="feature">Automação completa do WhatsApp</div>
                 <div class="feature">Trabalha 24 horas por dia, 7 dias por semana</div>
-                <div class="feature">Aumenta conversões em até 300%</div>
-                <div class="feature">ROI comprovado em 30 dias</div>
-                <div class="feature">Suporte especializado</div>
+                <div class="feature">Aumenta vendas em até 300%</div>
+                <div class="feature">ROI comprovado em 7 dias</div>
+                <div class="feature">Setup em 5 minutos</div>
             </div>
             
-            <h3>💰 Planos Disponíveis</h3>
-            <div class="plans">
-                <div class="plan">
-                    <h4>Clara Basic</h4>
-                    <div class="plan-price">R$ 97<span style="font-size: 14px; color: #666;">/mês</span></div>
-                    <div class="feature">Automação WhatsApp</div>
-                    <div class="feature">Campanhas básicas</div>
-                    <div class="feature">Suporte via chat</div>
-                    <div class="feature">Dashboard simples</div>
-                </div>
-                
-                <div class="plan featured">
-                    <h4>Clara Pro</h4>
-                    <div class="plan-price">R$ 197<span style="font-size: 14px; color: #666;">/mês</span></div>
-                    <div class="feature">Automação WhatsApp avançada</div>
-                    <div class="feature">Campanhas ilimitadas</div>
-                    <div class="feature">Suporte prioritário</div>
-                    <div class="feature">Dashboard completo</div>
-                    <div class="feature">Relatórios avançados</div>
-                    <div class="feature">Integração com CRM</div>
+            <h3>💰 Investimento</h3>
+            <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin: 20px 0;">
+                <div style="font-size: 36px; font-weight: bold; margin-bottom: 10px;">R$ 47/mês</div>
+                <div style="font-size: 16px; opacity: 0.9; margin-bottom: 20px;">Menos que R$ 1,60 por dia!</div>
+                <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                    <div class="feature" style="color: white;">✅ Automação completa do WhatsApp</div>
+                    <div class="feature" style="color: white;">✅ Atendimento 24/7 automatizado</div>
+                    <div class="feature" style="color: white;">✅ Setup completo incluído</div>
+                    <div class="feature" style="color: white;">✅ Suporte especializado</div>
+                    <div class="feature" style="color: white;">✅ 7 dias de garantia total</div>
                 </div>
             </div>
             
@@ -149,12 +139,12 @@ export async function POST(request: NextRequest) {
             <p>Tem alguma dúvida? Responda este email ou entre em contato conosco!</p>
             
             <p>Att,<br>
-            <strong>Equipe Clara IA</strong></p>
+            <strong>Equipe Donna IA</strong></p>
         </div>
         
         <div class="footer">
-            <p>© 2024 Clara IA - Todos os direitos reservados</p>
-            <p>Este email foi enviado automaticamente pela Clara IA</p>
+            <p>© 2024 Donna IA - Todos os direitos reservados</p>
+            <p>Este email foi enviado automaticamente pela Donna IA</p>
         </div>
     </div>
 </body>
