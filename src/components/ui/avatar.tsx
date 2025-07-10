@@ -7,17 +7,20 @@ import { cn } from '@/lib/utils';
 
 function Avatar({
   className,
+  children,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root>) {
+}: React.ComponentProps<typeof AvatarPrimitive.Root> & { children?: React.ReactNode }) {
   return (
     <AvatarPrimitive.Root
       data-slot="avatar"
       className={cn(
-        'relative flex size-8 shrink-0 overflow-hidden rounded-full',
+        'relative flex size-10 shrink-0 overflow-hidden rounded-full border-2 border-violet-500 bg-gradient-to-br from-violet-200 to-purple-200 shadow-md',
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </AvatarPrimitive.Root>
   );
 }
 
@@ -36,17 +39,20 @@ function AvatarImage({
 
 function AvatarFallback({
   className,
+  children,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+}: React.ComponentProps<typeof AvatarPrimitive.Fallback> & { children?: React.ReactNode }) {
   return (
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        'bg-muted flex size-full items-center justify-center rounded-full',
+        'bg-gradient-to-br from-violet-400 to-purple-600 flex size-full items-center justify-center rounded-full text-white font-bold text-lg',
         className
       )}
       {...props}
-    />
+    >
+      {children ? children : <span>🤖</span>}
+    </AvatarPrimitive.Fallback>
   );
 }
 

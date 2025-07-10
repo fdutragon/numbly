@@ -62,6 +62,14 @@ export function Chat() {
     console.log('Current Thread:', currentThread);
   }, [currentThreadId, currentThread]);
 
+  // Sempre rola para o final do container ao montar ou atualizar introTyping
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight - container.clientHeight;
+    }
+  }, [introTyping, currentThread?.messages.length]);
+
   // Remove todos os scrolls automáticos exceto após mensagem do usuário
 
   useEffect(() => {
