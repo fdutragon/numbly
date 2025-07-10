@@ -55,36 +55,7 @@ export function Chat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Garante que a mensagem de boas-vindas fique sempre visível mesmo com o teclado aberto
-  useEffect(() => {
-    if (currentThread?.messages.length === 0 && messagesContainerRef.current) {
-      // Sempre scrolla para o topo (garante que a mensagem de boas-vindas fique visível)
-      messagesContainerRef.current.scrollTop = 0;
-    }
-  }, [currentThread?.messages]);
-
-  // Scroll automático só após mensagem do usuário, nunca ao montar, nunca para IA
-  useEffect(() => {
-    if (!currentThread?.messages || currentThread.messages.length === 0) return;
-    if (currentThread.messages.length < 3) return;
-    const lastMessage = currentThread.messages[currentThread.messages.length - 1];
-    if (lastMessage.role === 'user') {
-      const container = messagesContainerRef.current;
-      if (!container) return;
-      const isAtBottom =
-        Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 32;
-      if (isAtBottom) {
-        setTimeout(() => {
-          if (messagesContainerRef.current) {
-            const c = messagesContainerRef.current;
-            if (c.scrollHeight > c.clientHeight + 8) {
-              c.scrollTop = c.scrollHeight;
-            }
-          }
-        }, 100);
-      }
-    }
-  }, [currentThread?.messages]);
+  // Remove todos os scrolls automáticos exceto após mensagem do usuário
 
   useEffect(() => {
     if (currentThread?.messages.length) return;
@@ -122,15 +93,14 @@ export function Chat() {
     setTimeout(() => {
       if (messagesContainerRef.current) {
         const container = messagesContainerRef.current;
-        if (container.scrollHeight > container.clientHeight + 8) {
-          container.scrollTop = container.scrollHeight;
-        }
+        // Faz scroll para o topo, removendo a última mensagem do campo de visão
+        container.scrollTop = container.scrollHeight - container.clientHeight;
       }
     }, 150);
   };
 
   // Função para focar no input com segurança
-  // Garante: nunca dá foco automático, nunca abre teclado sozinho
+  // Garantido: nunca dá foco automático, nunca abre teclado sozinho
   const handleInputFocus = () => {
     setTimeout(() => {
       if (inputRef.current) {
@@ -311,6 +281,12 @@ export function Chat() {
     'Clara, envie informações para meu@email.com',
   ];
 
+  // Controla montagem para evitar problemas de hidratação do ThemeToggle
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <>
       <div className="fixed inset-0 flex flex-col bg-background overflow-hidden max-h-dvh h-full w-full min-h-0">
@@ -334,7 +310,7 @@ export function Chat() {
                 </p>
               </div>
             </div>
-            <ThemeToggle />
+            {isMounted && <ThemeToggle />}
           </div>
         </div>  
 
