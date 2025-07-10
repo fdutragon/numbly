@@ -342,8 +342,8 @@ export function Chat() {
           ref={messagesContainerRef}
           className="absolute top-[72px] bottom-[72px] left-0 right-0 overflow-y-auto custom-scrollbar"
         >
-          <div className="p-4">
-            <div className="max-w-2xl mx-auto space-y-6">
+          <div className="flex flex-col justify-end h-full p-4">
+            <div className="max-w-2xl mx-auto w-full space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
                   <motion.div
