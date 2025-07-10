@@ -134,8 +134,9 @@ export function Chat() {
   };
 
   // Função para focar no input com segurança
+  // Removido: qualquer foco automático no input. O teclado só abre se o usuário clicar.
   const handleInputFocus = () => {
-    // Aguarda um pouco antes de fazer scroll para garantir que o teclado abriu
+    // Apenas scrolla o input para a área visível, sem dar foco automático
     setTimeout(() => {
       if (inputRef.current) {
         try {
