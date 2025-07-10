@@ -62,7 +62,7 @@ export function Chat() {
     const container = messagesContainerRef.current;
     const shouldScroll = container.scrollHeight > container.clientHeight;
     
-    if (shouldScroll && currentThread?.messages.length > 0) {
+    if (shouldScroll && (currentThread?.messages?.length ?? 0) > 0) {
       const timer = setTimeout(() => {
         container.scrollTop = container.scrollHeight;
       }, 50);
