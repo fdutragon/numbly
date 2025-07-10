@@ -435,6 +435,15 @@ export function Chat() {
     };
   }, [isKeyboardVisible]);
 
+  // Detecta se é desktop
+  const isDesktop = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+
+  useEffect(() => {
+    if (isDesktop && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isDesktop]);
+
   return (
     <>
       <div className="fixed inset-0 flex flex-col bg-background overflow-hidden max-h-dvh h-full w-full min-h-0">
@@ -469,8 +478,7 @@ export function Chat() {
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0"
           style={{
-            paddingTop: '20px',
-            paddingBottom: isKeyboardVisible ? '0px' : '20px',
+            padding: 0,
             transition: 'padding 0.3s ease-in-out'
           }}
         >
@@ -551,12 +559,9 @@ export function Chat() {
                 ))}
                 {isTyping && <TypingIndicator key="typing-indicator" />}
               </AnimatePresence>
-              <div 
-                ref={messagesEndRef} 
-                className="transition-all duration-300" 
-                style={{ 
-                  height: isKeyboardVisible ? '200px' : '120px' 
-                }} 
+              <div
+                ref={messagesEndRef}
+                style={{ height: isKeyboardVisible ? 0 : 20 }}
               />
             </div>
           </div>
