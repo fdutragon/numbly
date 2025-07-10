@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Simulação de VAPID keys - em produção, use as geradas pelo script
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEz4fP2zLbjilrYWmzjQzCVxFa5cLtji7tHOZhPdclQTB1TR8vUx0Jl5nE59b9vBcUGQY5gGnkE1wuWaHGS60q5g';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgO6-yHQO4slYtjS98_95xtvfw8Ra3NhMxkFo1LIVTnS6hRANCAATPh8_bMtuOKWthabONDMJXEVrlwu2OLu0c5mE91yVBMHVNHy9THQmXmcTn1v28FxQZBjmAaeQTXC5ZocZLrSrm';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:felipe@donna-ai.com';
+// VAPID keys devem ser definidas no .env
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT;
+
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) {
+  throw new Error('VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY e VAPID_SUBJECT devem estar definidos no .env');
+}
 
 export async function GET() {
   try {
