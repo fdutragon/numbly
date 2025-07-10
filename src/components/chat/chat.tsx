@@ -61,10 +61,12 @@ export function Chat() {
     const scrollToBottom = () => {
       if (messagesContainerRef.current) {
         const container = messagesContainerRef.current;
-        container.scrollTop = container.scrollHeight;
+        // Só faz scroll se o conteúdo for maior que o container (overflow)
+        if (container.scrollHeight > container.clientHeight + 8) {
+          container.scrollTop = container.scrollHeight;
+        }
       }
     };
-    // Delay para garantir que o DOM foi atualizado
     const timer = setTimeout(scrollToBottom, 50);
     return () => clearTimeout(timer);
   }, [currentThread?.messages, isTyping]);
