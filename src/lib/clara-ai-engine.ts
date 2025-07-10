@@ -334,6 +334,12 @@ async function generateContextualResponse(
   }
 
   // Usar IA para resposta contextual personalizada
+  // Monta o histórico da conversa para o prompt
+  const history = (currentState.conversationHistory || [])
+    .slice(-10) // Limita para os últimos 10 pares para não estourar tokens
+    .map(h => `- ${h.role === 'user' ? 'Usuário' : 'Clara'}: ${h.content}`)
+    .join('\n');
+
   const prompt = `
 Você é Clara, IA de vendas especializada em AUTOMAÇÃO WHATSAPP.
 
@@ -342,6 +348,7 @@ CONTEXTO:
 - Mensagem do usuário: "${message}"
 - Intenção detectada: ${intentionResult.intention} (${intentionResult.confidence * 100}%)
 - Sentimento: ${currentState.userSentiment}
+- Histórico recente:\n${history}
 
 PRODUTO: Clara IA - Automação WhatsApp 24/7
 PREÇO: R$ 247/mês
@@ -376,6 +383,8 @@ Responda como Clara:
       ],
       temperature: 0.7,
       max_tokens: 200,
+      // threadId incluído para rastreamento/contexto
+      ...(currentState as any).threadId ? { thread_id: (currentState as any).threadId } : {},
     });
 
     const aiResponse =

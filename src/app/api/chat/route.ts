@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   processUserMessage,
@@ -7,79 +8,61 @@ import {
 import { aiTools } from '@/lib/ai-tools';
 import { type ClaraState } from '@/lib/chat-store';
 
+// Simples storage em memória para contexto por threadId
+const threadContextStore = new Map<string, ClaraState>();
+
 export async function POST(request: NextRequest) {
   try {
-    const { messages, claraState } = await request.json();
-
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { error: 'Messages array is required' },
-        { status: 400 }
-      );
-    }
-
-    // Get user input
-    const lastUserMessage = messages[messages.length - 1];
-    const userInput = lastUserMessage?.content || '';
-
-    // Verifica se o usuário está chamando uma AI Tool
-    const toolMatch = aiTools.find(tool => {
-      const trigger = `/tool ${tool.id}`;
-      return userInput.trim().toLowerCase().startsWith(trigger);
+    const body = await request.json();
+    const schema = z.object({
+      message: z.string(), // só a mensagem do usuário
+      threadId: z.string().optional(),
     });
+    const { message, threadId } = schema.parse(body);
 
-    if (toolMatch) {
-      // Extrai o input após o comando
-      const input = userInput.replace(`/tool ${toolMatch.id}`, '').trim();
-      const toolResult = await toolMatch.run(input);
-      const encoder = new TextEncoder();
-      const readable = new ReadableStream({
-        start(controller) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                done: true,
-                content: toolResult,
-                claraState: claraState || null,
-                tool: toolMatch.id,
-              })}\n\n`
-            )
-          );
-          controller.close();
-        },
-      });
-      return new Response(readable, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-        },
-      });
+    let claraState: ClaraState;
+    if (threadId && threadContextStore.has(threadId)) {
+      claraState = threadContextStore.get(threadId)!;
+    } else {
+      claraState = createInitialClaraState();
     }
 
-    // Initialize or get Clara state
-    const currentState: ClaraState = claraState || createInitialClaraState();
+    // Atualiza o histórico com a nova mensagem
+    const updatedHistory = [
+      ...(claraState.conversationHistory || []),
+      { role: 'user' as const, content: message, timestamp: Date.now() },
+    ];
+    const currentState: ClaraState = {
+      ...claraState,
+      conversationHistory: updatedHistory,
+      lastInteraction: Date.now(),
+    };
 
-    // Process message with Clara AI Engine
-    const claraResponse = await processUserMessage(userInput, currentState);
+    // Processa a mensagem usando TODO o contexto
+    const claraResponse = await processUserMessage(message, currentState);
 
-    // Update Clara state
-    const updatedState = updateClaraState(
-      currentState,
-      userInput,
-      claraResponse
-    );
+    // Atualiza o estado da Clara, mantendo o histórico
+    const updatedState: ClaraState = {
+      ...updateClaraState(currentState, message, claraResponse),
+      conversationHistory: [
+        ...updatedHistory,
+        { role: 'assistant' as const, content: claraResponse.content, timestamp: Date.now() },
+      ],
+      lastInteraction: Date.now(),
+    };
+
+    // Persiste o contexto atualizado
+    if (threadId) {
+      threadContextStore.set(threadId, updatedState);
+    }
 
     // Create streaming response
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       start(controller) {
-        // Simulate thinking time based on response complexity
         const wordCount = claraResponse.content.split(' ').length;
-        const thinkingTime = Math.min(500 + wordCount * 20, 2000); // 0.5s to 2s max
-
+        const thinkingTime = Math.min(500 + wordCount * 20, 2000);
         setTimeout(() => {
-          // Send complete response
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
@@ -92,6 +75,7 @@ export async function POST(request: NextRequest) {
                 nextAction: claraResponse.nextAction,
                 reasoning: claraResponse.reasoning,
                 claraState: updatedState,
+                threadId,
               })}\n\n`
             )
           );

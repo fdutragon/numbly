@@ -49,11 +49,19 @@ export function Chat() {
   
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
-    const newThreadId = createThread();
-    setCurrentThread(newThreadId);
-    // Garante que o header esteja visível no carregamento
+    // Só cria novo thread se não existir um currentThreadId
+    if (!currentThreadId) {
+      const newThreadId = createThread();
+      setCurrentThread(newThreadId);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Debug: log do threadId atual
+  useEffect(() => {
+    console.log('Current Thread ID:', currentThreadId);
+    console.log('Current Thread:', currentThread);
+  }, [currentThreadId, currentThread]);
 
   // Remove todos os scrolls automáticos exceto após mensagem do usuário
 
@@ -117,12 +125,19 @@ export function Chat() {
   };
 
   async function handleSend(content: string) {
-    if (!currentThreadId) {
-      const newThreadId = createThread();
-      setCurrentThread(newThreadId);
+    // Garante que sempre temos um threadId válido
+    let threadId = currentThreadId;
+    if (!threadId) {
+      threadId = createThread();
+      setCurrentThread(threadId);
     }
 
-    const threadId = currentThreadId || createThread();
+    const thread = getCurrentThread();
+    const claraState = thread?.claraState || {};
+    
+    console.log('Sending message with threadId:', threadId);
+    console.log('Current thread state:', thread);
+    console.log('Clara state:', claraState);
 
     // Add user message
     addMessage(threadId, {
@@ -146,23 +161,16 @@ export function Chat() {
     }, 30000); // 30 segundos timeout
 
     try {
-      const messages =
-        getCurrentThread()?.messages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        })) || [];
-
-      messages.push({ role: 'user', content });
-
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages,
-          claraState: getCurrentThread()?.claraState,
+          message: content, // apenas a mensagem atual
+          threadId, // sempre envia o threadId
         }),
       });
-
+      
+      console.log('API Request:', { message: content, threadId });
       if (!response.ok) throw new Error('Failed to get response');
 
       const reader = response.body?.getReader();
@@ -209,9 +217,15 @@ export function Chat() {
                   isTyping: false,
                 });
 
-                // Update Clara state
+                // Update Clara state/contexto da thread
                 if (data.claraState) {
+                  console.log('Updating Clara state for thread:', threadId, data.claraState);
                   updateClaraState(threadId, data.claraState);
+                }
+                
+                // Garante que o threadId seja mantido
+                if (threadId && threadId !== currentThreadId) {
+                  setCurrentThread(threadId);
                 }
 
                 // Handle payment modal
@@ -222,7 +236,6 @@ export function Chat() {
                     userMessageLower.includes('premium')
                       ? 'pro'
                       : 'basic';
-                  // Redireciona para a página de checkout ao invés de abrir modal
                   window.location.href = `/checkout?plan=${plan}`;
                   return;
                 }
