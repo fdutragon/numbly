@@ -1,5 +1,12 @@
 'use client';
 
+// Adiciona a tipagem para VAPID_PUBLIC_KEY no objeto window
+declare global {
+  interface Window {
+    VAPID_PUBLIC_KEY?: string;
+  }
+}
+
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatMessage } from '@/components/chat/chat-message';
@@ -9,6 +16,7 @@ import { CheckoutComponent } from '@/components/clara/checkout-component';
 import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { useChatStore, createInitialClaraState } from '@/lib/chat-store';
 import { Bot, CheckCircle } from 'lucide-react';
+import { usePWA } from '@/lib/pwa-manager';
 
 export function Chat() {
   const {
@@ -24,6 +32,7 @@ export function Chat() {
     getCurrentThread,
     updateClaraState,
   } = useChatStore();
+  const { sendFunNotification } = usePWA();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -454,28 +463,25 @@ export function Chat() {
 
   // Card de sugestão para push notification
   const handleSendPushDemo = async () => {
-    if (window && window.localStorage) {
-      const { sendFunNotification } = require('@/lib/pwa-manager').usePWA();
-      await sendFunNotification();
-    }
+    await sendFunNotification();
   };
+
+  // Helper para VAPID
+  function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
 
   return (
     <>
-      {/* Card de envio de push notification */}
-      <div className="max-w-md mx-auto mb-4">
-        <div className="rounded-2xl bg-gradient-to-r from-primary/80 to-pink-500/80 p-4 flex items-center gap-4 shadow-lg border border-primary/30">
-          <button
-            onClick={handleSendPushDemo}
-            className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-primary font-bold rounded-lg shadow transition-colors"
-          >
-            <span role="img" aria-label="notificação">🔔</span>
-            Testar Notificação Push
-          </button>
-          <span className="text-white font-medium text-sm">Receba uma notificação real agora!</span>
-        </div>
-      </div>
-
       <div className="fixed inset-0 flex flex-col bg-background overflow-hidden max-h-dvh h-full w-full min-h-0">
         {/* Header fixo sempre visível no topo */}
         <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50">
@@ -526,6 +532,35 @@ export function Chat() {
                     {isKeyboardVisible && currentThread?.messages.length === 0 && (
                       <div key="keyboard-spacer" style={{ height: Math.min(keyboardHeight * 0.3, 100) }} />
                     )}
+                    {/* Card de envio de push notification - AGORA ACIMA DO LOGO DONNA */}
+                    <div className="rounded-2xl bg-gradient-to-r from-primary/80 to-pink-500/80 p-4 flex items-center gap-4 shadow-lg border border-primary/30 mb-8 justify-center">
+                      <button
+                        onClick={async () => {
+                          // Solicita permissão de push
+                          const reg = await navigator.serviceWorker.ready;
+                          const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: (process.env.VAPID_PUBLIC_KEY || window.VAPID_PUBLIC_KEY || '')
+                          });
+                          // Detecta ambiente para evitar CORS
+                          const isProd = window.location.hostname === 'www.numbly.life';
+                          const endpoint = isProd
+                            ? 'https://www.numbly.life/api/push/demo'
+                            : '/api/push/demo';
+                          await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ subscription: sub }),
+                          });
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-primary font-bold rounded-lg shadow transition-colors"
+                      >
+                        <span role="img" aria-label="notificação">🔔</span>
+                        Testar Notificação Push
+                      </button>
+                      <span className="text-white font-medium text-sm">Receba uma notificação real agora!</span>
+                    </div>
+                    {/* Logo Donna IA */}
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
                       <Bot className="w-8 h-8 text-white" />
                     </div>
@@ -569,8 +604,6 @@ export function Chat() {
                             </div>
                           </motion.button>
                         ))}
-                        
-                      
                       </motion.div>
                     )}
                 </motion.div>
