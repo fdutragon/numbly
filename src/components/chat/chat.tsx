@@ -534,40 +534,54 @@ export function Chat() {
                     <div className="rounded-2xl bg-gradient-to-r from-primary/80 to-pink-500/80 p-4 flex items-center gap-4 shadow-lg border border-primary/30 mb-8 justify-center">
                       <button
                         onClick={async () => {
-                          const reg = await navigator.serviceWorker.ready;
-                          let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || window.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-                          // Sanitize: remove espaços, quebras de linha e caracteres invisíveis
-                          vapidKey = (vapidKey || '').replace(/\s|\n|\r|\t|\u200B|\uFEFF/g, '');
-                          console.log('VAPID_PUBLIC_KEY (sanitized):', vapidKey, 'length:', vapidKey.length);
-                          if (!vapidKey || vapidKey.length < 40) {
-                            alert('NEXT_PUBLIC_VAPID_PUBLIC_KEY não configurada ou inválida. Verifique o .env.production e o build.');
-                            return;
-                          }
-                          let appServerKey;
                           try {
-                            appServerKey = urlBase64ToUint8Array(vapidKey);
-                          } catch (e) {
-                            alert('NEXT_PUBLIC_VAPID_PUBLIC_KEY inválida (erro na conversão).');
-                            return;
-                          }
-                          try {
-                            const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({
-                              userVisibleOnly: true,
-                              applicationServerKey: appServerKey
-                            });
+                            const reg = await navigator.serviceWorker.ready;
+                            let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || window.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+                            vapidKey = vapidKey.replace(/\s/g, '');
+                            console.log('VAPID Key (sanitized):', vapidKey, 'Length:', vapidKey.length);
+                            if (!vapidKey || vapidKey.length < 40) {
+                              alert('NEXT_PUBLIC_VAPID_PUBLIC_KEY não configurada ou inválida.');
+                              return;
+                            }
+                            let appServerKey;
+                            try {
+                              appServerKey = urlBase64ToUint8Array(vapidKey);
+                              console.log('appServerKey type:', typeof appServerKey, appServerKey);
+                              console.log('appServerKey instanceof Uint8Array:', appServerKey instanceof Uint8Array);
+                            } catch (e) {
+                              alert('NEXT_PUBLIC_VAPID_PUBLIC_KEY inválida (conversão falhou).');
+                              return;
+                            }
+                            let sub;
+                            try {
+                              sub = await reg.pushManager.getSubscription();
+                              if (!sub) {
+                                sub = await reg.pushManager.subscribe({
+                                  userVisibleOnly: true,
+                                  applicationServerKey: appServerKey
+                                });
+                              }
+                            } catch (err) {
+                              alert('Erro ao criar push subscription: ' + (err instanceof Error ? err.message : String(err)));
+                              return;
+                            }
                             const isProd = window.location.hostname === 'www.numbly.life';
                             const endpoint = isProd
                               ? 'https://www.numbly.life/api/push/demo'
                               : '/api/push/demo';
-                            await fetch(endpoint, {
+                            const resp = await fetch(endpoint, {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ subscription: sub }),
                             });
-                            alert('Push subscription criada e notificação enviada!');
+                            if (!resp.ok) {
+                              const text = await resp.text();
+                              alert('Erro ao enviar subscription para backend: ' + text);
+                            } else {
+                              alert('Push subscription criada e enviada com sucesso!');
+                            }
                           } catch (err) {
-                            console.error('Erro ao configurar push subscription:', err);
-                            alert('Erro ao configurar push subscription: ' + (err instanceof Error ? err.message : String(err)));
+                            alert('Erro inesperado ao configurar push: ' + (err instanceof Error ? err.message : String(err)));
                           }
                         }}
                         className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-primary font-bold rounded-lg shadow transition-colors"

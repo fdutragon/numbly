@@ -6,16 +6,21 @@ let webpush: typeof import('web-push') | undefined;
   try {
     const mod = await import('web-push');
     webpush = mod.default || mod;
-  } catch {
+  } catch (err) {
+    console.error('Erro ao importar web-push:', err);
     webpush = undefined;
   }
 })();
 
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY!;
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!;
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT!;
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:your-email@domain.com';
 
-if (webpush) {
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  console.error('VAPID keys ausentes. VAPID_PUBLIC_KEY:', VAPID_PUBLIC_KEY, 'VAPID_PRIVATE_KEY:', VAPID_PRIVATE_KEY);
+}
+
+if (webpush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 }
 
@@ -23,6 +28,9 @@ export async function POST(req: NextRequest) {
   try {
     if (!webpush) {
       return NextResponse.json({ error: 'web-push não disponível no runtime atual' }, { status: 500 });
+    }
+    if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+      return NextResponse.json({ error: 'VAPID keys ausentes no backend' }, { status: 500 });
     }
     const { subscription, recovery } = await req.json();
     if (!subscription) {
@@ -46,7 +54,9 @@ export async function POST(req: NextRequest) {
             icon: '/icons/icon.svg',
             tag: `cart-recovery-${idx+1}`,
             requireInteraction: true
-          })).catch(() => {});
+          })).catch((err) => {
+            console.error('Erro ao enviar push recovery:', err);
+          });
         }, delay);
       });
       return NextResponse.json({ success: true, recovery: true });
@@ -61,9 +71,18 @@ export async function POST(req: NextRequest) {
       requireInteraction: true
     });
 
-    await webpush.sendNotification(subscription, payload);
+    try {
+      await webpush.sendNotification(subscription, payload);
+    } catch (err) {
+      console.error('Erro ao enviar push demo:', err);
+      if (err instanceof Error) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+      }
+      return NextResponse.json({ error: 'Erro desconhecido ao enviar push' }, { status: 500 });
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Erro geral no endpoint push/demo:', error);
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
