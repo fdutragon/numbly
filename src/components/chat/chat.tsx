@@ -57,24 +57,23 @@ export function Chat() {
 
   // Sempre scrolla para o final ao adicionar mensagem ou typing
   useEffect(() => {
-    if (!currentThread?.messages || currentThread.messages.length === 0) return;
-    // Só faz scroll se o conteúdo for maior que o container (overflow)
-    // Removido scroll automático ao montar: só scrolla após mensagem do usuário (ver abaixo)
+    // Removido: qualquer scroll automático ao montar ou ao receber mensagem da IA
+    // O scroll só ocorre após mensagem do usuário (ver abaixo)
   }, [currentThread?.messages, isTyping]);
 
   // Scroll adicional apenas após envio de mensagem do usuário
   useEffect(() => {
-    if (currentThread?.messages.length && currentThread.messages.length > 0) {
-      const lastMessage = currentThread.messages[currentThread.messages.length - 1];
-      if (lastMessage.role === 'user') {
-        // Scroll imediato após mensagem do usuário
-        setTimeout(() => {
-          if (messagesContainerRef.current) {
-            const container = messagesContainerRef.current;
+    if (!currentThread?.messages || currentThread.messages.length === 0) return;
+    const lastMessage = currentThread.messages[currentThread.messages.length - 1];
+    if (lastMessage.role === 'user') {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          const container = messagesContainerRef.current;
+          if (container.scrollHeight > container.clientHeight + 8) {
             container.scrollTop = container.scrollHeight;
           }
-        }, 100);
-      }
+        }
+      }, 100);
     }
   }, [currentThread?.messages]);
 
@@ -110,19 +109,20 @@ export function Chat() {
   const handleSendMessage = async (content: string) => {
     // Chama a função original handleSend
     await handleSend(content);
-    // Força scroll para o final após envio (apenas para usuário)
+    // Scroll só após mensagem do usuário
     setTimeout(() => {
       if (messagesContainerRef.current) {
         const container = messagesContainerRef.current;
-        container.scrollTop = container.scrollHeight;
+        if (container.scrollHeight > container.clientHeight + 8) {
+          container.scrollTop = container.scrollHeight;
+        }
       }
     }, 150);
   };
 
   // Função para focar no input com segurança
-  // Removido: qualquer foco automático no input. O teclado só abre se o usuário clicar.
+  // Garantido: nunca dá foco automático, nunca abre teclado sozinho
   const handleInputFocus = () => {
-    // Apenas scrolla o input para a área visível, sem dar foco automático
     setTimeout(() => {
       if (inputRef.current) {
         try {
@@ -131,7 +131,7 @@ export function Chat() {
             block: 'center',
           });
         } catch (error) {
-          console.warn('ScrollIntoView on focus failed:', error);
+          // Silencia qualquer erro
         }
       }
     }, 300);
@@ -304,7 +304,7 @@ export function Chat() {
 
   return (
     <>
-      <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
+      <div className="fixed inset-0 flex flex-col bg-background overflow-hidden max-h-dvh h-full w-full">
         {/* Header fixo sempre visível no topo */}
         <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50">
           <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
