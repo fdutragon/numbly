@@ -51,13 +51,7 @@ export function Chat() {
   useEffect(() => {
     const newThreadId = createThread();
     setCurrentThread(newThreadId);
-    // Força scroll para o final ao iniciar
-    setTimeout(() => {
-      if (messagesContainerRef.current) {
-        const container = messagesContainerRef.current;
-        container.scrollTop = container.scrollHeight;
-      }
-    }, 100);
+    // Removido: scroll automático ao iniciar
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -318,7 +312,7 @@ export function Chat() {
 
   return (
     <>
-      <div className="flex flex-col h-screen w-full bg-background">
+      <div className="flex flex-col h-screen w-full bg-background overflow-hidden">
         {/* Header fixo sempre visível no topo */}
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0">
           <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
@@ -343,10 +337,10 @@ export function Chat() {
           </div>
         </div>
 
-        {/* Messages - Área com scroll */}
+        {/* Messages - Área com scroll absoluto entre header e input */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar pb-[80px] pt-[72px]"
+          className="absolute top-[72px] bottom-[72px] left-0 right-0 overflow-y-auto custom-scrollbar"
         >
           <div className="p-4">
             <div className="max-w-2xl mx-auto space-y-6">
