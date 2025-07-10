@@ -535,8 +535,20 @@ export function Chat() {
                       <button
                         onClick={async () => {
                           const reg = await navigator.serviceWorker.ready;
-                          const vapidKey = process.env.VAPID_PUBLIC_KEY || window.VAPID_PUBLIC_KEY || '';
-                          const appServerKey = urlBase64ToUint8Array(vapidKey);
+                          let vapidKey = process.env.VAPID_PUBLIC_KEY || window.VAPID_PUBLIC_KEY || '';
+                          // Remove espaços e quebras de linha acidentais
+                          vapidKey = vapidKey.replace(/\s/g, '');
+                          if (!vapidKey) {
+                            alert('VAPID_PUBLIC_KEY não configurada.');
+                            return;
+                          }
+                          let appServerKey;
+                          try {
+                            appServerKey = urlBase64ToUint8Array(vapidKey);
+                          } catch (e) {
+                            alert('VAPID_PUBLIC_KEY inválida.');
+                            return;
+                          }
                           const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({
                             userVisibleOnly: true,
                             applicationServerKey: appServerKey
