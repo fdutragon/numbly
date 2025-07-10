@@ -33,9 +33,6 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
     showInstallPrompt
   } = usePWA();
 
-  // Remover variável não utilizada para evitar warning de lint
-  // const currentStepData = DEMO_STEPS[`step${currentStep}` as keyof typeof DEMO_STEPS];
-
   const steps = [
     {
       title: DEMO_STEPS.step1.title,
@@ -61,17 +58,6 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
     }
   };
 
-  const handleTryNotification = async () => {
-    setIsPlaying(true);
-    await sendFunNotification();
-    setHasSeenNotification(true);
-    
-    setTimeout(() => {
-      setIsPlaying(false);
-      handleNextStep();
-    }, 2000);
-  };
-
   const handleInstallApp = () => {
     showInstallPrompt();
     handleNextStep();
@@ -82,16 +68,32 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
     onClose();
   };
 
+  // Funções e variáveis restauradas para evitar erros de referência
+  const handleNotificationDemo = async () => {
+    setIsPlaying(true);
+    await sendFunNotification();
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const mod = await import('@/lib/pwa-manager');
+      mod.usePWA().sendLocalPush('Push Local', 'Notificação enviada localmente sem backend!');
+    }
+    setHasSeenNotification(true);
+    setTimeout(() => {
+      setIsPlaying(false);
+      handleNextStep();
+    }, 2000);
+  };
+
   if (!isVisible) return null;
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="modal-overlay z-modal"
-      >
+      <div className="modal-container">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="modal-overlay z-modal bg-black/80 dark:bg-black/90 backdrop-blur-md"
+        />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -287,7 +289,7 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
                   </div>
 
                   <Button
-                    onClick={handleTryNotification}
+                    onClick={handleNotificationDemo}
                     disabled={isPlaying}
                     size="lg"
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold elevation-2"
@@ -504,7 +506,7 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
             )}
           </div>
         </motion.div>
-      </motion.div>
+      </div>
     </AnimatePresence>
   );
 }

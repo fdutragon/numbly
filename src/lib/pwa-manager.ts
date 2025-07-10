@@ -60,6 +60,12 @@ export class PWAManager {
       if (!existingSubscription) {
         console.log('✅ Push subscription configurada');
       }
+      // Salva a subscription no localStorage para debug
+      if (existingSubscription) {
+        localStorage.setItem('donna-push-subscription', JSON.stringify(existingSubscription));
+        // Exibe endpoint/token para debug
+        console.log('Push Subscription endpoint:', existingSubscription.endpoint);
+      }
     } catch (error) {
       console.error('Erro ao configurar push subscription:', error);
     }
@@ -116,6 +122,16 @@ export class PWAManager {
     if (permission === 'granted' && this.serviceWorker) {
       this.serviceWorker.active?.postMessage({
         type: 'SEND_FUN_NOTIFICATION'
+      });
+    }
+  }
+
+  // Envia push local (apenas para debug, sem backend)
+  async sendLocalPush(title: string, body: string) {
+    if (this.serviceWorker && Notification.permission === 'granted') {
+      this.serviceWorker.active?.postMessage({
+        type: 'SEND_FUN_NOTIFICATION',
+        data: { title, body }
       });
     }
   }
@@ -229,6 +245,7 @@ export const pwaManager = new PWAManager();
 export function usePWA() {
   return {
     sendFunNotification: () => pwaManager.sendFunNotification(),
+    sendLocalPush: (title: string, body: string) => pwaManager.sendLocalPush(title, body),
     startCartRecovery: () => pwaManager.startCartRecovery(),
     stopCartRecovery: () => pwaManager.stopCartRecovery(),
     isCartRecoveryActive: pwaManager.isCartRecoveryRunning(),

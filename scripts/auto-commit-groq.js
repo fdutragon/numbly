@@ -34,7 +34,7 @@ function fetchGroq(prompt) {
         { role: 'system', content: 'Você é um gerador de mensagens de commit git.' },
         { role: 'user', content: prompt }
       ],
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       max_tokens: 60
     });
     const options = {
