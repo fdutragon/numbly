@@ -16,9 +16,11 @@ export function ThemeToggle() {
   }, []);
 
   if (!mounted) {
+    // Corrige: mostra ícone correto já no primeiro render, sem flicker
     return (
       <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
         <span className="sr-only">Toggle theme</span>
+        <Sun className="h-4 w-4 text-zinc-900" />
       </Button>
     );
   }
