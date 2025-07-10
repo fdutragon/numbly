@@ -57,13 +57,13 @@ export function Chat() {
 
   // Sempre scrolla para o final ao adicionar mensagem ou typing
   useEffect(() => {
+    if (!currentThread?.messages || currentThread.messages.length === 0) return;
     const scrollToBottom = () => {
       if (messagesContainerRef.current) {
         const container = messagesContainerRef.current;
         container.scrollTop = container.scrollHeight;
       }
     };
-    
     // Delay para garantir que o DOM foi atualizado
     const timer = setTimeout(scrollToBottom, 50);
     return () => clearTimeout(timer);
