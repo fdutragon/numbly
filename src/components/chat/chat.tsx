@@ -99,15 +99,19 @@ export function Chat() {
     }
   }, [introIndex, introChar, introPhrases.length]);
 
+  // Função para focar no input com segurança
+  const handleInputFocus = () => {
+    // Não faz scroll automático nem foco automático
+  };
+
   const handleSendMessage = async (content: string, cardIndex?: number) => {
     // Marca o card como clicado se for um card de sugestão
     if (cardIndex !== undefined) {
       setCardsClicked(prev => new Set(prev).add(cardIndex));
     }
-    
     // Chama a função original handleSend
     await handleSend(content);
-    
+    // Não faz foco automático no input após envio de mensagem
     // Força scroll para o final após envio se necessário
     setTimeout(() => {
       if (messagesContainerRef.current) {
@@ -117,11 +121,6 @@ export function Chat() {
         }
       }
     }, 150);
-  };
-
-  // Função para focar no input com segurança
-  const handleInputFocus = () => {
-    // Não faz scroll automático para manter o input sempre visível
   };
 
   async function handleSend(content: string) {
