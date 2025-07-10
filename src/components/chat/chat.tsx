@@ -55,14 +55,17 @@ export function Chat() {
     } else {
       // Limpa as mensagens da thread atual ao recarregar
       if (currentThreadId && currentThread) {
-        updateClaraState(currentThreadId, {
-          ...createInitialClaraState(),
-          lastInteraction: currentThread.claraState?.lastInteraction || Date.now(),
-          salesMetrics: {
-            ...createInitialClaraState().salesMetrics,
-            lastActiveTime: currentThread.claraState?.salesMetrics?.lastActiveTime || Date.now(),
-          },
-        });
+        // Executa updateClaraState apenas no client para evitar mismatch de Date.now()
+        if (typeof window !== 'undefined') {
+          updateClaraState(currentThreadId, {
+            ...createInitialClaraState(),
+            lastInteraction: currentThread.claraState?.lastInteraction || Date.now(),
+            salesMetrics: {
+              ...createInitialClaraState().salesMetrics,
+              lastActiveTime: currentThread.claraState?.salesMetrics?.lastActiveTime || Date.now(),
+            },
+          });
+        }
         // Limpa as mensagens mantendo o threadId
         if (currentThread.messages.length > 0) {
           useChatStore.setState(state => ({

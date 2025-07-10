@@ -33,27 +33,41 @@ self.addEventListener('activate', (event) => {
 
 // Interceptar requisições
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  // Só cachear GET, não /api, não ws/wss, não POST/PUT/DELETE
+  const url = new URL(request.url);
+  if (
+    request.method !== 'GET' ||
+    url.pathname.startsWith('/api') ||
+    url.protocol.startsWith('ws') ||
+    url.pathname.endsWith('.map') // ignora source maps
+  ) {
+    return; // não intercepta
+  }
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Retorna cache se disponível, senão busca da rede
-        return response || fetch(event.request);
-      })
+    caches.match(request)
+      .then((response) => response || fetch(request))
   );
 });
 
 // Push Notifications
 self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    if (event.data) {
+      data = event.data.json();
+    }
+  } catch (e) {}
+
+  const title = data.title || 'Donna AI';
   const options = {
-    body: 'Nova mensagem da Donna AI!',
-    icon: '/icons/icon.svg',
-    badge: '/icons/icon.svg',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
-    actions: [
+    body: data.body || 'Nova mensagem da Donna AI!',
+    icon: data.icon || '/icons/icon.svg',
+    badge: data.badge || '/icons/icon.svg',
+    vibrate: data.vibrate || [100, 50, 100],
+    tag: data.tag || 'donna-notification',
+    requireInteraction: !!data.requireInteraction,
+    actions: data.actions || [
       {
         action: 'explore',
         title: 'Ver Mensagem',
@@ -64,20 +78,12 @@ self.addEventListener('push', (event) => {
         title: 'Fechar',
         icon: '/icons/close-icon.png'
       }
-    ]
+    ],
+    data: data.data || {}
   };
 
-  if (event.data) {
-    const data = event.data.json();
-    options.body = data.body || options.body;
-    options.title = data.title || 'Donna AI';
-    options.icon = data.icon || options.icon;
-    options.tag = data.tag || 'donna-notification';
-    options.requireInteraction = data.requireInteraction || false;
-  }
-
   event.waitUntil(
-    self.registration.showNotification('Donna AI', options)
+    self.registration.showNotification(title, options)
   );
 });
 
@@ -108,149 +114,8 @@ self.addEventListener('notificationclick', (event) => {
   }
 });
 
-// Cart Recovery System
-let cartRecoveryTimeouts = new Map();
-let cartRecoveryMessages = [
-  {
-    delay: 5 * 60 * 1000, // 5 minutos
-    title: '🛒 Esqueceu algo?',
-    body: 'Você estava quase finalizando sua compra da Donna AI. Que tal terminar agora?',
-    tag: 'cart-recovery-1'
-  },
-  {
-    delay: 30 * 60 * 1000, // 30 minutos
-    title: '💔 Sentimos sua falta!',
-    body: 'A Donna AI está esperando por você. Finalize sua compra e transforme seu negócio hoje!',
-    tag: 'cart-recovery-2'
-  },
-  {
-    delay: 2 * 60 * 60 * 1000, // 2 horas
-    title: '🔥 Oferta especial!',
-    body: 'Últimas horas para garantir a Donna AI com desconto especial. Não perca!',
-    tag: 'cart-recovery-3'
-  },
-  {
-    delay: 24 * 60 * 60 * 1000, // 24 horas
-    title: '⏰ Última chance!',
-    body: 'Sua oportunidade de ter a Donna AI está acabando. Finalize agora!',
-    tag: 'cart-recovery-4'
-  },
-  {
-    delay: 3 * 24 * 60 * 60 * 1000, // 3 dias
-    title: '🎯 Volte e ganhe!',
-    body: 'Que tal uma nova chance? A Donna AI pode revolucionar suas vendas ainda hoje!',
-    tag: 'cart-recovery-5'
-  }
-];
-
-// Receber mensagens do cliente
+// Mensagens do cliente (apenas debug/comando simples)
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'START_CART_RECOVERY') {
-    const userId = event.data.userId || 'default-user';
-    startCartRecovery(userId);
-  } else if (event.data && event.data.type === 'STOP_CART_RECOVERY') {
-    const userId = event.data.userId || 'default-user';
-    stopCartRecovery(userId);
-  } else if (event.data && event.data.type === 'SEND_FUN_NOTIFICATION') {
-    sendFunNotification();
-  }
+  // Exemplo: logar mensagem recebida
+  // console.log('SW recebeu mensagem:', event.data);
 });
-
-function startCartRecovery(userId) {
-  // Limpar timeouts existentes
-  stopCartRecovery(userId);
-  
-  const timeouts = [];
-  
-  cartRecoveryMessages.forEach((message, index) => {
-    const timeout = setTimeout(() => {
-      self.registration.showNotification(message.title, {
-        body: message.body,
-        icon: '/icons/icon.svg',
-        badge: '/icons/icon.svg',
-        tag: message.tag,
-        requireInteraction: true,
-        vibrate: [200, 100, 200],
-        actions: [
-          {
-            action: 'checkout',
-            title: 'Finalizar Compra',
-            icon: '/icons/cart-icon.png'
-          },
-          {
-            action: 'dismiss',
-            title: 'Agora não',
-            icon: '/icons/close-icon.png'
-          }
-        ],
-        data: {
-          type: 'cart-recovery',
-          userId: userId,
-          step: index + 1
-        }
-      });
-    }, message.delay);
-    
-    timeouts.push(timeout);
-  });
-  
-  cartRecoveryTimeouts.set(userId, timeouts);
-}
-
-function stopCartRecovery(userId) {
-  const timeouts = cartRecoveryTimeouts.get(userId);
-  if (timeouts) {
-    timeouts.forEach(timeout => clearTimeout(timeout));
-    cartRecoveryTimeouts.delete(userId);
-  }
-}
-
-function sendFunNotification() {
-  const funMessages = [
-    {
-      title: '🎉 Bem-vindo à era da IA!',
-      body: 'A Donna AI está aqui para revolucionar suas vendas. Prepare-se para o futuro!'
-    },
-    {
-      title: '🚀 Decolando com a Donna!',
-      body: 'Suas vendas estão prestes a alçar voo. A Donna AI é sua copiloto perfeita!'
-    },
-    {
-      title: '💎 Você descobriu um tesouro!',
-      body: 'A Donna AI é a joia que faltava no seu negócio. Brilhe com ela!'
-    },
-    {
-      title: '🎯 Mira certeira!',
-      body: 'Com a Donna AI, cada lead é uma oportunidade de ouro. Não erre o alvo!'
-    },
-    {
-      title: '🔮 O futuro chegou!',
-      body: 'Vendas automatizadas, clientes satisfeitos, lucros crescentes. A Donna AI faz tudo isso!'
-    }
-  ];
-  
-  const randomMessage = funMessages[Math.floor(Math.random() * funMessages.length)];
-  
-  self.registration.showNotification(randomMessage.title, {
-    body: randomMessage.body,
-    icon: '/icons/icon.svg',
-    badge: '/icons/icon.svg',
-    tag: 'fun-notification',
-    vibrate: [100, 50, 100, 50, 100],
-    actions: [
-      {
-        action: 'explore',
-        title: 'Explorar Donna AI',
-        icon: '/icons/chat-icon.png'
-      },
-      {
-        action: 'close',
-        title: 'Legal!',
-        icon: '/icons/close-icon.png'
-      }
-    ],
-    data: {
-      type: 'fun-notification'
-    }
-  });
-}

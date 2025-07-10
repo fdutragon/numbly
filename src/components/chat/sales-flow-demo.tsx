@@ -33,7 +33,8 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
     showInstallPrompt
   } = usePWA();
 
-  const currentStepData = DEMO_STEPS[`step${currentStep}` as keyof typeof DEMO_STEPS];
+  // Remover variável não utilizada para evitar warning de lint
+  // const currentStepData = DEMO_STEPS[`step${currentStep}` as keyof typeof DEMO_STEPS];
 
   const steps = [
     {
