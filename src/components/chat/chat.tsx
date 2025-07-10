@@ -306,8 +306,51 @@ export function Chat() {
   const headerRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
 
-  // Remove a lógica de esconder header - sempre mostrar
-  // useEffect(() => { ... }, []);
+  // Esconde header ao rolar para baixo, exibe ao rolar para cima
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        // Usa requestAnimationFrame se disponível, senão setTimeout
+        const scheduleUpdate =
+          window.requestAnimationFrame ||
+          ((fn: () => void) => setTimeout(fn, 16));
+        scheduleUpdate(() => {
+          try {
+            const st = container.scrollTop;
+            if (st > lastScrollTop.current + 8) {
+              setShowHeader(false);
+            } else if (st < lastScrollTop.current - 8) {
+              setShowHeader(true);
+            }
+            lastScrollTop.current = st;
+          } catch (scrollError) {
+            console.warn('Scroll handling failed:', scrollError);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    try {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+    } catch (addListenerError) {
+      // Fallback para navegadores muito antigos
+      console.warn('Failed to add passive scroll listener:', addListenerError);
+      container.addEventListener('scroll', handleScroll, false);
+    }
+
+    return () => {
+      try {
+        container.removeEventListener('scroll', handleScroll);
+      } catch (removeListenerError) {
+        console.warn('Failed to remove scroll listener:', removeListenerError);
+      }
+    };
+  }, []);
 
   // Atualiza altura do header dinamicamente
   useEffect(() => {
@@ -337,12 +380,9 @@ export function Chat() {
 
   return (
     <>
-      <div className="flex flex-col h-screen w-full bg-background">
+      <div className="flex flex-col h-screen w-full bg-background overflow-hidden">
         {/* Header fixo sempre visível */}
-        <div 
-          ref={headerRef}
-          className="flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
-        >
+        <div className="flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0">
           <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -365,12 +405,12 @@ export function Chat() {
           </div>
         </div>
 
-        {/* Messages - Área com scroll que ocupa o espaço restante */}
+        {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar"
+          className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]"
         >
-          <div className="p-4 pb-4">
+          <div className="p-4">
             <div className="max-w-2xl mx-auto space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
@@ -431,14 +471,14 @@ export function Chat() {
               </AnimatePresence>
               <div
                 ref={messagesEndRef}
-                className="h-4"
+                className="h-8"
               />
             </div>
           </div>
         </div>
 
-        {/* Input - Fixo no bottom sem sobreposição */}
-        <div className="bg-background border-t border-border px-4 py-3 flex-shrink-0">
+        {/* Input - Fixo no bottom */}
+        <div className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3 z-50">
           <div className="max-w-2xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
