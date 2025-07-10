@@ -469,8 +469,9 @@ export function Chat() {
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0"
           style={{
-            paddingBottom: '20px',
-            transition: 'padding-bottom 0.3s ease-in-out'
+            paddingTop: '20px',
+            paddingBottom: isKeyboardVisible ? '0px' : '20px',
+            transition: 'padding 0.3s ease-in-out'
           }}
         >
           <div className="p-4">
