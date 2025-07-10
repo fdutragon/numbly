@@ -52,7 +52,7 @@ html, body {
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(html.dark *));
 
 @theme inline {
   --color-background: var(--background);

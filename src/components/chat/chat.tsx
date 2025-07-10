@@ -327,7 +327,7 @@ export function Chat() {
             </div>
             <ThemeToggle />
           </div>
-        </div>
+        </div>  
 
         {/* Messages - Área com scroll */}
         <div
