@@ -198,8 +198,8 @@ export const useChatStore = create<ChatStore>()(
           messageId = `msg_${generateUUID()}`;
           timestamp = Date.now();
         } else {
-          // SSR: use valores fixos para evitar mismatch
-          messageId = 'ssr-msg';
+          // SSR: use valores únicos mesmo no servidor para evitar chaves duplicadas
+          messageId = `ssr-msg-${Math.random().toString(36).substr(2, 15)}-${Date.now()}`;
           timestamp = 0;
         }
         const messageWithMeta: Message = {

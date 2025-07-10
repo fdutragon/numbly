@@ -84,31 +84,53 @@ export function Chat() {
     console.log('Current Thread:', currentThread);
   }, [currentThreadId, currentThread]);
 
-  // Scroll automático inteligente - sempre mostra a última mensagem
-  const scrollToBottom = (force = false) => {
+  // Scroll automático inteligente - sempre mostra a última mensagem completamente
+  const scrollToBottom = (force = false, delay = 0) => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
       const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100;
       
       if (force || isNearBottom) {
-        requestAnimationFrame(() => {
-          container.scrollTop = container.scrollHeight;
-        });
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            // Garante que sempre mostra a última mensagem completamente
+            const maxScroll = container.scrollHeight - container.clientHeight;
+            container.scrollTop = maxScroll + 100; // Extra padding para nunca cortar
+          });
+        }, delay);
       }
     }
   };
 
-  // Scroll ao receber nova mensagem ou atualizar intro
+  // Scroll apenas quando terminar o typing effect, não durante
+  const [hasTypingFinished, setHasTypingFinished] = useState(false);
+  
   useEffect(() => {
-    scrollToBottom(true);
-  }, [introTyping, currentThread?.messages.length]);
+    const isFinished = introIndex === introPhrases.length - 1 && 
+                     introChar === introPhrases[introPhrases.length - 1].length;
+    if (isFinished && !hasTypingFinished) {
+      setHasTypingFinished(true);
+      // Removido: não faz scroll ao terminar o typing effect
+      // O scroll só ocorre quando há mensagens reais
+    }
+  }, [introIndex, introChar, introPhrases, hasTypingFinished]);
+
+  // Scroll ao receber nova mensagem (não durante intro)
+  useEffect(() => {
+    if (currentThread?.messages.length && currentThread.messages.length > 0) {
+      scrollToBottom(true, 100);
+    }
+  }, [currentThread?.messages.length]);
 
   // Remove todos os scrolls automáticos exceto após mensagem do usuário
 
   // Typing effect robusto: requestAnimationFrame + setTimeout para evitar travamentos
   useEffect(() => {
+    // Não executa typing se já há mensagens ou se já terminou
     if (currentThread?.messages.length) return;
     if (introIndex >= introPhrases.length) return;
+    if (hasTypingFinished) return;
+    
     let rafId: number | null = null;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let cancelled = false;
@@ -138,7 +160,7 @@ export function Chat() {
       if (rafId) cancelAnimationFrame(rafId);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [introChar, introIndex, introPhrases, currentThread?.messages.length]);
+  }, [introChar, introIndex, introPhrases, currentThread?.messages.length, hasTypingFinished]);
 
   useEffect(() => {
     if (
@@ -152,8 +174,8 @@ export function Chat() {
 
   const handleSendMessage = async (content: string) => {
     await handleSend(content);
-    // Força scroll para mostrar a nova mensagem
-    setTimeout(() => scrollToBottom(true), 100);
+    // Força scroll para mostrar a nova mensagem com delay maior
+    setTimeout(() => scrollToBottom(true), 200);
   };
 
   // Função para focar no input com segurança
@@ -433,8 +455,8 @@ export function Chat() {
                   Donna IA
                 </h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Vendedora Digital 24/7
+
+                  Sua Vendedora 24/7
                 </p>
               </div>
             </div>
@@ -447,22 +469,23 @@ export function Chat() {
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0"
           style={{
-            paddingBottom: isKeyboardVisible ? `${Math.min(keyboardHeight * 0.1, 50)}px` : '0px',
+            paddingBottom: isKeyboardVisible ? `${Math.min(keyboardHeight * 0.2, 80)}px` : '20px',
             transition: 'padding-bottom 0.3s ease-in-out'
           }}
         >
           <div className="p-4">
             <div className="max-w-2xl mx-auto w-full space-y-6">
               <AnimatePresence initial={false}>
-                {currentThread?.messages.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-12"
-                  >
+                {/* Sempre mostra a introdução e cards, mesmo com mensagens */}
+                <motion.div
+                  key="intro-section"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-12"
+                >
                     {/* Espaçamento inteligente para o teclado */}
                     {isKeyboardVisible && currentThread?.messages.length === 0 && (
-                      <div style={{ height: Math.min(keyboardHeight * 0.3, 100) }} />
+                      <div key="keyboard-spacer" style={{ height: Math.min(keyboardHeight * 0.3, 100) }} />
                     )}
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
                       <Bot className="w-8 h-8 text-white" />
@@ -471,7 +494,7 @@ export function Chat() {
                       Donna IA
                     </h3>
                     <div className="min-h-[2rem] mb-6">
-                      <p className="text-muted-foreground max-w-sm mx-auto whitespace-pre-line text-sm leading-relaxed">
+                      <p className="text-muted-foreground max-w-sm mx-auto whitespace-pre-line text-base leading-relaxed">
                         {introTyping}
                         <span className="animate-pulse text-violet-500">|</span>
                       </p>
@@ -485,7 +508,7 @@ export function Chat() {
                       >
                         {suggestionQuestions.map((q, i) => (
                           <motion.button
-                            key={i}
+                            key={`suggestion-${i}-${q.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '')}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
@@ -499,7 +522,7 @@ export function Chat() {
                             className="group w-full px-5 py-4 rounded-xl text-left transition-all duration-200 bg-gradient-to-r from-background to-muted/50 hover:from-violet-50 hover:to-purple-50 dark:hover:from-violet-950/20 dark:hover:to-purple-950/20 border border-border/50 hover:border-violet-200 dark:hover:border-violet-800 shadow-sm hover:shadow-md text-foreground/80 hover:text-foreground backdrop-blur-sm"
                             onClick={() => handleSendMessage(q)}
                           >
-                            <span className="text-base font-medium leading-relaxed group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">
+                            <span className="text-sm font-medium leading-relaxed group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">
                               {q}
                             </span>
                             <div className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -508,40 +531,30 @@ export function Chat() {
                           </motion.button>
                         ))}
                         
-                        {/* Card call-to-action especial */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.6 }}
-                          className="mt-6 p-4 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
-                        >
-                          <div className="text-center">
-                            <p className="text-sm font-medium mb-2">✨ Oferta Especial</p>
-                            <p className="text-lg font-bold mb-1">R$ 47/mês</p>
-                            <p className="text-xs opacity-90">Menos que R$ 1,60 por dia!</p>
-                          </div>
-                        </motion.div>
+                      
                       </motion.div>
                     )}
-                  </motion.div>
-                ) : (
-                  currentThread?.messages.map((message, index) => (
-                    <ChatMessage
-                      key={message.id}
-                      message={message}
-                      isLatest={
-                        index === (currentThread?.messages.length ?? 0) - 1
-                      }
-                    />
-                  ))
-                )}
-                {isTyping && <TypingIndicator />}
+                </motion.div>
+                
+                {/* Mensagens do chat */}
+                {currentThread?.messages
+                  .filter(message => message.id && message.id.trim() !== '') // Filtra mensagens sem ID válido
+                  .map((message, index) => (
+                  <ChatMessage
+                    key={`msg-${message.id}-${index}`} // Combina ID com índice para garantir unicidade
+                    message={message}
+                    isLatest={
+                      index === (currentThread?.messages.length ?? 0) - 1
+                    }
+                  />
+                ))}
+                {isTyping && <TypingIndicator key="typing-indicator" />}
               </AnimatePresence>
               <div 
                 ref={messagesEndRef} 
                 className="transition-all duration-300" 
                 style={{ 
-                  height: isKeyboardVisible ? '120px' : '32px' 
+                  height: isKeyboardVisible ? '200px' : '120px' 
                 }} 
               />
             </div>
@@ -572,6 +585,7 @@ export function Chat() {
       <AnimatePresence>
         {showSuccessMessage && (
           <motion.div
+            key="success-message"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}

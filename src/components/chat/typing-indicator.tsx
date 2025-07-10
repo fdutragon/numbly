@@ -21,16 +21,19 @@ export function TypingIndicator() {
           </span>
           <div className="flex items-center gap-1 ml-1">
             <motion.div
+              key="typing-dot-1"
               className="w-1 h-1 bg-violet-500 rounded-full"
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0 }}
             />
             <motion.div
+              key="typing-dot-2"
               className="w-1 h-1 bg-violet-500 rounded-full"
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
             />
             <motion.div
+              key="typing-dot-3"
               className="w-1 h-1 bg-violet-500 rounded-full"
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}

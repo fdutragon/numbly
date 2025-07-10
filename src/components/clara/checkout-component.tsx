@@ -82,25 +82,24 @@ export function CheckoutComponent({
 
   const plans = {
     basic: {
-      name: 'Clara Basic',
-      price: 97,
+      name: 'Donna IA',
+      price: 47,
       features: [
-        'Automação WhatsApp',
-        'Campanhas básicas',
-        'Suporte via chat',
-        'Dashboard simples',
+        'Vendedora Digital 24/7',
+        'Qualificação automática',
+        'Follow-up inteligente',
+        'Setup completo incluído',
       ],
     },
     pro: {
-      name: 'Clara Pro',
-      price: 197,
+      name: 'Donna Pro',
+      price: 97,
       features: [
-        'Automação WhatsApp avançada',
-        'Campanhas ilimitadas',
-        'Suporte prioritário',
-        'Dashboard completo',
+        'Tudo do plano básico',
         'Relatórios avançados',
-        'Integração com CRM',
+        'Suporte prioritário',
+        'Integrações ilimitadas',
+        'IA personalizada',
       ],
     },
   };
@@ -547,10 +546,10 @@ export function CheckoutComponent({
                 className="w-full h-12 text-lg font-semibold"
               >
                 {isLoading ? (
-                  <>
+                  <span className="flex items-center">
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                     Processando...
-                  </>
+                  </span>
                 ) : (
                   `Finalizar compra - R$ ${plans[plan].price}`
                 )}

@@ -51,17 +51,17 @@ export default function CheckoutPage() {
 
   const planDetails = {
     basic: {
-      name: 'Plano Básico',
+      name: 'Donna IA',
       price: 'R$ 47',
-      description: 'Até 1000 atendimentos/mês',
-      features: ['Atendimento 24/7', 'Relatórios básicos', 'Suporte email'],
+      description: 'Vendedora Digital 24/7',
+      features: ['Atendimento 24/7', 'Qualificação automática', 'Follow-up inteligente', 'Setup incluído'],
     },
     pro: {
-      name: 'Plano Pro',
-      price: 'R$ 99',
-      description: 'Atendimentos ilimitados',
+      name: 'Donna Pro',
+      price: 'R$ 97',
+      description: 'Recursos avançados',
       features: [
-        'Atendimento 24/7',
+        'Tudo do plano básico',
         'Relatórios avançados',
         'Suporte prioritário',
         'Integrações ilimitadas',
@@ -344,6 +344,10 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-background h-screen overflow-y-auto max-h-dvh">
+      {/* Alerta de contato */}
+      <div className="w-full bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 px-4 py-3 text-sm mb-2">
+        Em até 24 horas úteis entraremos em contato para implementar o chat direto no seu WhatsApp!
+      </div>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -355,11 +359,11 @@ export default function CheckoutPage() {
             variant="ghost"
             size="sm"
             onClick={() => router.back()}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 text-foreground"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 text-foreground" />
           </Button>
-          <h1 className="text-base font-medium">Checkout</h1>
+          <h1 className="text-base font-medium text-foreground">Checkout</h1>
           <div className="w-8" />
         </div>
       </motion.div>
@@ -638,15 +642,15 @@ export default function CheckoutPage() {
                       className="w-full h-9 text-sm"
                     >
                       {copied ? (
-                        <>
+                        <span className="flex items-center">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Copiado!
-                        </>
+                        </span>
                       ) : (
-                        <>
+                        <span className="flex items-center">
                           <Copy className="h-3 w-3 mr-1" />
                           Copiar Código PIX
-                        </>
+                        </span>
                       )}
                     </Button>
                     <div className="text-center">
@@ -657,24 +661,26 @@ export default function CheckoutPage() {
                   </div>
                 )}
               </Card>
-              {/* Card separado para o botão de ajuda */}
-              <Card className="p-4 mt-2">
-                <div className="text-center">
-                  <Button
-                    onClick={() =>
-                      window.open(
-                        'https://wa.me/5511999999999?text=Olá! Preciso de ajuda com minha assinatura Clara AI',
-                        '_blank'
-                      )
-                    }
-                    variant="outline"
-                    className="w-full h-9 text-sm"
-                  >
-                    <MessageCircle className="h-3 w-3 mr-1" />
-                    Ajuda via WhatsApp
-                  </Button>
-                </div>
-              </Card>
+              {/* Botão de ajuda via WhatsApp sempre visível após o método PIX */}
+              <div className="sticky bottom-0 z-40 bg-background/90 pt-2 pb-2 mt-4">
+                <Card className="p-4">
+                  <div className="text-center">
+                    <Button
+                      onClick={() =>
+                        window.open(
+                          'https://wa.me/5511999999999?text=Olá! Preciso de ajuda com minha assinatura Donna IA',
+                          '_blank'
+                        )
+                      }
+                      variant="outline"
+                      className="w-full h-9 text-sm"
+                    >
+                      <MessageCircle className="h-3 w-3 mr-1" />
+                      Ajuda via WhatsApp
+                    </Button>
+                  </div>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </motion.div>

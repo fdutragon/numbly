@@ -4,10 +4,18 @@ import crypto from 'crypto';
 
 // Configurações centralizadas do produto
 const PRODUCT_CONFIG = {
-  NAME: 'Assinatura Numbly Club',
-  SKU: 'NUMEROLOGICA-CLUB-001',
-  PRICE: 27.0,
-  CURRENCY: 'BRL',
+  basic: {
+    NAME: 'Donna IA - Vendedora Digital',
+    SKU: 'DONNA-BASIC-001',
+    PRICE: 47.0,
+    CURRENCY: 'BRL',
+  },
+  pro: {
+    NAME: 'Donna Pro - IA Avançada',
+    SKU: 'DONNA-PRO-001', 
+    PRICE: 97.0,
+    CURRENCY: 'BRL',
+  }
 };
 
 // Interfaces TypeScript
@@ -70,8 +78,16 @@ function hashEmail(email: string): string {
     .digest('hex');
 }
 
+// Interface para configuração do produto
+interface ProductConfig {
+  NAME: string;
+  SKU: string;
+  PRICE: number;
+  CURRENCY: string;
+}
+
 // Função para enviar evento InitiateCheckout para o TikTok Pixel
-async function sendTikTokInitiateCheckoutEvent(email: string): Promise<void> {
+async function sendTikTokInitiateCheckoutEvent(email: string, productConfig: ProductConfig): Promise<void> {
   try {
     // Verificar se as credenciais do TikTok estão configuradas
     if (!process.env.TT_PIXEL_ID || !process.env.TT_ACCESS_TOKEN) {
@@ -96,8 +112,8 @@ async function sendTikTokInitiateCheckoutEvent(email: string): Promise<void> {
             // Removendo phone e external_id pois TikTok não aceita valores null
           },
           properties: {
-            currency: PRODUCT_CONFIG.CURRENCY,
-            value: PRODUCT_CONFIG.PRICE,
+            currency: productConfig.CURRENCY,
+            value: productConfig.PRICE,
             content_type: 'product',
           },
           page: {
@@ -147,7 +163,7 @@ async function sendTikTokInitiateCheckoutEvent(email: string): Promise<void> {
 }
 
 // Função para enviar evento InitiateCheckout para o Meta Pixel (Facebook)
-async function sendMetaInitiateCheckoutEvent(email: string): Promise<void> {
+async function sendMetaInitiateCheckoutEvent(email: string, productConfig: ProductConfig): Promise<void> {
   try {
     if (!process.env.META_PIXEL_ID || !process.env.META_CAPI_TOKEN) {
       console.log(
@@ -169,8 +185,8 @@ async function sendMetaInitiateCheckoutEvent(email: string): Promise<void> {
             em: [hashedEmail],
           },
           custom_data: {
-            currency: PRODUCT_CONFIG.CURRENCY,
-            value: PRODUCT_CONFIG.PRICE,
+            currency: productConfig.CURRENCY,
+            value: productConfig.PRICE,
             content_type: 'product',
           },
           action_source: 'website',
@@ -247,6 +263,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Sanitizar dados de entrada
+    const plan = body.plan || 'basic';
+    const productConfig = PRODUCT_CONFIG[plan as keyof typeof PRODUCT_CONFIG] || PRODUCT_CONFIG.basic;
+    
     const sanitizedData: SanitizedData = {
       email: body.email.trim().toLowerCase(),
       name: body.name.trim(),
@@ -370,11 +389,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Criar pedido
     const orderPayload: OrderPayload = {
       'access-token': accessToken,
-      total: PRODUCT_CONFIG.PRICE,
+      total: productConfig.PRICE,
       products: [
         {
-          sku: PRODUCT_CONFIG.SKU,
-          name: PRODUCT_CONFIG.NAME,
+          sku: productConfig.SKU,
+          name: productConfig.NAME,
           qty: 1,
         },
       ],
@@ -818,7 +837,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Enviar evento InitiateCheckout para TikTok Pixel (apenas para PIX e se não pular pixels)
       if (!sanitizedData.skipPixelsAndEmails) {
         try {
-          await sendTikTokInitiateCheckoutEvent(sanitizedData.email);
+          await sendTikTokInitiateCheckoutEvent(sanitizedData.email, productConfig);
         } catch (error) {
           console.warn(
             '[TikTok Pixel] Erro ao enviar InitiateCheckout (PIX - continuando):',
@@ -827,7 +846,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
         // Enviar evento InitiateCheckout para Meta Pixel (apenas para PIX)
         try {
-          await sendMetaInitiateCheckoutEvent(sanitizedData.email);
+          await sendMetaInitiateCheckoutEvent(sanitizedData.email, productConfig);
         } catch (error) {
           console.warn(
             '[Meta Pixel] Erro ao enviar InitiateCheckout (PIX - continuando):',

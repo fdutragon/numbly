@@ -110,7 +110,7 @@ export function MarkdownRenderer({
 
       // Regular text with line breaks
       return part.split('\n').map((line, lineIndex, lines) => (
-        <React.Fragment key={`${index}-${lineIndex}`}>
+        <React.Fragment key={`part-${index}-line-${lineIndex}-${line.substring(0, 10)}`}>
           {line}
           {lineIndex < lines.length - 1 && <br />}
         </React.Fragment>
