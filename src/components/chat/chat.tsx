@@ -58,20 +58,11 @@ export function Chat() {
   // Sempre scrolla para o final ao adicionar mensagem ou typing
   useEffect(() => {
     if (!currentThread?.messages || currentThread.messages.length === 0) return;
-    const scrollToBottom = () => {
-      if (messagesContainerRef.current) {
-        const container = messagesContainerRef.current;
-        // Só faz scroll se o conteúdo for maior que o container (overflow)
-        if (container.scrollHeight > container.clientHeight + 8) {
-          container.scrollTop = container.scrollHeight;
-        }
-      }
-    };
-    const timer = setTimeout(scrollToBottom, 50);
-    return () => clearTimeout(timer);
+    // Só faz scroll se o conteúdo for maior que o container (overflow)
+    // Removido scroll automático ao montar: só scrolla após mensagem do usuário (ver abaixo)
   }, [currentThread?.messages, isTyping]);
 
-  // Scroll adicional após envio de mensagem
+  // Scroll adicional apenas após envio de mensagem do usuário
   useEffect(() => {
     if (currentThread?.messages.length && currentThread.messages.length > 0) {
       const lastMessage = currentThread.messages[currentThread.messages.length - 1];
@@ -119,8 +110,7 @@ export function Chat() {
   const handleSendMessage = async (content: string) => {
     // Chama a função original handleSend
     await handleSend(content);
-    
-    // Força scroll para o final após envio
+    // Força scroll para o final após envio (apenas para usuário)
     setTimeout(() => {
       if (messagesContainerRef.current) {
         const container = messagesContainerRef.current;
