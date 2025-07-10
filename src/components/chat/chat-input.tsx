@@ -13,6 +13,8 @@ interface ChatInputProps {
   disabled?: boolean;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
   onFocus?: () => void;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
 export function ChatInput({
@@ -21,8 +23,12 @@ export function ChatInput({
   disabled = false,
   inputRef,
   onFocus,
+  value,
+  onChange,
 }: ChatInputProps) {
-  const [value, setValue] = useState('');
+  const [internalValue, setInternalValue] = useState('');
+  const controlled = typeof value === 'string' && typeof onChange === 'function';
+  const textareaValue = controlled ? value : internalValue;
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || internalRef;
 
@@ -42,13 +48,13 @@ export function ChatInput({
         console.warn('Height adjustment failed:', error);
       }
     }
-  }, [value, textareaRef]);
+  }, [textareaValue, textareaRef]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!value.trim() || isLoading || disabled) return;
-    onSend(value.trim());
-    setValue('');
+    if (!textareaValue.trim() || isLoading || disabled) return;
+    onSend(textareaValue.trim());
+    if (!controlled) setInternalValue('');
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -58,11 +64,19 @@ export function ChatInput({
     }
   }
 
+  function handleTextareaChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    if (controlled && onChange) {
+      onChange(e);
+    } else {
+      setInternalValue(e.target.value);
+    }
+  }
+
   function handleTextareaFocus() {
     if (onFocus) onFocus();
   }
 
-  const canSend = value.trim() && !isLoading && !disabled;
+  const canSend = textareaValue.trim() && !isLoading && !disabled;
 
   return (
     <motion.div
@@ -75,8 +89,8 @@ export function ChatInput({
         <div className="relative flex items-end bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 focus-within:border-indigo-500 dark:focus-within:border-indigo-400">
           <textarea
             ref={textareaRef}
-            value={value}
-            onChange={e => setValue(e.target.value)}
+            value={textareaValue}
+            onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
             onFocus={handleTextareaFocus}
             placeholder={
