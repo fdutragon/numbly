@@ -74,6 +74,13 @@ export function ChatInput({
 
   function handleTextareaFocus() {
     if (onFocus) onFocus();
+    // Garante scroll até o final ao focar
+    try {
+      const container = document.querySelector('[data-chat-scroll-container]');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    } catch {}
   }
 
   const canSend = textareaValue.trim() && !isLoading && !disabled;
