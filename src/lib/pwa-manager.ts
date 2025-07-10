@@ -52,20 +52,32 @@ export class PWAManager {
 
       // Buscar VAPID public key do servidor
       const response = await fetch('/api/push');
-      await response.json();
-      
+      const vapidData = await response.json();
+      console.log('VAPID public key recebido:', vapidData);
+
       // Verificar se já tem subscription
       const existingSubscription = await this.serviceWorker.pushManager.getSubscription();
-      
-      if (!existingSubscription) {
-        console.log('✅ Push subscription configurada');
-      }
-      // Salva a subscription no localStorage para debug
       if (existingSubscription) {
+        console.log('Push subscription já existe:', existingSubscription);
         localStorage.setItem('donna-push-subscription', JSON.stringify(existingSubscription));
-        // Exibe endpoint/token para debug
-        console.log('Push Subscription endpoint:', existingSubscription.endpoint);
+        return;
       }
+
+      // Solicitar permissão
+      const permission = await Notification.requestPermission();
+      console.log('Permissão de notificação:', permission);
+      if (permission !== 'granted') {
+        console.warn('Permissão de notificação negada');
+        return;
+      }
+
+      // Criar nova subscription
+      const newSubscription = await this.serviceWorker.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidData.publicKey || vapidData.VAPID_PUBLIC_KEY
+      });
+      console.log('Nova push subscription criada:', newSubscription);
+      localStorage.setItem('donna-push-subscription', JSON.stringify(newSubscription));
     } catch (error) {
       console.error('Erro ao configurar push subscription:', error);
     }
