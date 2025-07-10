@@ -2,13 +2,30 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   processUserMessage,
-  updateClaraState,
-  createInitialClaraState,
-} from '@/lib/clara-ai-engine';
+  updateDonnaState,
+  createInitialDonnaState,
+  type DonnaResponse,
+} from '@/lib/donna-ai-engine';
 import { type ClaraState } from '@/lib/chat-store';
 
-// Simples storage em memória para contexto por threadId
-const threadContextStore = new Map<string, ClaraState>();
+// Simples storage em memória para contexto por threadId com TTL
+interface ThreadContext {
+  state: ClaraState;
+  lastAccess: number;
+  ttl: number;
+}
+
+const threadContextStore = new Map<string, ThreadContext>();
+
+// Cleanup de contextos expirados a cada 30 minutos
+setInterval(() => {
+  const now = Date.now();
+  for (const [threadId, context] of threadContextStore.entries()) {
+    if (now - context.lastAccess > context.ttl) {
+      threadContextStore.delete(threadId);
+    }
+  }
+}, 30 * 60 * 1000);
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,16 +37,21 @@ export async function POST(request: NextRequest) {
     const { message, threadId } = schema.parse(body);
 
     let claraState: ClaraState;
+    const now = Date.now();
+    
     if (threadId && threadContextStore.has(threadId)) {
-      claraState = threadContextStore.get(threadId)!;
+      const context = threadContextStore.get(threadId)!;
+      claraState = context.state;
+      // Atualizar último acesso
+      context.lastAccess = now;
     } else {
-      claraState = createInitialClaraState();
+      claraState = createInitialDonnaState();
     }
 
-    // Atualiza o histórico com a nova mensagem
+    // Atualiza o histórico com a nova mensagem, mantém apenas as últimas 20 para performance
     const updatedHistory = [
-      ...(claraState.conversationHistory || []),
-      { role: 'user' as const, content: message, timestamp: Date.now() },
+      ...claraState.conversationHistory.slice(-19),
+      { role: 'user' as const, content: message, timestamp: now },
     ];
     const currentState: ClaraState = {
       ...claraState,
@@ -37,42 +59,49 @@ export async function POST(request: NextRequest) {
       lastInteraction: Date.now(),
     };
 
-    // Processa a mensagem usando TODO o contexto
-    const claraResponse = await processUserMessage(message, currentState);
+    // Processa a mensagem usando TODO o contexto com Donna
+    const donnaResponse: DonnaResponse = await processUserMessage(message, currentState);
 
-    // Atualiza o estado da Clara, mantendo o histórico
+    // Atualiza o estado da Donna, mantendo o histórico
     const updatedState: ClaraState = {
-      ...updateClaraState(currentState, message, claraResponse),
+      ...updateDonnaState(currentState, message, donnaResponse),
       conversationHistory: [
         ...updatedHistory,
-        { role: 'assistant' as const, content: claraResponse.content, timestamp: Date.now() },
+        { role: 'assistant' as const, content: donnaResponse.content, timestamp: now },
       ],
-      lastInteraction: Date.now(),
+      lastInteraction: now,
     };
 
-    // Persiste o contexto atualizado
+    // Persiste o contexto atualizado com TTL de 2 horas
     if (threadId) {
-      threadContextStore.set(threadId, updatedState);
+      threadContextStore.set(threadId, {
+        state: updatedState,
+        lastAccess: now,
+        ttl: 2 * 60 * 60 * 1000, // 2 horas
+      });
     }
 
     // Create streaming response
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       start(controller) {
-        const wordCount = claraResponse.content.split(' ').length;
-        const thinkingTime = Math.min(500 + wordCount * 20, 2000);
+        const wordCount = donnaResponse.content.split(' ').length;
+        const thinkingTime = Math.min(300 + wordCount * 15, 1500); // Mais rápida
+        
         setTimeout(() => {
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
                 done: true,
-                content: claraResponse.content,
-                shouldShowPaymentModal: claraResponse.shouldShowPaymentModal,
-                emailSent: claraResponse.emailSent,
-                intention: claraResponse.intention,
-                confidence: claraResponse.confidence,
-                nextAction: claraResponse.nextAction,
-                reasoning: claraResponse.reasoning,
+                content: donnaResponse.content,
+                shouldShowPaymentModal: donnaResponse.shouldShowPaymentModal,
+                emailSent: donnaResponse.emailSent,
+                intention: donnaResponse.intention,
+                confidence: donnaResponse.confidence,
+                nextAction: donnaResponse.nextAction,
+                reasoning: donnaResponse.reasoning,
+                userData: donnaResponse.userData,
+                metrics: donnaResponse.metrics,
                 claraState: updatedState,
                 threadId,
               })}\n\n`

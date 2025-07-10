@@ -1,6 +1,20 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+// Função UUID compatível com todos os browsers
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  
+  // Fallback para browsers que não suportam crypto.randomUUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // Define ClaraState interface locally to avoid client-side import
 export interface ClaraState {
   currentStage:
@@ -55,7 +69,7 @@ export interface ClaraState {
 }
 
 // Create initial state function locally
-function createInitialClaraState(): ClaraState {
+export function createInitialClaraState(): ClaraState {
   return {
     currentStage: 'intro',
     conversationHistory: [],
@@ -143,7 +157,7 @@ export const useChatStore = create<ChatStore>()(
         // Only generate dynamic values when actually called (client-side)
         const threadId =
           typeof window !== 'undefined'
-            ? `thread_${crypto.randomUUID()}`
+            ? `thread_${generateUUID()}`
             : `thread_temp_${Math.random().toString(36).substr(2, 9)}`;
 
         const timestamp = typeof window !== 'undefined' ? Date.now() : 0;
@@ -181,7 +195,7 @@ export const useChatStore = create<ChatStore>()(
         let messageId = '';
         let timestamp = 0;
         if (typeof window !== 'undefined') {
-          messageId = `msg_${crypto.randomUUID()}`;
+          messageId = `msg_${generateUUID()}`;
           timestamp = Date.now();
         } else {
           // SSR: use valores fixos para evitar mismatch

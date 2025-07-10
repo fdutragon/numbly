@@ -1,0 +1,33 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\src\\components\\theme-provider.tsx",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "name": "Debug Playwright Tests",
+            "request": "launch",
+            "program": "${workspaceFolder}/node_modules/@playwright/test/cli.js",
+            "args": ["test", "--project=chromium"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "CI": "false"
+            }
+        }
+    ]
+}

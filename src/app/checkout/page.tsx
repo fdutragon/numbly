@@ -52,7 +52,7 @@ export default function CheckoutPage() {
   const planDetails = {
     basic: {
       name: 'Plano Básico',
-      price: 'R$ 49',
+      price: 'R$ 47',
       description: 'Até 1000 atendimentos/mês',
       features: ['Atendimento 24/7', 'Relatórios básicos', 'Suporte email'],
     },
@@ -113,6 +113,7 @@ export default function CheckoutPage() {
           document: customerCpf.replace(/\D/g, ''), // Enviar como 'document'
           telephone: customerPhone.replace(/\D/g, ''), // Enviar como 'telephone'
           paymentMethod: 'pix',
+          plan: plan, // Envia o plano selecionado para a API
         }),
       });
 
@@ -212,6 +213,7 @@ export default function CheckoutPage() {
           document: customerCpf.replace(/\D/g, ''), // Enviar como 'document'
           telephone: customerPhone.replace(/\D/g, ''), // Enviar como 'telephone'
           paymentMethod: 'credit-card',
+          plan: plan, // Envia o plano selecionado para a API
           creditCard: {
             number: cardNumber.replace(/\s/g, ''),
             name: cardName,
@@ -301,9 +303,12 @@ export default function CheckoutPage() {
   };
 
   const formatCpf = (value: string) => {
+    // Aplica máscara incremental conforme digita
     const v = value.replace(/\D/g, '');
-    const formatted = v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    return formatted;
+    if (v.length <= 3) return v;
+    if (v.length <= 6) return v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    if (v.length <= 9) return v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    return v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
   };
 
   const formatPhone = (value: string) => {
@@ -338,7 +343,7 @@ export default function CheckoutPage() {
   }, [customerName, customerEmail, customerPhone, customerCpf]);
 
   return (
-    <div className="min-h-screen bg-background overflow-y-auto">
+    <div className="min-h-screen bg-background h-screen overflow-y-auto max-h-dvh">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -448,8 +453,7 @@ export default function CheckoutPage() {
                     placeholder="123.456.789-00"
                     value={customerCpf}
                     onChange={e => {
-                      const formatted = formatCpf(e.target.value);
-                      setCustomerCpf(formatted);
+                      setCustomerCpf(formatCpf(e.target.value));
                     }}
                     className="h-9 text-sm"
                     maxLength={14}
@@ -695,7 +699,6 @@ export default function CheckoutPage() {
             <p className="text-sm text-muted-foreground mb-4">
               Sua assinatura foi ativada com sucesso. Redirecionando...
             </p>
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           </motion.div>
         </motion.div>
       )}

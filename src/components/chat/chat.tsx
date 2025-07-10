@@ -7,7 +7,7 @@ import { ChatInput } from '@/components/chat/chat-input';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { CheckoutComponent } from '@/components/clara/checkout-component';
 import { TypingIndicator } from '@/components/chat/typing-indicator';
-import { useChatStore } from '@/lib/chat-store';
+import { useChatStore, createInitialClaraState } from '@/lib/chat-store';
 import { Bot, CheckCircle } from 'lucide-react';
 
 export function Chat() {
@@ -33,9 +33,9 @@ export function Chat() {
   const [introTyping, setIntroTyping] = useState('');
   const introPhrases = useMemo(
     () => [
-      'Oi! Eu sou a Clara, sua secretária inteligente.',
-      'Faço atendimento automático no WhatsApp, organizo agendamentos, gero relatórios e conecto campanhas de marketing.\n',
-      'Como posso ajudar você hoje?',
+      'Oi! 👋 Eu sou a Donna, sua vendedora digital 24/7.',
+      'Transformo seu WhatsApp numa máquina de vendas que nunca para.\n',
+      'Pronta para multiplicar suas vendas? 🚀',
     ],
     []
   );
@@ -46,13 +46,115 @@ export function Chat() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // Sempre rola para o final do container ao montar ou atualizar mensagens/intro
+  // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
+    // Só cria novo thread se não existir um currentThreadId
+    if (!currentThreadId) {
+      const newThreadId = createThread();
+      setCurrentThread(newThreadId);
+    } else {
+      // Limpa as mensagens da thread atual ao recarregar
+      if (currentThreadId && currentThread) {
+        updateClaraState(currentThreadId, {
+          ...createInitialClaraState(),
+          lastInteraction: currentThread.claraState?.lastInteraction || Date.now(),
+          salesMetrics: {
+            ...createInitialClaraState().salesMetrics,
+            lastActiveTime: currentThread.claraState?.salesMetrics?.lastActiveTime || Date.now(),
+          },
+        });
+        // Limpa as mensagens mantendo o threadId
+        if (currentThread.messages.length > 0) {
+          useChatStore.setState(state => ({
+            threads: state.threads.map(thread =>
+              thread.id === currentThreadId
+                ? { ...thread, messages: [] }
+                : thread
+            ),
+          }));
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debug: log do threadId atual
+  useEffect(() => {
+    console.log('Current Thread ID:', currentThreadId);
+    console.log('Current Thread:', currentThread);
+  }, [currentThreadId, currentThread]);
+
+  // Scroll automático inteligente - sempre mostra a última mensagem
+  const scrollToBottom = (force = false) => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-      container.scrollTop = container.scrollHeight - container.clientHeight;
+      const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100;
+      
+      if (force || isNearBottom) {
+        requestAnimationFrame(() => {
+          container.scrollTop = container.scrollHeight;
+        });
+      }
     }
+  };
+
+  // Scroll ao receber nova mensagem ou atualizar intro
+  useEffect(() => {
+    scrollToBottom(true);
   }, [introTyping, currentThread?.messages.length]);
+
+  // Remove todos os scrolls automáticos exceto após mensagem do usuário
+
+  // Typing effect robusto: requestAnimationFrame + setTimeout para evitar travamentos
+  useEffect(() => {
+    if (currentThread?.messages.length) return;
+    if (introIndex >= introPhrases.length) return;
+    let rafId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+
+    function typeChar() {
+      if (cancelled) return;
+      if (introChar < introPhrases[introIndex].length) {
+        timeoutId = setTimeout(() => {
+          rafId = requestAnimationFrame(() => {
+            setIntroTyping(prev => prev + introPhrases[introIndex][introChar]);
+            setIntroChar(c => c + 1);
+          });
+        }, 35);
+      } else if (introIndex < introPhrases.length - 1) {
+        timeoutId = setTimeout(() => {
+          rafId = requestAnimationFrame(() => {
+            setIntroTyping(prev => prev + '\n');
+            setIntroIndex(i => i + 1);
+            setIntroChar(0);
+          });
+        }, 900);
+      }
+    }
+    typeChar();
+    return () => {
+      cancelled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [introChar, introIndex, introPhrases, currentThread?.messages.length]);
+
+  useEffect(() => {
+    if (
+      introIndex < introPhrases.length &&
+      introChar === 0 &&
+      introIndex !== 0
+    ) {
+      setIntroTyping(prev => prev + '');
+    }
+  }, [introIndex, introChar, introPhrases.length]);
+
+  const handleSendMessage = async (content: string) => {
+    await handleSend(content);
+    // Força scroll para mostrar a nova mensagem
+    setTimeout(() => scrollToBottom(true), 100);
+  };
 
   // Função para focar no input com segurança
   // Garantido: nunca dá foco automático, nunca abre teclado sozinho
@@ -64,7 +166,7 @@ export function Chat() {
             behavior: 'smooth',
             block: 'center',
           });
-        } catch (error) {
+        } catch {
           // Silencia qualquer erro
         }
       }
@@ -218,11 +320,6 @@ export function Chat() {
     }
   }
 
-  // Função para enviar mensagem do usuário
-  const handleSendMessage = async (content: string) => {
-    await handleSend(content);
-  };
-
   const handleCheckoutSuccess = () => {
     setShowCheckout(false);
     setShowSuccessMessage(true);
@@ -244,11 +341,11 @@ export function Chat() {
     introChar === introPhrases[introPhrases.length - 1].length;
 
   const suggestionQuestions: string[] = [
-    'Como automatizar meu atendimento no WhatsApp?',
-    'Quais campanhas de marketing posso integrar?',
-    'Como acessar relatórios de atendimentos?',
-    'Quero contratar o plano Pro',
-    'Clara, envie informações para meu@email.com',
+    '🚀 Como Donna pode multiplicar minhas vendas?',
+    '💰 Quanto custa para ter Donna trabalhando 24/7?',
+    '⚡ Quanto tempo leva para implementar?',
+    '📧 Envie mais informações para meu email',
+    '🎯 Quero fazer um teste grátis agora!',
   ];
 
   // Controla montagem para evitar problemas de hidratação do ThemeToggle
@@ -256,6 +353,65 @@ export function Chat() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Detecta altura do teclado (mobile) e gerencia scroll inteligente
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  
+  useEffect(() => {
+    let initialViewportHeight = window.innerHeight;
+    
+    function handleViewportChange() {
+      if (window.visualViewport) {
+        const currentHeight = window.visualViewport.height;
+        const heightDifference = initialViewportHeight - currentHeight;
+        
+        if (heightDifference > 150) { // Teclado provavelmente visível
+          setKeyboardHeight(heightDifference);
+          setIsKeyboardVisible(true);
+          // Scroll para mostrar a última mensagem quando o teclado aparecer
+          setTimeout(() => scrollToBottom(true), 300);
+        } else {
+          setKeyboardHeight(0);
+          setIsKeyboardVisible(false);
+        }
+      }
+    }
+    
+    function handleResize() {
+      // Atualiza a altura inicial em rotações de tela
+      if (!isKeyboardVisible) {
+        initialViewportHeight = window.innerHeight;
+      }
+      handleViewportChange();
+    }
+    
+    // Eventos para diferentes browsers/dispositivos
+    window.visualViewport?.addEventListener('resize', handleViewportChange);
+    window.addEventListener('resize', handleResize);
+    
+    // Detecta foco em inputs (método adicional para iOS)
+    const handleFocusIn = () => {
+      setTimeout(handleViewportChange, 300);
+    };
+    
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        setIsKeyboardVisible(false);
+        setKeyboardHeight(0);
+      }, 300);
+    };
+    
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, [isKeyboardVisible]);
 
   return (
     <>
@@ -273,11 +429,12 @@ export function Chat() {
                 </div>
               </div>
               <div>
-                <h1 className="font-medium text-foreground text-base">
+                <h1 className="font-semibold text-foreground text-base">
                   Donna IA
                 </h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  Sua Assistente Pessoal
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  Vendedora Digital 24/7
                 </p>
               </div>
             </div>
@@ -289,6 +446,10 @@ export function Chat() {
         <div
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0"
+          style={{
+            paddingBottom: isKeyboardVisible ? `${Math.min(keyboardHeight * 0.1, 50)}px` : '0px',
+            transition: 'padding-bottom 0.3s ease-in-out'
+          }}
         >
           <div className="p-4">
             <div className="max-w-2xl mx-auto w-full space-y-6">
@@ -299,11 +460,15 @@ export function Chat() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="text-center py-12"
                   >
+                    {/* Espaçamento inteligente para o teclado */}
+                    {isKeyboardVisible && currentThread?.messages.length === 0 && (
+                      <div style={{ height: Math.min(keyboardHeight * 0.3, 100) }} />
+                    )}
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
                       <Bot className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-lg font-medium text-foreground mb-2">
-                      Clara
+                    <h3 className="text-xl font-bold text-foreground mb-2">
+                      Donna IA
                     </h3>
                     <div className="min-h-[2rem] mb-6">
                       <p className="text-muted-foreground max-w-sm mx-auto whitespace-pre-line text-sm leading-relaxed">
@@ -316,7 +481,7 @@ export function Chat() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
-                        className="space-y-2"
+                        className="space-y-3 w-full max-w-md mx-auto"
                       >
                         {suggestionQuestions.map((q, i) => (
                           <motion.button
@@ -324,15 +489,38 @@ export function Chat() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
+                            whileHover={{ 
+                              scale: 1.02, 
+                              backgroundColor: "rgb(139 92 246 / 0.1)",
+                              borderColor: "rgb(139 92 246 / 0.3)" 
+                            }}
+                            whileTap={{ scale: 0.98 }}
                             type="button"
-                            className="w-full px-4 py-2.5 rounded-lg text-sm text-left transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+                            className="group w-full px-5 py-4 rounded-xl text-left transition-all duration-200 bg-gradient-to-r from-background to-muted/50 hover:from-violet-50 hover:to-purple-50 dark:hover:from-violet-950/20 dark:hover:to-purple-950/20 border border-border/50 hover:border-violet-200 dark:hover:border-violet-800 shadow-sm hover:shadow-md text-foreground/80 hover:text-foreground backdrop-blur-sm"
                             onClick={() => handleSendMessage(q)}
                           >
-                            {q}
+                            <span className="text-base font-medium leading-relaxed group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">
+                              {q}
+                            </span>
+                            <div className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <div className="w-8 h-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full"></div>
+                            </div>
                           </motion.button>
                         ))}
+                        
+                        {/* Card call-to-action especial */}
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.6 }}
+                          className="mt-6 p-4 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
+                        >
+                          <div className="text-center">
+                            <p className="text-sm font-medium mb-2">✨ Oferta Especial</p>
+                            <p className="text-lg font-bold mb-1">R$ 47/mês</p>
+                            <p className="text-xs opacity-90">Menos que R$ 1,60 por dia!</p>
+                          </div>
+                        </motion.div>
                       </motion.div>
                     )}
                   </motion.div>
@@ -349,7 +537,13 @@ export function Chat() {
                 )}
                 {isTyping && <TypingIndicator />}
               </AnimatePresence>
-              <div ref={messagesEndRef} className="h-8" />
+              <div 
+                ref={messagesEndRef} 
+                className="transition-all duration-300" 
+                style={{ 
+                  height: isKeyboardVisible ? '120px' : '32px' 
+                }} 
+              />
             </div>
           </div>
         </div>
