@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatMessage } from '@/components/chat/chat-message';
 import { ChatInput } from '@/components/chat/chat-input';
@@ -44,7 +44,6 @@ export function Chat() {
 
   // Estados para funcionalidades de intenção
   const [showCheckout, setShowCheckout] = useState(false);
-  const [checkoutPlan, setCheckoutPlan] = useState<'basic' | 'pro'>('basic');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Sempre inicia uma nova conversa ao montar o componente
@@ -417,7 +416,6 @@ export function Chat() {
         isOpen={showCheckout}
         onClose={() => setShowCheckout(false)}
         onSuccess={handleCheckoutSuccess}
-        plan={checkoutPlan}
       />
 
       {/* Success Message */}

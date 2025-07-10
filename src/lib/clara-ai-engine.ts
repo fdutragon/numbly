@@ -384,7 +384,9 @@ Responda como Clara:
       temperature: 0.7,
       max_tokens: 200,
       // threadId incluído para rastreamento/contexto
-      ...(currentState as any).threadId ? { thread_id: (currentState as any).threadId } : {},
+      ...(typeof (currentState as ClaraState & { threadId?: string }).threadId === 'string'
+        ? { thread_id: (currentState as ClaraState & { threadId?: string }).threadId }
+        : {}),
     });
 
     const aiResponse =

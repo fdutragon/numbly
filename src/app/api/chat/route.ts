@@ -5,7 +5,6 @@ import {
   updateClaraState,
   createInitialClaraState,
 } from '@/lib/clara-ai-engine';
-import { aiTools } from '@/lib/ai-tools';
 import { type ClaraState } from '@/lib/chat-store';
 
 // Simples storage em memória para contexto por threadId
