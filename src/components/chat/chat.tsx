@@ -102,8 +102,18 @@ export function Chat() {
   // Função para focar no input com segurança
   // Garantido: nunca dá foco automático, nunca abre teclado sozinho
   const handleInputFocus = () => {
-    // Não faz scroll automático ao focar o input
-    // Remove qualquer scrollIntoView ou timeout relacionado
+    setTimeout(() => {
+      if (inputRef.current) {
+        try {
+          inputRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        } catch (error) {
+          // Silencia qualquer erro
+        }
+      }
+    }, 300);
   };
 
   async function handleSend(content: string) {
