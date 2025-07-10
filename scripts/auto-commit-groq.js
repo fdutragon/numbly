@@ -22,7 +22,7 @@ function getGitDiff() {
 }
 
 async function getCommitMessage(diff) {
-  const prompt = `Gere apenas a mensagem de commit git, curta, clara e objetiva (máx. 60 caracteres), sem comentários antes ou depois, para as seguintes mudanças de código. Responda apenas com a mensagem de commit, sem aspas, sem prefixo, sem explicação:\n${diff}`;
+  const prompt = `Gere apenas a mensagem de commit git, curta, clara e objetiva (máx. 60 caracteres), SEM comentários antes ou depois, para as seguintes mudanças de código. Use sempre verbo no passado (ex: adicionado, removido, corrigido, ajustado, modificado, implementado, refatorado, etc). Responda apenas com a mensagem de commit, sem aspas, sem prefixo, sem explicação:\n${diff}`;
   const response = await fetchGroq(prompt);
   return response;
 }
