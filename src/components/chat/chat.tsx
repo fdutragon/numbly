@@ -100,20 +100,13 @@ export function Chat() {
   };
 
   // Função para focar no input com segurança
-  // Garantido: nunca dá foco automático, nunca abre teclado sozinho
+  // Garante scroll até o final ao focar o input
   const handleInputFocus = () => {
     setTimeout(() => {
-      if (inputRef.current) {
-        try {
-          inputRef.current.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-          });
-        } catch (error) {
-          // Silencia qualquer erro
-        }
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
       }
-    }, 300);
+    }, 50);
   };
 
   async function handleSend(content: string) {
@@ -222,8 +215,9 @@ export function Chat() {
                     userMessageLower.includes('premium')
                       ? 'pro'
                       : 'basic';
-                  setCheckoutPlan(plan);
-                  setShowCheckout(true);
+                  // Redireciona para a página de checkout ao invés de abrir modal
+                  window.location.href = `/checkout?plan=${plan}`;
+                  return;
                 }
 
                 // Handle email sent confirmation
