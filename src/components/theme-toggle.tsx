@@ -25,7 +25,7 @@ export function ThemeToggle() {
         variant="ghost"
         size="sm"
         onClick={() => isReady && setTheme(isDark ? 'light' : 'dark')}
-        className="relative w-9 h-9 p-0 bg-white/80 dark:bg-zinc-800/80 border border-zinc-200/50 dark:border-zinc-700/50 hover:bg-white/90 dark:hover:bg-zinc-800/90 shadow-sm backdrop-blur-sm"
+        className="relative w-9 h-9 p-1 bg-white/80 dark:bg-zinc-800/80 border border-zinc-200/50 dark:border-zinc-700/50 hover:bg-white/90 dark:hover:bg-zinc-800/90 shadow-sm backdrop-blur-sm"
         disabled={!isReady}
       >
         <motion.div
