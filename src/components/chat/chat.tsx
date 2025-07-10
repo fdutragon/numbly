@@ -312,9 +312,9 @@ export function Chat() {
 
   return (
     <>
-      <div className="flex flex-col h-screen w-full bg-background overflow-hidden">
+      <div className="fixed inset-0 flex flex-col bg-background overscroll-behavior-y-none">
         {/* Header fixo sempre visível no topo */}
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50">
           <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -337,12 +337,12 @@ export function Chat() {
           </div>
         </div>
 
-        {/* Messages - Área com scroll absoluto entre header e input */}
+        {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
-          className="absolute top-[72px] bottom-[72px] left-0 right-0 overflow-y-auto custom-scrollbar"
+          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain"
         >
-          <div className="flex flex-col justify-end h-full p-4">
+          <div className="p-4">
             <div className="max-w-2xl mx-auto w-full space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
@@ -410,7 +410,7 @@ export function Chat() {
         </div>
 
         {/* Input - Fixo no bottom */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3 z-50">
+        <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 z-50">
           <div className="max-w-2xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
