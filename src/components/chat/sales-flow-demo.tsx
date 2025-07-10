@@ -12,7 +12,8 @@ import {
   Rocket,
   Crown,
   Play,
-  CheckCircle2
+  CheckCircle2,
+  Smartphone
 } from 'lucide-react';
 import { usePWA } from '@/lib/pwa-manager';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,6 +50,19 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
     {
       title: DEMO_STEPS.step4.title,
       subtitle: DEMO_STEPS.step4.subtitle
+    }
+  ];
+
+  const featureCards = [
+    {
+      icon: <Bell className="w-8 h-8 text-primary" />, // Notificação
+      title: 'Teste a Demo na Prática',
+      description: 'Veja como a Donna AI recupera vendas e engaja clientes com notificações push reais. Experimente a automação de vendas em tempo real.'
+    },
+    {
+      icon: <Smartphone className="w-8 h-8 text-primary" />, // PWA
+      title: 'PWA: Instale como App',
+      description: 'Tenha o seu negócio no bolso do cliente. Instale como app, envie push, aumente recorrência e fidelização.'
     }
   ];
 
@@ -100,6 +114,23 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
           exit={{ opacity: 0, y: 20 }}
           className="modal-content z-modal-content elevation-5"
         >
+          {/* Features Cards Destacados */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {featureCards.map((card, idx) => (
+              <Card key={idx} className="elevation-2 border-thin">
+                <CardHeader className="flex flex-row items-center gap-4 pb-2">
+                  {card.icon}
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    {card.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{card.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
           {/* Header */}
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-thin border-border/50">
             <div className="flex items-center justify-between p-4">

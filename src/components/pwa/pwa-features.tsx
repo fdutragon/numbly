@@ -25,9 +25,10 @@ export function PWAFeatures() {
   } = usePWA();
 
   useEffect(() => {
-    // Atualizar informações da PWA
     setPWAInfo(getPWAInfo());
-  }, [getPWAInfo]);
+    // Se quiser atualizar dinamicamente, adicione listeners customizados aqui
+    // Exemplo: window.addEventListener('appinstalled', () => setPWAInfo(getPWAInfo()));
+  }, []); // Corrigido: roda só no mount
 
   const handleSendNotification = async () => {
     await sendFunNotification();
@@ -80,19 +81,19 @@ export function PWAFeatures() {
   ];
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6">
+    <div className="w-full max-w-6xl mx-auto p-6 bg-background/95 rounded-2xl shadow-xl">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold mb-4">
           🚀 Donna AI - Sua Vendedora no Bolso
         </h2>
-        <p className="text-gray-600 text-lg">
+        <p className="text-gray-600 dark:text-gray-300 text-lg">
           Transforme seu dispositivo em uma máquina de vendas 24/7
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {features.map((feature, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
+          <Card key={index} className="hover:shadow-lg transition-shadow bg-card/90 dark:bg-card/80 border border-thin">
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 {feature.icon}
@@ -100,7 +101,7 @@ export function PWAFeatures() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">{feature.description}</p>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">{feature.description}</p>
               <Button
                 onClick={feature.onClick}
                 disabled={!feature.enabled}
