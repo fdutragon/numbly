@@ -55,22 +55,22 @@ export function Chat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sempre scrolla para o final ao adicionar mensagem ou typing
+  // Garante que a mensagem de boas-vindas fique sempre visível mesmo com o teclado aberto
   useEffect(() => {
-    // Removido: qualquer scroll automático ao montar ou ao receber mensagem da IA
-    // O scroll só ocorre após mensagem do usuário (ver abaixo)
-  }, [currentThread?.messages, isTyping]);
+    if (currentThread?.messages.length === 0 && messagesContainerRef.current) {
+      // Sempre scrolla para o topo (garante que a mensagem de boas-vindas fique visível)
+      messagesContainerRef.current.scrollTop = 0;
+    }
+  }, [currentThread?.messages]);
 
-  // Scroll adicional apenas se o usuário já está no final da lista de mensagens
+  // Scroll automático só após mensagem do usuário, nunca ao montar, nunca para IA
   useEffect(() => {
     if (!currentThread?.messages || currentThread.messages.length === 0) return;
-    // Só ativa scroll automático se já havia pelo menos 2 mensagens antes
     if (currentThread.messages.length < 3) return;
     const lastMessage = currentThread.messages[currentThread.messages.length - 1];
     if (lastMessage.role === 'user') {
       const container = messagesContainerRef.current;
       if (!container) return;
-      // Só scrolla se o usuário já está no final (tolerância de 32px)
       const isAtBottom =
         Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 32;
       if (isAtBottom) {
@@ -130,7 +130,7 @@ export function Chat() {
   };
 
   // Função para focar no input com segurança
-  // Garantido: nunca dá foco automático, nunca abre teclado sozinho
+  // Garante: nunca dá foco automático, nunca abre teclado sozinho
   const handleInputFocus = () => {
     setTimeout(() => {
       if (inputRef.current) {

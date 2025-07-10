@@ -27,12 +27,6 @@ export function ChatInput({
   const textareaRef = inputRef || internalRef;
 
   useEffect(() => {
-    if (!isLoading && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [isLoading, textareaRef]);
-
-  useEffect(() => {
     if (textareaRef.current) {
       try {
         const textarea = textareaRef.current;
