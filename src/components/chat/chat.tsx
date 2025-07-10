@@ -46,29 +46,46 @@ export function Chat() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutPlan, setCheckoutPlan] = useState<'basic' | 'pro'>('basic');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [cardsClicked, setCardsClicked] = useState<Set<number>>(new Set());
   
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
     const newThreadId = createThread();
     setCurrentThread(newThreadId);
+    // Garante que o header esteja visível no carregamento
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Scroll inteligente - só scrolla quando necessário
+  // Sempre scrolla para o final ao adicionar mensagem ou typing
   useEffect(() => {
-    if (!messagesContainerRef.current) return;
-    
-    const container = messagesContainerRef.current;
-    const shouldScroll = container.scrollHeight > container.clientHeight;
-    
-    if (shouldScroll && (currentThread?.messages?.length ?? 0) > 0) {
-      const timer = setTimeout(() => {
-        container.scrollTop = container.scrollHeight;
-      }, 50);
-      return () => clearTimeout(timer);
-    }
+    if (!currentThread?.messages || currentThread.messages.length === 0) return;
+    const scrollToBottom = () => {
+      if (messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        // Só faz scroll se o conteúdo for maior que o container (overflow)
+        if (container.scrollHeight > container.clientHeight + 8) {
+          container.scrollTop = container.scrollHeight;
+        }
+      }
+    };
+    const timer = setTimeout(scrollToBottom, 50);
+    return () => clearTimeout(timer);
   }, [currentThread?.messages, isTyping]);
+
+  // Scroll adicional após envio de mensagem
+  useEffect(() => {
+    if (currentThread?.messages.length && currentThread.messages.length > 0) {
+      const lastMessage = currentThread.messages[currentThread.messages.length - 1];
+      if (lastMessage.role === 'user') {
+        // Scroll imediato após mensagem do usuário
+        setTimeout(() => {
+          if (messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            container.scrollTop = container.scrollHeight;
+          }
+        }, 100);
+      }
+    }
+  }, [currentThread?.messages]);
 
   useEffect(() => {
     if (currentThread?.messages.length) return;
@@ -99,28 +116,35 @@ export function Chat() {
     }
   }, [introIndex, introChar, introPhrases.length]);
 
-  // Função para focar no input com segurança
-  const handleInputFocus = () => {
-    // Não faz scroll automático nem foco automático
-  };
-
-  const handleSendMessage = async (content: string, cardIndex?: number) => {
-    // Marca o card como clicado se for um card de sugestão
-    if (cardIndex !== undefined) {
-      setCardsClicked(prev => new Set(prev).add(cardIndex));
-    }
+  const handleSendMessage = async (content: string) => {
     // Chama a função original handleSend
     await handleSend(content);
-    // Não faz foco automático no input após envio de mensagem
-    // Força scroll para o final após envio se necessário
+    
+    // Força scroll para o final após envio
     setTimeout(() => {
       if (messagesContainerRef.current) {
         const container = messagesContainerRef.current;
-        if (container.scrollHeight > container.clientHeight) {
-          container.scrollTop = container.scrollHeight;
-        }
+        container.scrollTop = container.scrollHeight;
       }
     }, 150);
+  };
+
+  // Função para focar no input com segurança
+  // Removido: qualquer foco automático no input. O teclado só abre se o usuário clicar.
+  const handleInputFocus = () => {
+    // Apenas scrolla o input para a área visível, sem dar foco automático
+    setTimeout(() => {
+      if (inputRef.current) {
+        try {
+          inputRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        } catch (error) {
+          console.warn('ScrollIntoView on focus failed:', error);
+        }
+      }
+    }, 300);
   };
 
   async function handleSend(content: string) {
@@ -320,7 +344,7 @@ export function Chat() {
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain"
         >
-          <div className="p-4 pb-[100px]">
+          <div className="p-4">
             <div className="max-w-2xl mx-auto w-full space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
@@ -357,12 +381,8 @@ export function Chat() {
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
                             type="button"
-                            className={`w-full px-4 py-2.5 rounded-lg text-sm text-left transition-colors ${
-                              cardsClicked.has(i) 
-                                ? 'bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800' 
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }`}
-                            onClick={() => handleSendMessage(q, i)}
+                            className="w-full px-4 py-2.5 rounded-lg text-sm text-left transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+                            onClick={() => handleSendMessage(q)}
                           >
                             {q}
                           </motion.button>
@@ -392,7 +412,7 @@ export function Chat() {
         </div>
 
         {/* Input - Fixo no bottom */}
-        <div className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3 z-50">
+        <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 z-50 sticky bottom-0">
           <div className="max-w-2xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
