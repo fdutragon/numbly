@@ -16,10 +16,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePWA } from '@/lib/pwa-manager';
 import Image from 'next/image';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { stopCartRecovery } = usePWA();
   const [plan, setPlan] = useState<'basic' | 'pro'>('basic');
   const [activeTab, setActiveTab] = useState('card');
   const [pixCode, setPixCode] = useState('');
@@ -233,6 +235,9 @@ export default function CheckoutPage() {
           creditCard: result.credit_card,
         });
 
+        // Parar cart recovery pois o usuário comprou
+        stopCartRecovery();
+        
         setShowSuccess(true);
         setTimeout(() => {
           router.push('/?success=true');

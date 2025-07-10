@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CreditCard } from 'lucide-react';
+import { usePWA } from '@/lib/pwa-manager';
 
 interface CheckoutButtonProps {
   planType: 'basic' | 'pro';
@@ -15,8 +16,11 @@ export function CheckoutButton({
   className = '',
 }: CheckoutButtonProps) {
   const router = useRouter();
+  const { startCartRecovery } = usePWA();
 
   const handleCheckout = () => {
+    // Iniciar cart recovery quando usuário vai para checkout
+    startCartRecovery();
     router.push(`/checkout?plan=${planType}`);
   };
 
