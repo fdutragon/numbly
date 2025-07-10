@@ -100,12 +100,26 @@ export function Chat() {
   };
 
   // Função para focar no input com segurança
-  // Sempre rola para o final da tela ao focar o input
+  // Ao focar, rola para a última mensagem do assistente (ou última mensagem)
   const handleInputFocus = () => {
     setTimeout(() => {
-      if (messagesContainerRef.current) {
+      if (messagesContainerRef.current && currentThread?.messages?.length) {
         const container = messagesContainerRef.current;
-        container.scrollTop = container.scrollHeight;
+        // Busca a última mensagem do assistente
+        const lastAssistantIndex = [...currentThread.messages].reverse().findIndex(m => m.role === 'assistant');
+        let targetIndex = currentThread.messages.length - 1;
+        if (lastAssistantIndex !== -1) {
+          targetIndex = currentThread.messages.length - 1 - lastAssistantIndex;
+        }
+        // Seleciona o elemento da mensagem alvo
+        const messageElements = container.querySelectorAll('[data-role="message"]');
+        const targetEl = messageElements[targetIndex] as HTMLElement | undefined;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        } else {
+          // fallback: scroll para o final
+          container.scrollTop = container.scrollHeight;
+        }
       }
     }, 100);
   };
