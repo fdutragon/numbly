@@ -64,7 +64,7 @@ export function Chat() {
   // Scroll adicional apenas se o usuário já está no final da lista de mensagens
   useEffect(() => {
     if (!currentThread?.messages || currentThread.messages.length === 0) return;
-    // Só ativa scroll automático se já havia pelo menos 1 mensagem antes
+    // Só ativa scroll automático se já havia pelo menos 2 mensagens antes
     if (currentThread.messages.length < 3) return;
     const lastMessage = currentThread.messages[currentThread.messages.length - 1];
     if (lastMessage.role === 'user') {
