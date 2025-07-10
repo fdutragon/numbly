@@ -436,13 +436,18 @@ export function Chat() {
   }, [isKeyboardVisible]);
 
   // Detecta se é desktop
-  const isDesktop = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsDesktop(window.matchMedia('(pointer: fine)').matches);
+    }
+  }, []);
 
   useEffect(() => {
     if (isDesktop && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isDesktop]);
+  }, [isDesktop, isMounted]);
 
   return (
     <>
