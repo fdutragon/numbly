@@ -46,70 +46,13 @@ export function Chat() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // Sempre inicia uma nova conversa ao montar o componente
-  useEffect(() => {
-    // Só cria novo thread se não existir um currentThreadId
-    if (!currentThreadId) {
-      const newThreadId = createThread();
-      setCurrentThread(newThreadId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Debug: log do threadId atual
-  useEffect(() => {
-    console.log('Current Thread ID:', currentThreadId);
-    console.log('Current Thread:', currentThread);
-  }, [currentThreadId, currentThread]);
-
-  // Sempre rola para o final do container ao montar ou atualizar introTyping
+  // Sempre rola para o final do container ao montar ou atualizar mensagens/intro
   useEffect(() => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
       container.scrollTop = container.scrollHeight - container.clientHeight;
     }
   }, [introTyping, currentThread?.messages.length]);
-
-  // Remove todos os scrolls automáticos exceto após mensagem do usuário
-
-  useEffect(() => {
-    if (currentThread?.messages.length) return;
-    if (introIndex >= introPhrases.length) return;
-    if (introChar < introPhrases[introIndex].length) {
-      const timeout = setTimeout(() => {
-        setIntroTyping(prev => prev + introPhrases[introIndex][introChar]);
-        setIntroChar(c => c + 1);
-      }, 35);
-      return () => clearTimeout(timeout);
-    } else if (introIndex < introPhrases.length - 1) {
-      const timeout = setTimeout(() => {
-        setIntroTyping(prev => prev + '\n');
-        setIntroIndex(i => i + 1);
-        setIntroChar(0);
-      }, 900);
-      return () => clearTimeout(timeout);
-    }
-  }, [introChar, introIndex, introPhrases, currentThread?.messages.length]);
-
-  useEffect(() => {
-    if (
-      introIndex < introPhrases.length &&
-      introChar === 0 &&
-      introIndex !== 0
-    ) {
-      setIntroTyping(prev => prev + '');
-    }
-  }, [introIndex, introChar, introPhrases.length]);
-
-  const handleSendMessage = async (content: string) => {
-    await handleSend(content);
-    // Scroll imediatamente após o envio, removendo a última mensagem do assistente do campo de visão
-    if (messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      // Scroll para o topo do container, removendo a última mensagem do assistente
-      container.scrollTop = container.scrollHeight - container.clientHeight;
-    }
-  };
 
   // Função para focar no input com segurança
   // Garantido: nunca dá foco automático, nunca abre teclado sozinho
@@ -274,6 +217,11 @@ export function Chat() {
       setTyping(false);
     }
   }
+
+  // Função para enviar mensagem do usuário
+  const handleSendMessage = async (content: string) => {
+    await handleSend(content);
+  };
 
   const handleCheckoutSuccess = () => {
     setShowCheckout(false);
