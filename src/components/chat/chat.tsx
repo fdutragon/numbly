@@ -314,35 +314,35 @@ export function Chat() {
 
   return (
     <>
-      <div className="fixed inset-0 flex flex-col bg-background h-screen overflow-hidden">
-        {/* Header fixo sempre visível no topo */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50">
-          <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
-                  <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
-                </div>
+      {/* Header fixo sempre visível no topo (fora do container principal) */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
+                <Bot className="w-4 h-4 text-white" />
               </div>
-              <div>
-                <h1 className="font-medium text-foreground text-base">Clara</h1>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <span className="w-1 h-1 bg-green-500 rounded-full"></span>
-                  Online
-                </p>
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
+                <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
               </div>
             </div>
-            <ThemeToggle />
+            <div>
+              <h1 className="font-medium text-foreground text-base">Clara</h1>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="w-1 h-1 bg-green-500 rounded-full"></span>
+                Online
+              </p>
+            </div>
           </div>
+          <ThemeToggle />
         </div>
+      </div>
 
+      <div className="fixed inset-0 flex flex-col bg-background h-screen overflow-hidden">
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain"
+          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain pt-[72px]"
         >
           <div className="p-4">
             <div className="max-w-2xl mx-auto w-full space-y-6">
