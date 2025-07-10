@@ -46,7 +46,7 @@ export function Chat() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutPlan, setCheckoutPlan] = useState<'basic' | 'pro'>('basic');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  
+
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
     // Só cria novo thread se não existir um currentThreadId
@@ -131,7 +131,7 @@ export function Chat() {
 
     const thread = getCurrentThread();
     const claraState = thread?.claraState || {};
-    
+
     console.log('Sending message with threadId:', threadId);
     console.log('Current thread state:', thread);
     console.log('Clara state:', claraState);
@@ -166,7 +166,7 @@ export function Chat() {
           threadId, // sempre envia o threadId
         }),
       });
-      
+
       console.log('API Request:', { message: content, threadId });
       if (!response.ok) throw new Error('Failed to get response');
 
@@ -216,10 +216,14 @@ export function Chat() {
 
                 // Update Clara state/contexto da thread
                 if (data.claraState) {
-                  console.log('Updating Clara state for thread:', threadId, data.claraState);
+                  console.log(
+                    'Updating Clara state for thread:',
+                    threadId,
+                    data.claraState
+                  );
                   updateClaraState(threadId, data.claraState);
                 }
-                
+
                 // Garante que o threadId seja mantido
                 if (threadId && threadId !== currentThreadId) {
                   setCurrentThread(threadId);
@@ -314,16 +318,17 @@ export function Chat() {
                 </div>
               </div>
               <div>
-                <h1 className="font-medium text-foreground text-base">Clara</h1>
+                <h1 className="font-medium text-foreground text-base">
+                  Donna IA
+                </h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <span className="w-1 h-1 bg-green-500 rounded-full"></span>
-                  Online
+                  Sua Assistente Pessoal
                 </p>
               </div>
             </div>
             {isMounted && <ThemeToggle />}
           </div>
-        </div>  
+        </div>
 
         {/* Messages - Área com scroll */}
         <div
@@ -389,10 +394,7 @@ export function Chat() {
                 )}
                 {isTyping && <TypingIndicator />}
               </AnimatePresence>
-              <div
-                ref={messagesEndRef}
-                className="h-8"
-              />
+              <div ref={messagesEndRef} className="h-8" />
             </div>
           </div>
         </div>

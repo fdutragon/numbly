@@ -27,7 +27,8 @@ export function ChatInput({
   onChange,
 }: ChatInputProps) {
   const [internalValue, setInternalValue] = useState('');
-  const controlled = typeof value === 'string' && typeof onChange === 'function';
+  const controlled =
+    typeof value === 'string' && typeof onChange === 'function';
   const textareaValue = controlled ? value : internalValue;
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || internalRef;
@@ -134,15 +135,11 @@ export function ChatInput({
 
         <div className="mt-2 px-1">
           <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
-            Pressione{' '}
+            💡 Dica: Pergunte{' '}
             <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-              Enter
+              valores
             </kbd>{' '}
-            para enviar,{' '}
-            <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-              Shift + Enter
-            </kbd>{' '}
-            para nova linha
+            para saber o preço.{' '}
           </p>
         </div>
       </form>
