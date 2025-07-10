@@ -4,27 +4,27 @@ html, body {
   overflow-anchor: none;
   max-width: 100vw;
   overflow-x: hidden;
-  height: calc(var(--vh, 1vh) * 100);
+  /* Removido height/min-height para evitar scroll global duplicado */
   margin: 0;
+  height: 100%;
 }
 
-/* Estilo adicional para suporte teclado mobile */
 @media (max-width: 600px) {
   html {
     -webkit-overflow-scrolling: touch;
-    height: calc(var(--vh, 1vh) * 100);
+    height: 100%;
   }
 
   body {
     position: relative;
-    min-height: calc(var(--vh, 1vh) * 100);
+    min-height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
-    transform: translate3d(0, 0, 0); /* Força aceleração de hardware */
+    transform: translate3d(0, 0, 0);
   }
 
   #__next {
-    height: auto; /* Permite crescimento conforme input e teclado */
+    height: 100%;
   }
 
   /* Corrige elemento fixo na parte inferior */

@@ -332,7 +332,7 @@ export function Chat() {
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain"
+          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0"
         >
           <div className="p-4">
             <div className="max-w-2xl mx-auto w-full space-y-6">
@@ -402,7 +402,7 @@ export function Chat() {
         </div>
 
         {/* Input - Fixo no bottom */}
-        <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 z-50 sticky bottom-0">
+        <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 z-50 sticky bottom-0 min-h-0">
           <div className="max-w-2xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
