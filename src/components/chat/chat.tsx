@@ -87,14 +87,11 @@ export function Chat() {
   }, [introIndex, introChar, introPhrases.length]);
 
   const handleSendMessage = async (content: string) => {
-    // Chama a função original handleSend
     await handleSend(content);
-    // Scroll só após mensagem do usuário
+    // Scroll para mostrar a última mensagem do assistente
     setTimeout(() => {
-      if (messagesContainerRef.current) {
-        const container = messagesContainerRef.current;
-        // Faz scroll para o topo, removendo a última mensagem do campo de visão
-        container.scrollTop = container.scrollHeight - container.clientHeight;
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
     }, 150);
   };
