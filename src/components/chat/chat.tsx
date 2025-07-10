@@ -51,6 +51,13 @@ export function Chat() {
   useEffect(() => {
     const newThreadId = createThread();
     setCurrentThread(newThreadId);
+    // Força scroll para o final ao iniciar
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
