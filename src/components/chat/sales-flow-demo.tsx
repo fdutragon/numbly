@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -36,10 +36,7 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
   const [isPlaying, setIsPlaying] = useState(false);
   const {
     sendFunNotification,
-    startCartRecovery,
-    getPWAInfo,
-    showInstallPrompt,
-    requestNotificationPermission
+    showInstallPrompt
   } = usePWA();
 
   const features = [

@@ -3,11 +3,17 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, Download, Smartphone, Zap, ShoppingCart, Star } from 'lucide-react';
+import { Bell, Download, Zap, ShoppingCart, Star } from 'lucide-react';
 import { usePWA } from '@/lib/pwa-manager';
 
 export function PWAFeatures() {
-  const [pwaInfo, setPWAInfo] = useState<any>(null);
+  const [pwaInfo, setPWAInfo] = useState<{
+    isStandalone: boolean;
+    canInstall: boolean;
+    notificationPermission: NotificationPermission;
+    isCartRecoveryActive: boolean;
+    userId: string;
+  } | null>(null);
   const [notificationSent, setNotificationSent] = useState(false);
   const {
     sendFunNotification,
@@ -15,14 +21,13 @@ export function PWAFeatures() {
     stopCartRecovery,
     isCartRecoveryActive,
     getPWAInfo,
-    requestNotificationPermission,
     showInstallPrompt
   } = usePWA();
 
   useEffect(() => {
     // Atualizar informações da PWA
     setPWAInfo(getPWAInfo());
-  }, []);
+  }, [getPWAInfo]);
 
   const handleSendNotification = async () => {
     await sendFunNotification();

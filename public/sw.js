@@ -4,8 +4,7 @@ const urlsToCache = [
   '/',
   '/checkout',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/icons/icon.svg'
 ];
 
 // Instalar Service Worker
@@ -47,8 +46,8 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   const options = {
     body: 'Nova mensagem da Donna AI!',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: '/icons/icon.svg',
+    badge: '/icons/icon.svg',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
@@ -167,8 +166,8 @@ function startCartRecovery(userId) {
     const timeout = setTimeout(() => {
       self.registration.showNotification(message.title, {
         body: message.body,
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
+        icon: '/icons/icon.svg',
+        badge: '/icons/icon.svg',
         tag: message.tag,
         requireInteraction: true,
         vibrate: [200, 100, 200],
@@ -234,8 +233,8 @@ function sendFunNotification() {
   
   self.registration.showNotification(randomMessage.title, {
     body: randomMessage.body,
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: '/icons/icon.svg',
+    badge: '/icons/icon.svg',
     tag: 'fun-notification',
     vibrate: [100, 50, 100, 50, 100],
     actions: [

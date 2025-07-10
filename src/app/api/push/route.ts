@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Simulação de VAPID keys - em produção, use as geradas pelo script
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEz4fP2zLbjilrYWmzjQzCVxFa5cLtji7tHOZhPdclQTB1TR8vUx0Jl5nE59b9vBcUGQY5gGnkE1wuWaHGS60q5g';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgO6-yHQO4slYtjS98_95xtvfw8Ra3NhMxkFo1LIVTnS6hRANCAATPh8_bMtuOKWthabONDMJXEVrlwu2OLu0c5mE91yVBMHVNHy9THQmXmcTn1v28FxQZBjmAaeQTXC5ZocZLrSrm';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:felipe@donna-ai.com';
 
 export async function GET() {
@@ -68,7 +70,11 @@ export async function POST(request: NextRequest) {
 }
 
 // Função para enviar push notification real (para uso futuro)
-async function sendPushNotification(subscription: any, payload: any) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function sendPushNotification(
+  subscription: PushSubscription, 
+  payload: { title: string; body: string; icon?: string }
+) {
   try {
     // Esta função seria implementada com web-push library
     // npm install web-push
@@ -83,7 +89,7 @@ async function sendPushNotification(subscription: any, payload: any) {
     // 
     // return await webpush.sendNotification(subscription, JSON.stringify(payload));
     
-    console.log('🚀 Push notification would be sent here');
+    console.log('🚀 Push notification would be sent here', { subscription, payload });
     return { success: true };
   } catch (error) {
     console.error('Error sending push notification:', error);

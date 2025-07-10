@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Smartphone, Bell, Download } from 'lucide-react';
+import { Smartphone, Bell } from 'lucide-react';
 
 const Chat = dynamic(
   () => import('@/components/chat/chat').then(mod => ({ default: mod.Chat })),

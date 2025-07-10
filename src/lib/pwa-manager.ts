@@ -12,6 +12,10 @@ export class PWAManager {
   }
 
   private getUserId(): string {
+    if (typeof window === 'undefined') {
+      return 'ssr-user-' + nanoid();
+    }
+    
     let userId = localStorage.getItem('donna-user-id');
     if (!userId) {
       userId = nanoid();
@@ -48,7 +52,7 @@ export class PWAManager {
 
       // Buscar VAPID public key do servidor
       const response = await fetch('/api/push');
-      const { publicKey } = await response.json();
+      await response.json();
       
       // Verificar se já tem subscription
       const existingSubscription = await this.serviceWorker.pushManager.getSubscription();
@@ -91,9 +95,11 @@ export class PWAManager {
 
   // Verificar se PWA está instalada
   isStandalone(): boolean {
+    if (typeof window === 'undefined') return false;
+    
     return (
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone ||
+      (window.navigator as { standalone?: boolean }).standalone ||
       document.referrer.includes('android-app://')
     );
   }
@@ -116,6 +122,8 @@ export class PWAManager {
 
   // Iniciar cart recovery
   startCartRecovery(): void {
+    if (typeof window === 'undefined') return;
+    
     if (this.serviceWorker && !this.isCartRecoveryActive) {
       this.isCartRecoveryActive = true;
       this.serviceWorker.active?.postMessage({
@@ -131,6 +139,8 @@ export class PWAManager {
 
   // Parar cart recovery (quando usuario compra)
   stopCartRecovery(): void {
+    if (typeof window === 'undefined') return;
+    
     if (this.serviceWorker && this.isCartRecoveryActive) {
       this.isCartRecoveryActive = false;
       this.serviceWorker.active?.postMessage({
@@ -146,6 +156,10 @@ export class PWAManager {
 
   // Verificar se cart recovery está ativo
   isCartRecoveryRunning(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    
     const isActive = localStorage.getItem('donna-cart-recovery-active') === 'true';
     const startTime = localStorage.getItem('donna-cart-recovery-start');
     
@@ -164,11 +178,17 @@ export class PWAManager {
   }
 
   // Obter informações da PWA
-  getPWAInfo() {
+  getPWAInfo(): {
+    isStandalone: boolean;
+    canInstall: boolean;
+    notificationPermission: NotificationPermission;
+    isCartRecoveryActive: boolean;
+    userId: string;
+  } {
     return {
       isStandalone: this.isStandalone(),
       canInstall: this.canInstall(),
-      notificationPermission: Notification.permission,
+      notificationPermission: typeof window !== 'undefined' ? Notification.permission : 'default',
       isCartRecoveryActive: this.isCartRecoveryRunning(),
       userId: this.userId
     };

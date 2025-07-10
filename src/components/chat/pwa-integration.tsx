@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, Download, Smartphone, Star, Gift } from 'lucide-react';
 import { usePWA } from '@/lib/pwa-manager';
 import { motion } from 'framer-motion';
@@ -17,8 +16,6 @@ export function PWAIntegration({ isVisible, onClose }: PWAIntegrationProps) {
   const [hasTriedNotification, setHasTriedNotification] = useState(false);
   const {
     sendFunNotification,
-    requestNotificationPermission,
-    getPWAInfo,
     showInstallPrompt
   } = usePWA();
 

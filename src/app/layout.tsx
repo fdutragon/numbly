@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   description:
     'Transforme seu WhatsApp em uma máquina de vendas com a Donna AI. Atendimento, vendas e automação 24h por dia para escalar seu negócio.',
   manifest: '/manifest.json',
-  themeColor: '#3b82f6',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -25,6 +24,15 @@ export const metadata: Metadata = {
     description: 'Transforme seu WhatsApp em uma máquina de vendas com a Donna AI',
   },
 };
+
+export function generateViewport() {
+  return {
+    themeColor: '#3b82f6',
+    width: 'device-width',
+    initialScale: 1,
+    viewportFit: 'cover'
+  };
+}
 
 export default function RootLayout({
   children,
@@ -55,15 +63,11 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
         
         {/* Apple Touch Icons */}
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
-        <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/icons/icon.svg" />
         
         {/* Favicons */}
-        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png" />
-        <link rel="shortcut icon" href="/icons/icon-32x32.png" />
+        <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+        <link rel="shortcut icon" href="/icons/icon.svg" />
         
         {/* Safari Pinned Tab */}
         <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#3b82f6" />
