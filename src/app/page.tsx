@@ -21,13 +21,32 @@ const PWAFeatures = dynamic(
   }
 );
 
+const SalesFlowDemo = dynamic(
+  () => import('@/components/chat/sales-flow-demo').then(mod => ({ default: mod.SalesFlowDemo })),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 export default function Page() {
   const [showPWAFeatures, setShowPWAFeatures] = useState(false);
+  const [showSalesDemo, setShowSalesDemo] = useState(false);
 
   return (
     <main className="min-h-0 h-full w-full overflow-hidden relative">
-      {/* PWA Features Banner */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Demo Buttons */}
+      <div className="absolute top-4 right-4 z-50 flex gap-2">
+        <Button
+          onClick={() => setShowSalesDemo(true)}
+          variant="default"
+          size="sm"
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+        >
+          <Bell className="w-4 h-4 mr-2" />
+          Ver Demo
+        </Button>
+        
         <Button
           onClick={() => setShowPWAFeatures(!showPWAFeatures)}
           variant="outline"
@@ -38,6 +57,16 @@ export default function Page() {
           PWA Features
         </Button>
       </div>
+
+      {/* Sales Demo Modal */}
+      <SalesFlowDemo
+        isVisible={showSalesDemo}
+        onClose={() => setShowSalesDemo(false)}
+        onStartDemo={() => {
+          // Aqui você pode adicionar lógica para iniciar a demonstração do chat
+          console.log('🚀 Iniciando demonstração de vendas!');
+        }}
+      />
 
       {/* PWA Features Modal/Panel */}
       {showPWAFeatures && (

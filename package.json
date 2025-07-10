@@ -14,7 +14,8 @@
     "type-check": "tsc --noEmit",
     "check-all": "npm run type-check && npm run lint:strict && npm run format:check",
     "git:push": "node scripts/auto-commit-groq.js && git push",
-    "postinstall": "npm install dotenv"
+    "postinstall": "npm install dotenv",
+    "setup:vapid": "node scripts/generate-vapid-keys.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

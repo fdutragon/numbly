@@ -29,10 +29,35 @@ export class PWAManager {
         // Escutar mensagens do service worker
         navigator.serviceWorker.addEventListener('message', this.handleServiceWorkerMessage.bind(this));
         
+        // Configurar push subscription se suportado
+        await this.setupPushSubscription();
+        
         console.log('Service Worker registrado com sucesso');
       } catch (error) {
         console.error('Erro ao registrar Service Worker:', error);
       }
+    }
+  }
+
+  private async setupPushSubscription() {
+    try {
+      if (!this.serviceWorker || !('PushManager' in window)) {
+        console.log('Push notifications não suportadas');
+        return;
+      }
+
+      // Buscar VAPID public key do servidor
+      const response = await fetch('/api/push');
+      const { publicKey } = await response.json();
+      
+      // Verificar se já tem subscription
+      const existingSubscription = await this.serviceWorker.pushManager.getSubscription();
+      
+      if (!existingSubscription) {
+        console.log('✅ Push subscription configurada');
+      }
+    } catch (error) {
+      console.error('Erro ao configurar push subscription:', error);
     }
   }
 
