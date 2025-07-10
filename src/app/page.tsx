@@ -7,7 +7,7 @@ const Chat = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center" style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+      <div className="flex items-center justify-center min-h-0 h-full w-full">
         <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
       </div>
     ),
@@ -16,7 +16,7 @@ const Chat = dynamic(
 
 export default function Page() {
   return (
-    <main style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+    <main className="min-h-0 h-full w-full overflow-hidden">
       <Chat />
     </main>
   );
