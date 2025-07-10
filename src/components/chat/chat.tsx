@@ -318,8 +318,8 @@ export function Chat() {
   return (
     <>
       <div className="flex flex-col h-screen w-full bg-background overflow-hidden">
-        {/* Header fixo sempre visível */}
-        <div className="flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0">
+        {/* Header fixo sempre visível no topo */}
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0">
           <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -345,7 +345,7 @@ export function Chat() {
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]"
+          className="flex-1 overflow-y-auto custom-scrollbar pb-[80px] pt-[72px]"
         >
           <div className="p-4">
             <div className="max-w-2xl mx-auto space-y-6">
@@ -415,7 +415,7 @@ export function Chat() {
         </div>
 
         {/* Input - Fixo no bottom */}
-        <div className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3 z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3 z-50">
           <div className="max-w-2xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
