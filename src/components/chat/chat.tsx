@@ -452,8 +452,30 @@ export function Chat() {
     }
   }, [isDesktop, isMounted]);
 
+  // Card de sugestão para push notification
+  const handleSendPushDemo = async () => {
+    if (window && window.localStorage) {
+      const { sendFunNotification } = require('@/lib/pwa-manager').usePWA();
+      await sendFunNotification();
+    }
+  };
+
   return (
     <>
+      {/* Card de envio de push notification */}
+      <div className="max-w-md mx-auto mb-4">
+        <div className="rounded-2xl bg-gradient-to-r from-primary/80 to-pink-500/80 p-4 flex items-center gap-4 shadow-lg border border-primary/30">
+          <button
+            onClick={handleSendPushDemo}
+            className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-primary font-bold rounded-lg shadow transition-colors"
+          >
+            <span role="img" aria-label="notificação">🔔</span>
+            Testar Notificação Push
+          </button>
+          <span className="text-white font-medium text-sm">Receba uma notificação real agora!</span>
+        </div>
+      </div>
+
       <div className="fixed inset-0 flex flex-col bg-background overflow-hidden max-h-dvh h-full w-full min-h-0">
         {/* Header fixo sempre visível no topo */}
         <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50">
