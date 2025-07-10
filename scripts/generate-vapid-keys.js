@@ -32,6 +32,7 @@ VAPID_SUBJECT=mailto:your-email@domain.com
 
 # Outras variáveis de ambiente
 GROQ_API_KEY=your_groq_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 RESEND_API_KEY=your_resend_api_key_here
 APPMAX_API_KEY=your_appmax_api_key_here
 APPMAX_SECRET=your_appmax_secret_here

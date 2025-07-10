@@ -7,8 +7,9 @@ const fetch = require('node:https').request ? require('node:https') : require('h
 require('dotenv').config();
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-if (!GROQ_API_KEY) {
-  console.error('GROQ_API_KEY não encontrado no .env');
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GROQ_API_KEY && !GEMINI_API_KEY) {
+  console.error('GROQ_API_KEY ou GEMINI_API_KEY não encontrado no .env');
   process.exit(1);
 }
 
@@ -23,8 +24,17 @@ function getGitDiff() {
 
 async function getCommitMessage(diff) {
   const prompt = `Gere apenas a mensagem de commit git, curta, clara e objetiva (máx. 60 caracteres), SEM comentários antes ou depois, para as seguintes mudanças de código. Use sempre verbo no passado (ex: adicionado, removido, corrigido, ajustado, modificado, implementado, refatorado, etc). Responda apenas com a mensagem de commit, sem aspas, sem prefixo, sem explicação:\n${diff}`;
-  const response = await fetchGroq(prompt);
-  return response;
+  if (GROQ_API_KEY) {
+    try {
+      return await fetchGroq(prompt);
+    } catch (e) {
+      console.warn('Groq falhou, tentando Gemini...');
+    }
+  }
+  if (GEMINI_API_KEY) {
+    return await fetchGemini(prompt);
+  }
+  throw new Error('Nenhuma API key válida para commit message.');
 }
 
 function fetchGroq(prompt) {
@@ -61,6 +71,42 @@ function fetchGroq(prompt) {
         } catch (e) {
           console.error('Resposta bruta da Groq:', body);
           reject('Erro ao processar resposta da Groq: ' + e.message);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
+
+function fetchGemini(prompt) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 60 }
+    });
+    const options = {
+      hostname: 'generativelanguage.googleapis.com',
+      path: `/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    };
+    const req = fetch.request(options, res => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          if (!json.candidates || !json.candidates[0] || !json.candidates[0].content || !json.candidates[0].content.parts || !json.candidates[0].content.parts[0] || !json.candidates[0].content.parts[0].text) {
+            console.error('Resposta bruta da Gemini:', body);
+            return reject('Resposta inválida da Gemini');
+          }
+          const msg = json.candidates[0].content.parts[0].text.trim();
+          resolve(msg.replace(/^"|"$/g, ''));
+        } catch (e) {
+          console.error('Resposta bruta da Gemini:', body);
+          reject('Erro ao processar resposta da Gemini: ' + e.message);
         }
       });
     });
