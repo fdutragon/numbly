@@ -46,46 +46,29 @@ export function Chat() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutPlan, setCheckoutPlan] = useState<'basic' | 'pro'>('basic');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [cardsClicked, setCardsClicked] = useState<Set<number>>(new Set());
   
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
     const newThreadId = createThread();
     setCurrentThread(newThreadId);
-    // Garante que o header esteja visível no carregamento
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sempre scrolla para o final ao adicionar mensagem ou typing
+  // Scroll inteligente - só scrolla quando necessário
   useEffect(() => {
-    if (!currentThread?.messages || currentThread.messages.length === 0) return;
-    const scrollToBottom = () => {
-      if (messagesContainerRef.current) {
-        const container = messagesContainerRef.current;
-        // Só faz scroll se o conteúdo for maior que o container (overflow)
-        if (container.scrollHeight > container.clientHeight + 8) {
-          container.scrollTop = container.scrollHeight;
-        }
-      }
-    };
-    const timer = setTimeout(scrollToBottom, 50);
-    return () => clearTimeout(timer);
-  }, [currentThread?.messages, isTyping]);
-
-  // Scroll adicional após envio de mensagem
-  useEffect(() => {
-    if (currentThread?.messages.length && currentThread.messages.length > 0) {
-      const lastMessage = currentThread.messages[currentThread.messages.length - 1];
-      if (lastMessage.role === 'user') {
-        // Scroll imediato após mensagem do usuário
-        setTimeout(() => {
-          if (messagesContainerRef.current) {
-            const container = messagesContainerRef.current;
-            container.scrollTop = container.scrollHeight;
-          }
-        }, 100);
-      }
+    if (!messagesContainerRef.current) return;
+    
+    const container = messagesContainerRef.current;
+    const shouldScroll = container.scrollHeight > container.clientHeight;
+    
+    if (shouldScroll && currentThread?.messages.length > 0) {
+      const timer = setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 50);
+      return () => clearTimeout(timer);
     }
-  }, [currentThread?.messages]);
+  }, [currentThread?.messages, isTyping]);
 
   useEffect(() => {
     if (currentThread?.messages.length) return;
@@ -116,35 +99,29 @@ export function Chat() {
     }
   }, [introIndex, introChar, introPhrases.length]);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, cardIndex?: number) => {
+    // Marca o card como clicado se for um card de sugestão
+    if (cardIndex !== undefined) {
+      setCardsClicked(prev => new Set(prev).add(cardIndex));
+    }
+    
     // Chama a função original handleSend
     await handleSend(content);
     
-    // Força scroll para o final após envio
+    // Força scroll para o final após envio se necessário
     setTimeout(() => {
       if (messagesContainerRef.current) {
         const container = messagesContainerRef.current;
-        container.scrollTop = container.scrollHeight;
+        if (container.scrollHeight > container.clientHeight) {
+          container.scrollTop = container.scrollHeight;
+        }
       }
     }, 150);
   };
 
   // Função para focar no input com segurança
-  // Removido: qualquer foco automático no input. O teclado só abre se o usuário clicar.
   const handleInputFocus = () => {
-    // Apenas scrolla o input para a área visível, sem dar foco automático
-    setTimeout(() => {
-      if (inputRef.current) {
-        try {
-          inputRef.current.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-          });
-        } catch (error) {
-          console.warn('ScrollIntoView on focus failed:', error);
-        }
-      }
-    }, 300);
+    // Não faz scroll automático para manter o input sempre visível
   };
 
   async function handleSend(content: string) {
@@ -314,37 +291,37 @@ export function Chat() {
 
   return (
     <>
-      {/* Header fixo sempre visível no topo (fora do container principal) */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
-                <Bot className="w-4 h-4 text-white" />
-              </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
-                <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
-              </div>
-            </div>
-            <div>
-              <h1 className="font-medium text-foreground text-base">Clara</h1>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="w-1 h-1 bg-green-500 rounded-full"></span>
-                Online
-              </p>
-            </div>
-          </div>
-          <ThemeToggle />
-        </div>
-      </div>
-
       <div className="fixed inset-0 flex flex-col bg-background h-screen overflow-hidden">
+        {/* Header fixo sempre visível no topo */}
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50">
+          <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background">
+                  <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
+                </div>
+              </div>
+              <div>
+                <h1 className="font-medium text-foreground text-base">Clara</h1>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="w-1 h-1 bg-green-500 rounded-full"></span>
+                  Online
+                </p>
+              </div>
+            </div>
+            <ThemeToggle />
+          </div>
+        </div>
+
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain pt-[72px]"
+          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain"
         >
-          <div className="p-4">
+          <div className="p-4 pb-[100px]">
             <div className="max-w-2xl mx-auto w-full space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
@@ -381,8 +358,12 @@ export function Chat() {
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
                             type="button"
-                            className="w-full px-4 py-2.5 rounded-lg text-sm text-left transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
-                            onClick={() => handleSendMessage(q)}
+                            className={`w-full px-4 py-2.5 rounded-lg text-sm text-left transition-colors ${
+                              cardsClicked.has(i) 
+                                ? 'bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800' 
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            }`}
+                            onClick={() => handleSendMessage(q, i)}
                           >
                             {q}
                           </motion.button>
@@ -412,7 +393,7 @@ export function Chat() {
         </div>
 
         {/* Input - Fixo no bottom */}
-        <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 z-50 sticky bottom-0">
+        <div className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3 z-50">
           <div className="max-w-2xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
