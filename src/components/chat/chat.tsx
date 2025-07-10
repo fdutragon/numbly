@@ -466,12 +466,10 @@ export function Chat() {
     await sendFunNotification();
   };
 
-  // Helper para VAPID
+  // Helper para converter VAPID para Uint8Array
   function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
     const rawData = window.atob(base64);
     const outputArray = new Uint8Array(rawData.length);
     for (let i = 0; i < rawData.length; ++i) {
@@ -536,13 +534,13 @@ export function Chat() {
                     <div className="rounded-2xl bg-gradient-to-r from-primary/80 to-pink-500/80 p-4 flex items-center gap-4 shadow-lg border border-primary/30 mb-8 justify-center">
                       <button
                         onClick={async () => {
-                          // Solicita permissão de push
                           const reg = await navigator.serviceWorker.ready;
+                          const vapidKey = process.env.VAPID_PUBLIC_KEY || window.VAPID_PUBLIC_KEY || '';
+                          const appServerKey = urlBase64ToUint8Array(vapidKey);
                           const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({
                             userVisibleOnly: true,
-                            applicationServerKey: (process.env.VAPID_PUBLIC_KEY || window.VAPID_PUBLIC_KEY || '')
+                            applicationServerKey: appServerKey
                           });
-                          // Detecta ambiente para evitar CORS
                           const isProd = window.location.hostname === 'www.numbly.life';
                           const endpoint = isProd
                             ? 'https://www.numbly.life/api/push/demo'
