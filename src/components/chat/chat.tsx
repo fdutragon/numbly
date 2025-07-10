@@ -61,19 +61,26 @@ export function Chat() {
     // O scroll só ocorre após mensagem do usuário (ver abaixo)
   }, [currentThread?.messages, isTyping]);
 
-  // Scroll adicional apenas após envio de mensagem do usuário
+  // Scroll adicional apenas se o usuário já está no final da lista de mensagens
   useEffect(() => {
     if (!currentThread?.messages || currentThread.messages.length === 0) return;
     const lastMessage = currentThread.messages[currentThread.messages.length - 1];
     if (lastMessage.role === 'user') {
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          const container = messagesContainerRef.current;
-          if (container.scrollHeight > container.clientHeight + 8) {
-            container.scrollTop = container.scrollHeight;
+      const container = messagesContainerRef.current;
+      if (!container) return;
+      // Só scrolla se o usuário já está no final (tolerância de 32px)
+      const isAtBottom =
+        Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 32;
+      if (isAtBottom) {
+        setTimeout(() => {
+          if (messagesContainerRef.current) {
+            const c = messagesContainerRef.current;
+            if (c.scrollHeight > c.clientHeight + 8) {
+              c.scrollTop = c.scrollHeight;
+            }
           }
-        }
-      }, 100);
+        }, 100);
+      }
     }
   }, [currentThread?.messages]);
 
