@@ -3,15 +3,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Sparkles, MessageCircle} from 'lucide-react';
+import { Sparkles, MessageCircle } from 'lucide-react';
 
 const typewriterPhrases = [
-  "Oi! Sou a Clara, sua secretária inteligente 💼",
-  "Atendo seus clientes no WhatsApp automaticamente 📱",
-  "Gerencio campanhas de marketing com precisão 🎯",
-  "Gero relatórios em tempo real para você 📊",
-  "Organizo agendamentos e compromissos 📅",
-  "Monitoro tudo 24h por dia, sem parar! ⏰",
+  'Oi! Sou a Clara, sua secretária inteligente 💼',
+  'Atendo seus clientes no WhatsApp automaticamente 📱',
+  'Gerencio campanhas de marketing com precisão 🎯',
+  'Gero relatórios em tempo real para você 📊',
+  'Organizo agendamentos e compromissos 📅',
+  'Monitoro tudo 24h por dia, sem parar! ⏰',
 ];
 
 export function HeroSection() {
@@ -39,7 +39,7 @@ export function HeroSection() {
           setDisplayedText(displayedText.slice(0, -1));
         }, 30);
       } else {
-        setCurrentPhraseIndex((prev) => (prev + 1) % typewriterPhrases.length);
+        setCurrentPhraseIndex(prev => (prev + 1) % typewriterPhrases.length);
         setIsTyping(true);
       }
     }
@@ -48,10 +48,13 @@ export function HeroSection() {
   }, [displayedText, isTyping, currentPhraseIndex]);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 py-20 overflow-hidden">
+    <section 
+      className="relative flex items-center justify-center px-4 py-20 overflow-hidden"
+      style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}
+    >
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-pink-950/20" />
-      
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -62,7 +65,7 @@ export function HeroSection() {
           transition={{
             duration: 20,
             repeat: Infinity,
-            ease: "linear"
+            ease: 'linear',
           }}
           className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"
         />
@@ -74,7 +77,7 @@ export function HeroSection() {
           transition={{
             duration: 25,
             repeat: Infinity,
-            ease: "linear"
+            ease: 'linear',
           }}
           className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
         />
@@ -101,7 +104,8 @@ export function HeroSection() {
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            A Clara monitora suas campanhas 24h e te avisa no WhatsApp quando algo precisa de atenção
+            A Clara monitora suas campanhas 24h e te avisa no WhatsApp quando
+            algo precisa de atenção
           </p>
         </motion.div>
 
@@ -122,11 +126,10 @@ export function HeroSection() {
                 <p className="text-sm text-muted-foreground">Online</p>
               </div>
             </div>
-            
+
             <div className="text-left">
               <p className="text-lg text-foreground min-h-[2rem]">
-                "{displayedText}"
-                <span className="animate-pulse">|</span>
+                "{displayedText}"<span className="animate-pulse">|</span>
               </p>
             </div>
           </div>
@@ -142,7 +145,9 @@ export function HeroSection() {
           <Button
             size="lg"
             className="px-8 py-4 text-lg font-semibold rounded-full bg-foreground text-background border border-foreground hover:bg-background hover:text-foreground transition-all duration-200 shadow-none cursor-pointer"
-            onClick={() => { window.location.href = '/chat'; }}
+            onClick={() => {
+              window.location.href = '/chat';
+            }}
           >
             <Sparkles className="w-5 h-5 mr-2" />
             Teste agora gratuitamente

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
 // Cache global para email IDs
 interface EmailCacheData {
@@ -17,7 +17,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const orderId = searchParams.get('orderId');
 
   if (!orderId) {
-    return NextResponse.json({ error: "orderId é obrigatório" }, { status: 400 });
+    return NextResponse.json(
+      { error: 'orderId é obrigatório' },
+      { status: 400 }
+    );
   }
 
   try {
@@ -32,20 +35,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           success: true,
           scheduledEmailIds: cachedData.scheduledEmailIds,
           timestamp: cachedData.timestamp,
-          email: cachedData.email
+          email: cachedData.email,
         });
       }
     }
-    
+
     return NextResponse.json({
       success: false,
-      message: "IDs ainda não disponíveis",
-      scheduledEmailIds: []
+      message: 'IDs ainda não disponíveis',
+      scheduledEmailIds: [],
     });
   } catch (error: unknown) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : "Erro desconhecido",
-      debug: error
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : 'Erro desconhecido',
+        debug: error,
+      },
+      { status: 500 }
+    );
   }
 }

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  processUserMessage, 
-  updateClaraState, 
-  createInitialClaraState
+import {
+  processUserMessage,
+  updateClaraState,
+  createInitialClaraState,
 } from '@/lib/clara-ai-engine';
 import { aiTools } from '@/lib/ai-tools';
 import { type ClaraState } from '@/lib/chat-store';
@@ -10,9 +10,12 @@ import { type ClaraState } from '@/lib/chat-store';
 export async function POST(request: NextRequest) {
   try {
     const { messages, claraState } = await request.json();
-    
+
     if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: 'Messages array is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Messages array is required' },
+        { status: 400 }
+      );
     }
 
     // Get user input
@@ -33,12 +36,14 @@ export async function POST(request: NextRequest) {
       const readable = new ReadableStream({
         start(controller) {
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({
-              done: true,
-              content: toolResult,
-              claraState: claraState || null,
-              tool: toolMatch.id,
-            })}\n\n`)
+            encoder.encode(
+              `data: ${JSON.stringify({
+                done: true,
+                content: toolResult,
+                claraState: claraState || null,
+                tool: toolMatch.id,
+              })}\n\n`
+            )
           );
           controller.close();
         },
@@ -47,19 +52,23 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
+          Connection: 'keep-alive',
         },
       });
     }
 
     // Initialize or get Clara state
     const currentState: ClaraState = claraState || createInitialClaraState();
-    
+
     // Process message with Clara AI Engine
     const claraResponse = await processUserMessage(userInput, currentState);
-    
+
     // Update Clara state
-    const updatedState = updateClaraState(currentState, userInput, claraResponse);
+    const updatedState = updateClaraState(
+      currentState,
+      userInput,
+      claraResponse
+    );
 
     // Create streaming response
     const encoder = new TextEncoder();
@@ -67,22 +76,24 @@ export async function POST(request: NextRequest) {
       start(controller) {
         // Simulate thinking time based on response complexity
         const wordCount = claraResponse.content.split(' ').length;
-        const thinkingTime = Math.min(500 + (wordCount * 20), 2000); // 0.5s to 2s max
-        
+        const thinkingTime = Math.min(500 + wordCount * 20, 2000); // 0.5s to 2s max
+
         setTimeout(() => {
           // Send complete response
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({
-              done: true,
-              content: claraResponse.content,
-              shouldShowPaymentModal: claraResponse.shouldShowPaymentModal,
-              emailSent: claraResponse.emailSent,
-              intention: claraResponse.intention,
-              confidence: claraResponse.confidence,
-              nextAction: claraResponse.nextAction,
-              reasoning: claraResponse.reasoning,
-              claraState: updatedState,
-            })}\n\n`)
+            encoder.encode(
+              `data: ${JSON.stringify({
+                done: true,
+                content: claraResponse.content,
+                shouldShowPaymentModal: claraResponse.shouldShowPaymentModal,
+                emailSent: claraResponse.emailSent,
+                intention: claraResponse.intention,
+                confidence: claraResponse.confidence,
+                nextAction: claraResponse.nextAction,
+                reasoning: claraResponse.reasoning,
+                claraState: updatedState,
+              })}\n\n`
+            )
           );
           controller.close();
         }, thinkingTime);
@@ -93,11 +104,14 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     });
   } catch (error) {
     console.error('Clara chat error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

@@ -3,9 +3,29 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 // Define ClaraState interface locally to avoid client-side import
 export interface ClaraState {
-  currentStage: 'intro' | 'qualifying' | 'pain_point' | 'solution' | 'social_proof' | 'pricing' | 'urgency' | 'closing' | 'objection_handling' | 'follow_up';
-  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string; timestamp: number }>;
-  userSentiment: 'positive' | 'negative' | 'hesitant' | 'neutral' | 'excited' | 'skeptical';
+  currentStage:
+    | 'intro'
+    | 'qualifying'
+    | 'pain_point'
+    | 'solution'
+    | 'social_proof'
+    | 'pricing'
+    | 'urgency'
+    | 'closing'
+    | 'objection_handling'
+    | 'follow_up';
+  conversationHistory: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: number;
+  }>;
+  userSentiment:
+    | 'positive'
+    | 'negative'
+    | 'hesitant'
+    | 'neutral'
+    | 'excited'
+    | 'skeptical';
   objectionCount: number;
   engagementLevel: 'low' | 'medium' | 'high';
   lastInteraction: number;
@@ -91,12 +111,19 @@ interface ChatStore {
   currentThreadId: string | null;
   isLoading: boolean;
   isTyping: boolean;
-  
+
   // Actions
   createThread: () => string;
   setCurrentThread: (threadId: string) => void;
-  addMessage: (threadId: string, message: Omit<Message, 'id' | 'timestamp'>) => void;
-  updateMessage: (threadId: string, messageId: string, updates: Partial<Message>) => void;
+  addMessage: (
+    threadId: string,
+    message: Omit<Message, 'id' | 'timestamp'>
+  ) => void;
+  updateMessage: (
+    threadId: string,
+    messageId: string,
+    updates: Partial<Message>
+  ) => void;
   setLoading: (loading: boolean) => void;
   setTyping: (typing: boolean) => void;
   getCurrentThread: () => ChatThread | null;
@@ -114,12 +141,13 @@ export const useChatStore = create<ChatStore>()(
 
       createThread: () => {
         // Only generate dynamic values when actually called (client-side)
-        const threadId = typeof window !== 'undefined' 
-          ? `thread_${crypto.randomUUID()}` 
-          : `thread_temp_${Math.random().toString(36).substr(2, 9)}`;
-        
+        const threadId =
+          typeof window !== 'undefined'
+            ? `thread_${crypto.randomUUID()}`
+            : `thread_temp_${Math.random().toString(36).substr(2, 9)}`;
+
         const timestamp = typeof window !== 'undefined' ? Date.now() : 0;
-        
+
         const newThread: ChatThread = {
           id: threadId,
           title: 'New Chat',
@@ -136,7 +164,7 @@ export const useChatStore = create<ChatStore>()(
           },
         };
 
-        set((state) => ({
+        set(state => ({
           threads: [newThread, ...state.threads],
           currentThreadId: threadId,
         }));
@@ -144,7 +172,7 @@ export const useChatStore = create<ChatStore>()(
         return threadId;
       },
 
-      setCurrentThread: (threadId) => {
+      setCurrentThread: threadId => {
         set({ currentThreadId: threadId });
       },
 
@@ -165,8 +193,8 @@ export const useChatStore = create<ChatStore>()(
           id: messageId,
           timestamp,
         };
-        set((state) => ({
-          threads: state.threads.map((thread) =>
+        set(state => ({
+          threads: state.threads.map(thread =>
             thread.id === threadId
               ? {
                   ...thread,
@@ -179,12 +207,12 @@ export const useChatStore = create<ChatStore>()(
       },
 
       updateMessage: (threadId, messageId, updates) => {
-        set((state) => ({
-          threads: state.threads.map((thread) =>
+        set(state => ({
+          threads: state.threads.map(thread =>
             thread.id === threadId
               ? {
                   ...thread,
-                  messages: thread.messages.map((msg) =>
+                  messages: thread.messages.map(msg =>
                     msg.id === messageId ? { ...msg, ...updates } : msg
                   ),
                   updatedAt: typeof window !== 'undefined' ? Date.now() : 0,
@@ -194,27 +222,28 @@ export const useChatStore = create<ChatStore>()(
         }));
       },
 
-      setLoading: (loading) => set({ isLoading: loading }),
-      setTyping: (typing) => set({ isTyping: typing }),
+      setLoading: loading => set({ isLoading: loading }),
+      setTyping: typing => set({ isTyping: typing }),
 
       getCurrentThread: () => {
         const { threads, currentThreadId } = get();
-        return threads.find((thread) => thread.id === currentThreadId) || null;
+        return threads.find(thread => thread.id === currentThreadId) || null;
       },
 
-      deleteThread: (threadId) => {
-        set((state) => ({
-          threads: state.threads.filter((thread) => thread.id !== threadId),
-          currentThreadId: state.currentThreadId === threadId ? null : state.currentThreadId,
+      deleteThread: threadId => {
+        set(state => ({
+          threads: state.threads.filter(thread => thread.id !== threadId),
+          currentThreadId:
+            state.currentThreadId === threadId ? null : state.currentThreadId,
         }));
       },
 
       updateClaraState: (threadId: string, state: ClaraState) => {
-        set((currentState) => ({
-          threads: currentState.threads.map((thread) =>
+        set(currentState => ({
+          threads: currentState.threads.map(thread =>
             thread.id === threadId
-              ? { 
-                  ...thread, 
+              ? {
+                  ...thread,
                   claraState: state,
                   updatedAt: typeof window !== 'undefined' ? Date.now() : 0,
                 }
@@ -226,7 +255,7 @@ export const useChatStore = create<ChatStore>()(
     {
       name: 'chat-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
+      partialize: state => ({
         threads: state.threads,
         currentThreadId: state.currentThreadId,
       }),

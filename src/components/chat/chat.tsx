@@ -29,19 +29,16 @@ export function Chat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const currentThread = getCurrentThread();
-  
-  // Estados para lidar com teclado em dispositivos antigos
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [viewportHeight, setViewportHeight] = useState(0);
-  const [initialViewportHeight, setInitialViewportHeight] = useState(0);
 
   const [introTyping, setIntroTyping] = useState('');
-  const introPhrases = useMemo(() => [
-    'Oi! Eu sou a Clara, sua secretária inteligente.',
-    'Faço atendimento automático no WhatsApp, organizo agendamentos, gero relatórios e conecto campanhas de marketing.\n',
-    'Como posso ajudar você hoje?'
-  ], []);
+  const introPhrases = useMemo(
+    () => [
+      'Oi! Eu sou a Clara, sua secretária inteligente.',
+      'Faço atendimento automático no WhatsApp, organizo agendamentos, gero relatórios e conecto campanhas de marketing.\n',
+      'Como posso ajudar você hoje?',
+    ],
+    []
+  );
   const [introIndex, setIntroIndex] = useState(0);
   const [introChar, setIntroChar] = useState(0);
 
@@ -49,77 +46,17 @@ export function Chat() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutPlan, setCheckoutPlan] = useState<'basic' | 'pro'>('basic');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  
+  // Estado para ajuste dinâmico do teclado virtual
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const suggestionQuestions = [
     'Como automatizar meu atendimento no WhatsApp?',
     'Quais campanhas de marketing posso integrar?',
     'Como acessar relatórios de atendimentos?',
     'Quero contratar o plano Pro',
-    'Clara, envie informações para meu@email.com'
+    'Clara, envie informações para meu@email.com',
   ];
-
-  // Detecta mudanças na viewport para lidar com teclado
-  useEffect(() => {
-    const handleResize = () => {
-      const currentHeight = window.innerHeight;
-      
-      // Salva a altura inicial na primeira execução
-      if (initialViewportHeight === 0) {
-        setInitialViewportHeight(currentHeight);
-        setViewportHeight(currentHeight);
-        return;
-      }
-      
-      setViewportHeight(currentHeight);
-      
-      // Detecta se o teclado está aberto (altura diminuiu significativamente)
-      const heightDifference = initialViewportHeight - currentHeight;
-      const isKeyboardVisible = heightDifference > 150; // 150px é o threshold
-      
-      setIsKeyboardOpen(isKeyboardVisible);
-      setKeyboardHeight(isKeyboardVisible ? heightDifference : 0);
-      
-      // Força scroll para o input quando o teclado abre
-      if (isKeyboardVisible && inputRef.current) {
-        setTimeout(() => {
-          try {
-            inputRef.current?.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
-            });
-          } catch (error) {
-            console.warn('ScrollIntoView failed:', error);
-            // Fallback manual
-            if (messagesContainerRef.current) {
-              messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-            }
-          }
-        }, 300);
-      }
-    };
-    
-    // Eventos para detectar mudanças na viewport
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', () => {
-      setTimeout(handleResize, 500); // Delay para aguardar orientação
-    });
-    
-    // Visual Viewport API para dispositivos modernos
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-    }
-    
-    // Inicializa
-    handleResize();
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleResize);
-      }
-    };
-  }, [initialViewportHeight]);
 
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
@@ -135,10 +72,10 @@ export function Chat() {
         if (messagesEndRef.current) {
           // Tenta scrollIntoView com opções modernas primeiro
           if (messagesEndRef.current.scrollIntoView) {
-            messagesEndRef.current.scrollIntoView({ 
+            messagesEndRef.current.scrollIntoView({
               behavior: 'smooth',
               block: 'end',
-              inline: 'end'
+              inline: 'end',
             });
           } else {
             // Fallback para dispositivos antigos
@@ -149,7 +86,8 @@ export function Chat() {
         // Fallback manual para scroll
         console.warn('ScrollIntoView failed, using manual scroll:', error);
         if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          messagesContainerRef.current.scrollTop =
+            messagesContainerRef.current.scrollHeight;
         }
       }
     };
@@ -177,7 +115,11 @@ export function Chat() {
   }, [introChar, introIndex, introPhrases, currentThread?.messages.length]);
 
   useEffect(() => {
-    if (introIndex < introPhrases.length && introChar === 0 && introIndex !== 0) {
+    if (
+      introIndex < introPhrases.length &&
+      introChar === 0 &&
+      introIndex !== 0
+    ) {
       setIntroTyping(prev => prev + '');
     }
   }, [introIndex, introChar, introPhrases.length]);
@@ -202,27 +144,28 @@ export function Chat() {
     } catch (error) {
       console.warn('Blur failed:', error);
     }
-    
+
     // Força scroll para mensagens após envio
     setTimeout(() => {
       if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        messagesContainerRef.current.scrollTop =
+          messagesContainerRef.current.scrollHeight;
       }
     }, 100);
-    
+
     // Chama a função original handleSend
     return handleSend(content);
   };
-  
+
   // Função para focar no input com segurança
   const handleInputFocus = () => {
     // Aguarda um pouco antes de fazer scroll para garantir que o teclado abriu
     setTimeout(() => {
-      if (inputRef.current && isKeyboardOpen) {
+      if (inputRef.current) {
         try {
-          inputRef.current.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
+          inputRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
           });
         } catch (error) {
           console.warn('ScrollIntoView on focus failed:', error);
@@ -247,7 +190,7 @@ export function Chat() {
 
     setLoading(true);
     setTyping(true);
-    
+
     // Timeout para evitar loading infinito em dispositivos antigos
     const loadingTimeout = setTimeout(() => {
       if (isLoading) {
@@ -261,19 +204,20 @@ export function Chat() {
     }, 30000); // 30 segundos timeout
 
     try {
-      const messages = getCurrentThread()?.messages.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-      })) || [];
+      const messages =
+        getCurrentThread()?.messages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        })) || [];
 
       messages.push({ role: 'user', content });
 
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          messages, 
-          claraState: getCurrentThread()?.claraState 
+        body: JSON.stringify({
+          messages,
+          claraState: getCurrentThread()?.claraState,
         }),
       });
 
@@ -294,7 +238,8 @@ export function Chat() {
 
       // Get the message ID from the store
       const updatedThread = getCurrentThread();
-      assistantMessageId = updatedThread?.messages[updatedThread.messages.length - 1]?.id || null;
+      assistantMessageId =
+        updatedThread?.messages[updatedThread.messages.length - 1]?.id || null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -330,7 +275,11 @@ export function Chat() {
                 // Handle payment modal
                 if (data.shouldShowPaymentModal) {
                   const userMessageLower = content.toLowerCase();
-                  const plan = userMessageLower.includes('pro') || userMessageLower.includes('premium') ? 'pro' : 'basic';
+                  const plan =
+                    userMessageLower.includes('pro') ||
+                    userMessageLower.includes('premium')
+                      ? 'pro'
+                      : 'basic';
                   setCheckoutPlan(plan);
                   setShowCheckout(true);
                 }
@@ -351,7 +300,8 @@ export function Chat() {
       console.error('Error sending message:', error);
       addMessage(threadId, {
         role: 'assistant',
-        content: 'Desculpe, houve um erro. Tente novamente em alguns instantes.',
+        content:
+          'Desculpe, houve um erro. Tente novamente em alguns instantes.',
       });
     } finally {
       // Limpa o timeout
@@ -365,18 +315,21 @@ export function Chat() {
     setShowCheckout(false);
     setShowSuccessMessage(true);
     setTimeout(() => setShowSuccessMessage(false), 3000);
-    
+
     // Add success message to chat
     if (currentThreadId) {
       addMessage(currentThreadId, {
         role: 'assistant',
-        content: 'Parabéns! Sua assinatura foi ativada com sucesso! 🎉 Você receberá as instruções de acesso em seu email. Bem-vindo à família Clara! 🚀',
+        content:
+          'Parabéns! Sua assinatura foi ativada com sucesso! 🎉 Você receberá as instruções de acesso em seu email. Bem-vindo à família Clara! 🚀',
       });
     }
   };
 
   // Controla se o typing terminou
-  const isIntroFinished = introIndex === introPhrases.length - 1 && introChar === introPhrases[introPhrases.length - 1].length;
+  const isIntroFinished =
+    introIndex === introPhrases.length - 1 &&
+    introChar === introPhrases[introPhrases.length - 1].length;
 
   // Estado para controlar visibilidade do header
   const [showHeader, setShowHeader] = useState(true);
@@ -392,7 +345,9 @@ export function Chat() {
     const handleScroll = () => {
       if (!ticking) {
         // Usa requestAnimationFrame se disponível, senão setTimeout
-        const scheduleUpdate = window.requestAnimationFrame || ((fn: () => void) => setTimeout(fn, 16));
+        const scheduleUpdate =
+          window.requestAnimationFrame ||
+          ((fn: () => void) => setTimeout(fn, 16));
         scheduleUpdate(() => {
           try {
             const st = container.scrollTop;
@@ -410,7 +365,7 @@ export function Chat() {
         ticking = true;
       }
     };
-    
+
     try {
       container.addEventListener('scroll', handleScroll, { passive: true });
     } catch (addListenerError) {
@@ -418,7 +373,7 @@ export function Chat() {
       console.warn('Failed to add passive scroll listener:', addListenerError);
       container.addEventListener('scroll', handleScroll, false);
     }
-    
+
     return () => {
       try {
         container.removeEventListener('scroll', handleScroll);
@@ -438,6 +393,23 @@ export function Chat() {
     window.addEventListener('resize', updateHeaderHeight);
     return () => window.removeEventListener('resize', updateHeaderHeight);
   }, []);
+  
+  // Detecção de teclado virtual para ajuste dinâmico
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const offset = window.innerHeight - window.visualViewport.height;
+        setKeyboardOffset(offset > 0 ? offset : 0);
+      }
+    };
+    
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => {
+        window.visualViewport?.removeEventListener('resize', handleResize);
+      };
+    }
+  }, []);
 
   // Use header variables to avoid unused variable warnings
   console.log('Header state:', { showHeader, headerHeight });
@@ -450,10 +422,7 @@ export function Chat() {
     <>
       <div 
         className="flex flex-col w-full bg-background overflow-hidden"
-        style={{ 
-          height: isKeyboardOpen ? `${viewportHeight}px` : '100vh',
-          maxHeight: isKeyboardOpen ? `${viewportHeight}px` : '100vh'
-        }}
+        style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
       >
         {/* Header fixo sempre visível */}
         <div
@@ -471,9 +440,7 @@ export function Chat() {
                 </div>
               </div>
               <div>
-                <h1 className="font-medium text-foreground text-base">
-                  Clara
-                </h1>
+                <h1 className="font-medium text-foreground text-base">Clara</h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <span className="w-1 h-1 bg-green-500 rounded-full"></span>
                   Online
@@ -483,15 +450,11 @@ export function Chat() {
             <ThemeToggle />
           </div>
         </div>
-        
+
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto custom-scrollbar"
-          style={{ 
-            paddingBottom: isKeyboardOpen ? 20 : 96,
-            height: isKeyboardOpen ? `calc(${viewportHeight}px - 160px)` : 'auto'
-          }}
         >
           <div className="p-4 pb-0">
             <div className="max-w-2xl mx-auto space-y-6">
@@ -544,17 +507,23 @@ export function Chat() {
                     <ChatMessage
                       key={message.id}
                       message={message}
-                      isLatest={index === (currentThread?.messages.length ?? 0) - 1}
+                      isLatest={
+                        index === (currentThread?.messages.length ?? 0) - 1
+                      }
                     />
                   ))
-                )}   
+                )}
                 {isTyping && <TypingIndicator />}
               </AnimatePresence>
-              <div ref={messagesEndRef} className="h-4" style={{ paddingBottom: 20 }} />
+              <div
+                ref={messagesEndRef}
+                className="h-4"
+                style={{ paddingBottom: 20 }}
+              />
             </div>
           </div>
         </div>
-        
+
         {/* Input - Fixo no bottom */}
         <div
           className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
@@ -562,19 +531,19 @@ export function Chat() {
             position: 'fixed',
             left: 0,
             right: 0,
-            bottom: isKeyboardOpen ? `${keyboardHeight}px` : 0,
+            bottom: 0,
             zIndex: 100,
             width: '100vw',
             maxWidth: '100vw',
-            transform: isKeyboardOpen ? 'translateY(0)' : 'translateY(0)',
-            transition: 'bottom 0.3s ease-in-out, transform 0.3s ease-in-out'
+            transform: `translateY(-${keyboardOffset}px)`,
+            transition: 'bottom 0.3s ease-in-out, transform 0.3s ease-in-out',
           }}
         >
           <div className="max-w-2xl mx-auto">
-            <ChatInput 
-              onSend={handleSendMessage} 
-              isLoading={isLoading} 
-              inputRef={inputRef} 
+            <ChatInput
+              onSend={handleSendMessage}
+              isLoading={isLoading}
+              inputRef={inputRef}
               onFocus={handleInputFocus}
             />
           </div>

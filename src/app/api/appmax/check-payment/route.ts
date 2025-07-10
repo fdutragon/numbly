@@ -4,7 +4,7 @@ import { z } from 'zod';
 // Schema de validação simplificado
 const CheckPaymentSchema = z.object({
   orderId: z.string().min(1, 'ID do pedido é obrigatório'),
-  userEmail: z.string().email('Email do usuário é obrigatório').optional()
+  userEmail: z.string().email('Email do usuário é obrigatório').optional(),
 });
 
 // Removed unused interface
@@ -13,7 +13,11 @@ const CheckPaymentSchema = z.object({
 const claraPaymentStatuses = new Map<string, string>();
 
 // Função helper para logs com timestamp
-const logWithTransaction = (transactionId: string, message: string, data?: unknown) => {
+const logWithTransaction = (
+  transactionId: string,
+  message: string,
+  data?: unknown
+) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] [TXN:${transactionId}] ${message}`, data || '');
 };
@@ -34,12 +38,15 @@ export async function GET(req: NextRequest) {
     }
 
     // Log the check
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const ip =
+      req.headers.get('x-forwarded-for') ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
     console.log(`Clara payment check for: ${paymentId} from IP: ${ip}`);
 
     // Simulate payment processing time
     const currentStatus = claraPaymentStatuses.get(paymentId);
-    
+
     if (!currentStatus) {
       // First check - set to processing
       claraPaymentStatuses.set(paymentId, 'processing');
@@ -50,24 +57,24 @@ export async function GET(req: NextRequest) {
     if (paymentId.startsWith('clara_')) {
       const timestamp = parseInt(paymentId.split('_')[1]);
       const timeSinceCreation = Date.now() - timestamp;
-      
-      if (timeSinceCreation > 15000) { // 15 seconds for demo
+
+      if (timeSinceCreation > 15000) {
+        // 15 seconds for demo
         claraPaymentStatuses.set(paymentId, 'paid');
-        
+
         console.log(`Clara payment confirmed: ${paymentId}`);
-        
-        return NextResponse.json({ 
+
+        return NextResponse.json({
           status: 'paid',
-          message: 'Pagamento confirmado com sucesso'
+          message: 'Pagamento confirmado com sucesso',
         });
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       status: 'processing',
-      message: 'Aguardando confirmação do pagamento'
+      message: 'Aguardando confirmação do pagamento',
     });
-
   } catch (error) {
     console.error('Error checking Clara payment status:', error);
     return NextResponse.json(
@@ -82,8 +89,11 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-  
+  const ip =
+    req.headers.get('x-forwarded-for') ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
+
   try {
     // Validação da requisição
     const body = await req.json();
@@ -91,41 +101,44 @@ export async function POST(req: NextRequest) {
     const { orderId } = validatedData;
 
     console.log(`Payment check started for order: ${orderId} from IP: ${ip}`);
-    logWithTransaction(transactionId, `[CHECK-PAYMENT] ${orderId} - Verificando pagamento`);
+    logWithTransaction(
+      transactionId,
+      `[CHECK-PAYMENT] ${orderId} - Verificando pagamento`
+    );
 
     // Mock response for demo - in production integrate with real AppMax API
     const mockResponse = {
       status: 'paid',
-      total: 97.00
+      total: 97.0,
     };
 
     return NextResponse.json({
       success: true,
       data: mockResponse,
-      transactionId
+      transactionId,
     });
-
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     console.error(`Payment check error: ${errorMessage}`);
     logWithTransaction(transactionId, `[ERROR] ${errorMessage}`);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Dados inválidos',
-          details: error.errors 
+          details: error.errors,
         },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Erro interno do servidor',
-        transactionId 
+        transactionId,
       },
       { status: 500 }
     );

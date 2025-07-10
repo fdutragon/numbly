@@ -9,12 +9,12 @@ interface TypewriterProps {
   startDelay?: number;
 }
 
-export function TypewriterText({ 
-  text, 
-  speed = 30, 
-  onComplete, 
+export function TypewriterText({
+  text,
+  speed = 30,
+  onComplete,
   className = '',
-  startDelay = 0
+  startDelay = 0,
 }: TypewriterProps) {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -34,7 +34,7 @@ export function TypewriterText({
     setDisplayText('');
     setCurrentIndex(0);
     setIsStarted(false);
-    
+
     if (startDelay > 0) {
       const startTimeout = setTimeout(() => setIsStarted(true), startDelay);
       return () => clearTimeout(startTimeout);
@@ -58,7 +58,14 @@ export function TypewriterText({
     }, speed);
 
     return () => clearTimeout(timeout);
-  }, [currentIndex, memoizedText, speed, isStarted, handleComplete, onComplete]);
+  }, [
+    currentIndex,
+    memoizedText,
+    speed,
+    isStarted,
+    handleComplete,
+    onComplete,
+  ]);
 
   const showCursor = currentIndex < memoizedText.length && isStarted;
 
@@ -66,7 +73,7 @@ export function TypewriterText({
     <span className={className}>
       {displayText}
       {showCursor && (
-        <motion.span 
+        <motion.span
           className="inline-block ml-1"
           animate={{ opacity: [1, 0, 1] }}
           transition={{ duration: 0.8, repeat: Infinity }}

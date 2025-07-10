@@ -3,7 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, Copy, CheckCircle, QrCode, MessageCircle, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  CreditCard,
+  Copy,
+  CheckCircle,
+  QrCode,
+  MessageCircle,
+  Loader2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -46,14 +54,19 @@ export default function CheckoutPage() {
       name: 'Plano Básico',
       price: 'R$ 49',
       description: 'Até 1000 atendimentos/mês',
-      features: ['Atendimento 24/7', 'Relatórios básicos', 'Suporte email']
+      features: ['Atendimento 24/7', 'Relatórios básicos', 'Suporte email'],
     },
     pro: {
       name: 'Plano Pro',
       price: 'R$ 99',
       description: 'Atendimentos ilimitados',
-      features: ['Atendimento 24/7', 'Relatórios avançados', 'Suporte prioritário', 'Integrações ilimitadas']
-    }
+      features: [
+        'Atendimento 24/7',
+        'Relatórios avançados',
+        'Suporte prioritário',
+        'Integrações ilimitadas',
+      ],
+    },
   };
 
   const safeParseJson = async (response: Response) => {
@@ -108,18 +121,21 @@ export default function CheckoutPage() {
         // Use os dados retornados pela API AppMax (estrutura correta)
         if (result.pix_emv) {
           setPixCode(result.pix_emv);
-          console.log('✅ PIX Code recebido:', result.pix_emv.substring(0, 50) + '...');
+          console.log(
+            '✅ PIX Code recebido:',
+            result.pix_emv.substring(0, 50) + '...'
+          );
         }
         if (result.qr_code_img) {
           setQrCodeUrl(result.qr_code_img);
           console.log('✅ QR Code URL recebido:', result.qr_code_img);
         }
-        
+
         console.log('✅ PIX gerado com sucesso:', {
           orderId: result.order_id,
           customerId: result.customer_id,
           qrCodeBase64: result.qr_code_base64,
-          checkoutUrl: result.checkout_url
+          checkoutUrl: result.checkout_url,
         });
       } else {
         let errorMessage = 'Erro ao gerar PIX';
@@ -142,18 +158,19 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error('❌ Erro ao gerar PIX:', error);
-      
+
       // Melhorar mensagem de erro baseada no tipo
       let errorMessage = 'Erro ao conectar com servidor';
-      
+
       if (error instanceof SyntaxError) {
         // Erro de parsing JSON - servidor pode ter retornado HTML/texto
         errorMessage = 'Erro de comunicação com o servidor. Tente novamente.';
       } else if (error instanceof TypeError) {
         // Erro de rede/conectividade
-        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        errorMessage =
+          'Erro de conexão. Verifique sua internet e tente novamente.';
       }
-      
+
       alert(errorMessage);
     } finally {
       setProcessing(false);
@@ -167,8 +184,16 @@ export default function CheckoutPage() {
   };
 
   const handleCardPayment = async () => {
-    if (!customerName || !customerEmail || !customerPhone || !customerCpf || 
-        !cardNumber || !cardName || !cardExpiry || !cardCvv) {
+    if (
+      !customerName ||
+      !customerEmail ||
+      !customerPhone ||
+      !customerCpf ||
+      !cardNumber ||
+      !cardName ||
+      !cardExpiry ||
+      !cardCvv
+    ) {
       alert('Por favor, preencha todos os dados');
       return;
     }
@@ -203,9 +228,9 @@ export default function CheckoutPage() {
         console.log('✅ Pagamento processado com sucesso:', {
           orderId: result.order_id,
           customerId: result.customer_id,
-          creditCard: result.credit_card
+          creditCard: result.credit_card,
         });
-        
+
         setShowSuccess(true);
         setTimeout(() => {
           router.push('/?success=true');
@@ -241,18 +266,19 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error('❌ Erro no pagamento:', error);
-      
+
       // Melhorar mensagem de erro baseada no tipo
       let errorMessage = 'Erro ao conectar com servidor';
-      
+
       if (error instanceof SyntaxError) {
         // Erro de parsing JSON - servidor pode ter retornado HTML/texto
         errorMessage = 'Erro de comunicação com o servidor. Tente novamente.';
       } else if (error instanceof TypeError) {
         // Erro de rede/conectividade
-        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        errorMessage =
+          'Erro de conexão. Verifique sua internet e tente novamente.';
       }
-      
+
       alert(errorMessage);
     } finally {
       setProcessing(false);
@@ -262,7 +288,7 @@ export default function CheckoutPage() {
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
@@ -306,7 +332,7 @@ export default function CheckoutPage() {
       name: customerName,
       email: customerEmail,
       phone: customerPhone,
-      cpf: customerCpf
+      cpf: customerCpf,
     };
     localStorage.setItem('clara_checkout_customer', JSON.stringify(data));
   }, [customerName, customerEmail, customerPhone, customerCpf]);
@@ -343,8 +369,12 @@ export default function CheckoutPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-medium">{planDetails[plan].name}</h2>
-                <p className="text-xs text-muted-foreground">{planDetails[plan].description}</p>
+                <h2 className="text-sm font-medium">
+                  {planDetails[plan].name}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {planDetails[plan].description}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold">{planDetails[plan].price}</p>
@@ -372,11 +402,11 @@ export default function CheckoutPage() {
                   type="text"
                   placeholder="João Silva"
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  onChange={e => setCustomerName(e.target.value)}
                   className="h-9 text-sm"
                 />
               </div>
-              
+
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">
                   Email
@@ -385,7 +415,7 @@ export default function CheckoutPage() {
                   type="email"
                   placeholder="joao@email.com"
                   value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  onChange={e => setCustomerEmail(e.target.value)}
                   className="h-9 text-sm"
                 />
               </div>
@@ -400,7 +430,7 @@ export default function CheckoutPage() {
                     inputMode="numeric"
                     placeholder="(11) 99999-9999"
                     value={customerPhone}
-                    onChange={(e) => {
+                    onChange={e => {
                       const formatted = formatPhone(e.target.value);
                       setCustomerPhone(formatted);
                     }}
@@ -417,7 +447,7 @@ export default function CheckoutPage() {
                     inputMode="numeric"
                     placeholder="123.456.789-00"
                     value={customerCpf}
-                    onChange={(e) => {
+                    onChange={e => {
                       const formatted = formatCpf(e.target.value);
                       setCustomerCpf(formatted);
                     }}
@@ -436,7 +466,11 @@ export default function CheckoutPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="card" className="text-xs">
                 <CreditCard className="h-3 w-3 mr-1" />
@@ -461,12 +495,14 @@ export default function CheckoutPage() {
                       pattern="[0-9\s]{13,19}"
                       placeholder="1234 5678 9012 3456"
                       value={cardNumber}
-                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                      onChange={e =>
+                        setCardNumber(formatCardNumber(e.target.value))
+                      }
                       className="h-9 text-sm"
                       maxLength={19}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">
                       Nome no Cartão
@@ -475,7 +511,7 @@ export default function CheckoutPage() {
                       type="text"
                       placeholder="João Silva"
                       value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
+                      onChange={e => setCardName(e.target.value)}
                       className="h-9 text-sm"
                     />
                   </div>
@@ -490,9 +526,12 @@ export default function CheckoutPage() {
                         inputMode="numeric"
                         placeholder="12/28"
                         value={cardExpiry}
-                        onChange={(e) => {
+                        onChange={e => {
                           const value = e.target.value.replace(/\D/g, '');
-                          const formatted = value.replace(/(\d{2})(\d{2})/, '$1/$2');
+                          const formatted = value.replace(
+                            /(\d{2})(\d{2})/,
+                            '$1/$2'
+                          );
                           setCardExpiry(formatted);
                         }}
                         className="h-9 text-sm"
@@ -508,7 +547,9 @@ export default function CheckoutPage() {
                         inputMode="numeric"
                         placeholder="123"
                         value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
+                        onChange={e =>
+                          setCardCvv(e.target.value.replace(/\D/g, ''))
+                        }
                         className="h-9 text-sm"
                         maxLength={4}
                       />
@@ -520,8 +561,17 @@ export default function CheckoutPage() {
               <Button
                 onClick={handleCardPayment}
                 className="w-full h-10 text-sm"
-                disabled={processing || !customerName || !customerEmail || !customerPhone || !customerCpf || 
-                         !cardNumber || !cardName || !cardExpiry || !cardCvv}
+                disabled={
+                  processing ||
+                  !customerName ||
+                  !customerEmail ||
+                  !customerPhone ||
+                  !customerCpf ||
+                  !cardNumber ||
+                  !cardName ||
+                  !cardExpiry ||
+                  !cardCvv
+                }
               >
                 {processing ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -541,7 +591,13 @@ export default function CheckoutPage() {
                     <Button
                       onClick={generatePixCode}
                       className="h-9 text-sm"
-                      disabled={processing || !customerName || !customerEmail || !customerPhone || !customerCpf}
+                      disabled={
+                        processing ||
+                        !customerName ||
+                        !customerEmail ||
+                        !customerPhone ||
+                        !customerCpf
+                      }
                     >
                       {processing ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -553,9 +609,9 @@ export default function CheckoutPage() {
                   <div className="space-y-3">
                     {qrCodeUrl && (
                       <div className="text-center">
-                        <Image 
-                          src={qrCodeUrl} 
-                          alt="QR Code PIX" 
+                        <Image
+                          src={qrCodeUrl}
+                          alt="QR Code PIX"
                           width={256}
                           height={256}
                           className="mx-auto rounded-lg"
@@ -564,7 +620,9 @@ export default function CheckoutPage() {
                     )}
                     <div className="text-center">
                       <p className="text-xs text-muted-foreground mb-2">
-                        {qrCodeUrl ? 'Escaneie o QR Code ou copie o código PIX' : 'Copie o código PIX abaixo'}
+                        {qrCodeUrl
+                          ? 'Escaneie o QR Code ou copie o código PIX'
+                          : 'Copie o código PIX abaixo'}
                       </p>
                       <div className="bg-muted rounded-lg p-2 text-xs font-mono break-all max-h-24 overflow-y-auto">
                         {pixCode}
@@ -599,7 +657,12 @@ export default function CheckoutPage() {
               <Card className="p-4 mt-2">
                 <div className="text-center">
                   <Button
-                    onClick={() => window.open('https://wa.me/5511999999999?text=Olá! Preciso de ajuda com minha assinatura Clara AI', '_blank')}
+                    onClick={() =>
+                      window.open(
+                        'https://wa.me/5511999999999?text=Olá! Preciso de ajuda com minha assinatura Clara AI',
+                        '_blank'
+                      )
+                    }
                     variant="outline"
                     className="w-full h-9 text-sm"
                   >

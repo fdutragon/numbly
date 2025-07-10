@@ -21,9 +21,9 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ 
+      transition={{
         duration: 0.3,
-        ease: 'easeOut'
+        ease: 'easeOut',
       }}
       className={`flex items-start gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
     >
@@ -34,7 +34,7 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
           </AvatarFallback>
         </Avatar>
       )}
-      
+
       <div className={`max-w-[75%] ${isUser ? 'order-first' : ''}`}>
         <div
           className={`px-3 py-2 rounded-xl text-sm ${
@@ -46,7 +46,7 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
           {isAssistant && message.isTyping && !message.content ? (
             <div className="flex items-center gap-2">
               <div className="flex gap-1">
-                {[0, 1, 2].map((i) => (
+                {[0, 1, 2].map(i => (
                   <motion.div
                     key={i}
                     className="w-1.5 h-1.5 bg-violet-400 rounded-full"
@@ -62,11 +62,13 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
                   />
                 ))}
               </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Clara está pensando...</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Clara está pensando...
+              </span>
             </div>
           ) : isAssistant && isLatest && message.isTyping && message.content ? (
             <div className="typewriter-container">
-              <TypewriterText 
+              <TypewriterText
                 text={message.content}
                 speed={20}
                 className="block"
@@ -76,23 +78,25 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
             <MarkdownRenderer content={message.content} />
           )}
         </div>
-        
+
         {/* Checkout Button for payment messages */}
-        {isAssistant && message.content && (
-          message.content.includes('direcionar para o checkout') || 
-          message.content.includes('Vou te direcionar para o checkout')
-        ) && (
-          <CheckoutButton 
-            planType={message.content.includes('Pro') ? 'pro' : 'basic'} 
-          />
-        )}
-        
-        <div className={`text-xs text-gray-400 dark:text-gray-500 mt-1 ${
-          isUser ? 'text-right' : 'text-left'
-        }`}>
+        {isAssistant &&
+          message.content &&
+          (message.content.includes('direcionar para o checkout') ||
+            message.content.includes('Vou te direcionar para o checkout')) && (
+            <CheckoutButton
+              planType={message.content.includes('Pro') ? 'pro' : 'basic'}
+            />
+          )}
+
+        <div
+          className={`text-xs text-gray-400 dark:text-gray-500 mt-1 ${
+            isUser ? 'text-right' : 'text-left'
+          }`}
+        >
           {new Date(message.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
           })}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
 
 // Rate limiting simples em memória
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -11,7 +11,10 @@ export interface RateLimitResult {
 // Função para aplicar rate limiting
 export function paymentRateLimiter(request: NextRequest): RateLimitResult {
   try {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const ip =
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
     const key = `payment_${ip}`;
     const now = Date.now();
     const windowMs = 5 * 60 * 1000; // 5 minutos
@@ -25,7 +28,7 @@ export function paymentRateLimiter(request: NextRequest): RateLimitResult {
     }
 
     const current = rateLimitMap.get(key);
-    
+
     if (!current) {
       // Primeira tentativa
       rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
@@ -33,8 +36,8 @@ export function paymentRateLimiter(request: NextRequest): RateLimitResult {
         headers: {
           'X-RateLimit-Limit': maxRequests.toString(),
           'X-RateLimit-Remaining': (maxRequests - 1).toString(),
-          'X-RateLimit-Reset': Math.ceil((now + windowMs) / 1000).toString()
-        }
+          'X-RateLimit-Reset': Math.ceil((now + windowMs) / 1000).toString(),
+        },
       };
     }
 
@@ -46,8 +49,8 @@ export function paymentRateLimiter(request: NextRequest): RateLimitResult {
           'X-RateLimit-Limit': maxRequests.toString(),
           'X-RateLimit-Remaining': '0',
           'X-RateLimit-Reset': Math.ceil(current.resetTime / 1000).toString(),
-          'Retry-After': Math.ceil((current.resetTime - now) / 1000).toString()
-        }
+          'Retry-After': Math.ceil((current.resetTime - now) / 1000).toString(),
+        },
       };
     }
 
@@ -59,10 +62,9 @@ export function paymentRateLimiter(request: NextRequest): RateLimitResult {
       headers: {
         'X-RateLimit-Limit': maxRequests.toString(),
         'X-RateLimit-Remaining': (maxRequests - current.count).toString(),
-        'X-RateLimit-Reset': Math.ceil(current.resetTime / 1000).toString()
-      }
+        'X-RateLimit-Reset': Math.ceil(current.resetTime / 1000).toString(),
+      },
     };
-
   } catch (error) {
     console.error('[RATE LIMITER] Erro:', error);
     return {}; // Permitir em caso de erro

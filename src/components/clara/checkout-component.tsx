@@ -4,9 +4,22 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, QrCode, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
+import {
+  CreditCard,
+  QrCode,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  X,
+} from 'lucide-react';
 
 interface CheckoutFormData {
   email: string;
@@ -47,15 +60,19 @@ interface CheckoutComponentProps {
   plan?: 'basic' | 'pro';
 }
 
-export function CheckoutComponent({ 
-  isOpen, 
-  onClose, 
+export function CheckoutComponent({
+  isOpen,
+  onClose,
   onSuccess,
-  plan = 'basic'
+  plan = 'basic',
 }: CheckoutComponentProps) {
-  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'pix'>('credit');
+  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'pix'>(
+    'credit'
+  );
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(
+    null
+  );
   const [formData, setFormData] = useState<CheckoutFormData>({
     email: '',
     name: '',
@@ -71,8 +88,8 @@ export function CheckoutComponent({
         'Automação WhatsApp',
         'Campanhas básicas',
         'Suporte via chat',
-        'Dashboard simples'
-      ]
+        'Dashboard simples',
+      ],
     },
     pro: {
       name: 'Clara Pro',
@@ -83,15 +100,15 @@ export function CheckoutComponent({
         'Suporte prioritário',
         'Dashboard completo',
         'Relatórios avançados',
-        'Integração com CRM'
-      ]
-    }
+        'Integração com CRM',
+      ],
+    },
   };
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -104,8 +121,8 @@ export function CheckoutComponent({
         cvv: '',
         holder: '',
         ...prev.cardData,
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
@@ -145,9 +162,9 @@ export function CheckoutComponent({
   const validateCPF = (cpf: string): boolean => {
     const cleanCPF = cpf.replace(/\D/g, '');
     if (cleanCPF.length !== 11) return false;
-    
+
     if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
-    
+
     let sum = 0;
     for (let i = 0; i < 9; i++) {
       sum += parseInt(cleanCPF[i]) * (10 - i);
@@ -155,7 +172,7 @@ export function CheckoutComponent({
     let remainder = (sum * 10) % 11;
     if (remainder === 10 || remainder === 11) remainder = 0;
     if (remainder !== parseInt(cleanCPF[9])) return false;
-    
+
     sum = 0;
     for (let i = 0; i < 10; i++) {
       sum += parseInt(cleanCPF[i]) * (11 - i);
@@ -163,7 +180,7 @@ export function CheckoutComponent({
     remainder = (sum * 10) % 11;
     if (remainder === 10 || remainder === 11) remainder = 0;
     if (remainder !== parseInt(cleanCPF[10])) return false;
-    
+
     return true;
   };
 
@@ -173,34 +190,37 @@ export function CheckoutComponent({
   };
 
   const isFormValid = (): boolean => {
-    const isBasicDataValid = formData.name.trim() !== '' && 
-                            validateEmail(formData.email) && 
-                            validateCPF(formData.cpf) && 
-                            formData.phone.replace(/\D/g, '').length >= 10;
-    
+    const isBasicDataValid =
+      formData.name.trim() !== '' &&
+      validateEmail(formData.email) &&
+      validateCPF(formData.cpf) &&
+      formData.phone.replace(/\D/g, '').length >= 10;
+
     if (paymentMethod === 'credit') {
-      return isBasicDataValid && 
-             formData.cardData !== undefined &&
-             formData.cardData.number.replace(/\D/g, '').length >= 13 &&
-             formData.cardData.expiry.length === 5 &&
-             formData.cardData.cvv.length >= 3 &&
-             formData.cardData.holder.trim() !== '';
+      return (
+        isBasicDataValid &&
+        formData.cardData !== undefined &&
+        formData.cardData.number.replace(/\D/g, '').length >= 13 &&
+        formData.cardData.expiry.length === 5 &&
+        formData.cardData.cvv.length >= 3 &&
+        formData.cardData.holder.trim() !== ''
+      );
     }
-    
+
     return isBasicDataValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isFormValid()) {
       setPaymentResult({
         success: false,
-        error: 'Por favor, preencha todos os campos corretamente.'
+        error: 'Por favor, preencha todos os campos corretamente.',
       });
       return;
     }
-    
+
     setIsLoading(true);
     setPaymentResult(null);
 
@@ -211,7 +231,7 @@ export function CheckoutComponent({
         phone: formData.phone.replace(/\D/g, ''),
         isPWA: false,
         plan: plan,
-        paymentMethod
+        paymentMethod,
       };
 
       const response = await fetch('/api/appmax', {
@@ -235,7 +255,7 @@ export function CheckoutComponent({
       console.error('Payment error:', error);
       setPaymentResult({
         success: false,
-        error: 'Erro ao processar pagamento. Tente novamente.'
+        error: 'Erro ao processar pagamento. Tente novamente.',
       });
     } finally {
       setIsLoading(false);
@@ -256,7 +276,7 @@ export function CheckoutComponent({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
         className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-md max-h-[90vh] overflow-auto"
       >
         <Card className="border-0 shadow-none">
@@ -278,9 +298,12 @@ export function CheckoutComponent({
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Plan Summary */}
               <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md">
-                <h3 className="font-semibold text-base mb-1">{plans[plan].name}</h3>
+                <h3 className="font-semibold text-base mb-1">
+                  {plans[plan].name}
+                </h3>
                 <div className="text-xl font-bold text-blue-600 mb-2">
-                  R$ {plans[plan].price}<span className="text-xs font-normal">/mês</span>
+                  R$ {plans[plan].price}
+                  <span className="text-xs font-normal">/mês</span>
                 </div>
                 <ul className="space-y-0.5 text-xs">
                   {plans[plan].features.map((feature, index) => (
@@ -296,21 +319,25 @@ export function CheckoutComponent({
               <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium mb-1">Nome completo</label>
+                    <label className="block text-xs font-medium mb-1">
+                      Nome completo
+                    </label>
                     <Input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      onChange={e => handleInputChange('name', e.target.value)}
                       placeholder="Seu nome completo"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-1">E-mail</label>
+                    <label className="block text-xs font-medium mb-1">
+                      E-mail
+                    </label>
                     <Input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      onChange={e => handleInputChange('email', e.target.value)}
                       placeholder="seu@email.com"
                       required
                     />
@@ -318,22 +345,30 @@ export function CheckoutComponent({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium mb-1">CPF</label>
+                    <label className="block text-xs font-medium mb-1">
+                      CPF
+                    </label>
                     <Input
                       type="text"
                       value={formData.cpf}
-                      onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
+                      onChange={e =>
+                        handleInputChange('cpf', formatCPF(e.target.value))
+                      }
                       placeholder="000.000.000-00"
                       maxLength={14}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-1">Telefone</label>
+                    <label className="block text-xs font-medium mb-1">
+                      Telefone
+                    </label>
                     <Input
                       type="text"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                      onChange={e =>
+                        handleInputChange('phone', formatPhone(e.target.value))
+                      }
                       placeholder="(11) 99999-9999"
                       maxLength={15}
                       required
@@ -344,14 +379,27 @@ export function CheckoutComponent({
 
               {/* Payment Methods */}
               <div>
-                <label className="block text-sm font-medium mb-4">Forma de pagamento</label>
-                <Tabs value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'credit' | 'pix')}>
+                <label className="block text-sm font-medium mb-4">
+                  Forma de pagamento
+                </label>
+                <Tabs
+                  value={paymentMethod}
+                  onValueChange={value =>
+                    setPaymentMethod(value as 'credit' | 'pix')
+                  }
+                >
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="credit" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="credit"
+                      className="flex items-center gap-2"
+                    >
                       <CreditCard className="w-4 h-4" />
                       Cartão de crédito
                     </TabsTrigger>
-                    <TabsTrigger value="pix" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="pix"
+                      className="flex items-center gap-2"
+                    >
                       <QrCode className="w-4 h-4" />
                       PIX
                     </TabsTrigger>
@@ -360,44 +408,69 @@ export function CheckoutComponent({
                   <TabsContent value="credit" className="space-y-4 mt-4">
                     <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Número do cartão</label>
+                        <label className="block text-sm font-medium mb-2">
+                          Número do cartão
+                        </label>
                         <Input
                           type="text"
                           value={formData.cardData?.number || ''}
-                          onChange={(e) => handleCardDataChange('number', formatCardNumber(e.target.value))}
+                          onChange={e =>
+                            handleCardDataChange(
+                              'number',
+                              formatCardNumber(e.target.value)
+                            )
+                          }
                           placeholder="0000 0000 0000 0000"
                           maxLength={19}
                           required={paymentMethod === 'credit'}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Nome no cartão</label>
+                        <label className="block text-sm font-medium mb-2">
+                          Nome no cartão
+                        </label>
                         <Input
                           type="text"
                           value={formData.cardData?.holder || ''}
-                          onChange={(e) => handleCardDataChange('holder', e.target.value)}
+                          onChange={e =>
+                            handleCardDataChange('holder', e.target.value)
+                          }
                           placeholder="Nome como no cartão"
                           required={paymentMethod === 'credit'}
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium mb-2">Validade</label>
+                          <label className="block text-sm font-medium mb-2">
+                            Validade
+                          </label>
                           <Input
                             type="text"
                             value={formData.cardData?.expiry || ''}
-                            onChange={(e) => handleCardDataChange('expiry', formatExpiry(e.target.value))}
+                            onChange={e =>
+                              handleCardDataChange(
+                                'expiry',
+                                formatExpiry(e.target.value)
+                              )
+                            }
                             placeholder="MM/AA"
                             maxLength={5}
                             required={paymentMethod === 'credit'}
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-2">CVV</label>
+                          <label className="block text-sm font-medium mb-2">
+                            CVV
+                          </label>
                           <Input
                             type="text"
                             value={formData.cardData?.cvv || ''}
-                            onChange={(e) => handleCardDataChange('cvv', e.target.value.replace(/\D/g, ''))}
+                            onChange={e =>
+                              handleCardDataChange(
+                                'cvv',
+                                e.target.value.replace(/\D/g, '')
+                              )
+                            }
                             placeholder="000"
                             maxLength={4}
                             required={paymentMethod === 'credit'}
@@ -410,9 +483,12 @@ export function CheckoutComponent({
                   <TabsContent value="pix" className="mt-4">
                     <div className="text-center p-6 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                       <QrCode className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                      <h3 className="font-semibold text-lg mb-2">Pagamento via PIX</h3>
+                      <h3 className="font-semibold text-lg mb-2">
+                        Pagamento via PIX
+                      </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Após clicar em "Finalizar compra", você receberá o código PIX
+                        Após clicar em "Finalizar compra", você receberá o
+                        código PIX
                       </p>
                     </div>
                   </TabsContent>
@@ -436,10 +512,16 @@ export function CheckoutComponent({
                     ) : (
                       <AlertCircle className="w-5 h-5 text-red-600" />
                     )}
-                    <span className={`font-medium ${
-                      paymentResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
-                    }`}>
-                      {paymentResult.success ? 'Pagamento processado!' : 'Erro no pagamento'}
+                    <span
+                      className={`font-medium ${
+                        paymentResult.success
+                          ? 'text-green-800 dark:text-green-200'
+                          : 'text-red-800 dark:text-red-200'
+                      }`}
+                    >
+                      {paymentResult.success
+                        ? 'Pagamento processado!'
+                        : 'Erro no pagamento'}
                     </span>
                   </div>
                   {paymentResult.error && (

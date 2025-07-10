@@ -10,7 +10,10 @@ interface CheckoutButtonProps {
   className?: string;
 }
 
-export function CheckoutButton({ planType, className = '' }: CheckoutButtonProps) {
+export function CheckoutButton({
+  planType,
+  className = '',
+}: CheckoutButtonProps) {
   const router = useRouter();
 
   const handleCheckout = () => {
@@ -20,12 +23,12 @@ export function CheckoutButton({ planType, className = '' }: CheckoutButtonProps
   const planDetails = {
     basic: {
       name: 'Plano Básico',
-      price: 'R$ 49/mês'
+      price: 'R$ 49/mês',
     },
     pro: {
       name: 'Plano Pro',
-      price: 'R$ 99/mês'
-    }
+      price: 'R$ 99/mês',
+    },
   };
 
   return (

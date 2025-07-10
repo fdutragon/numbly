@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from 'crypto';
 
 // Configuração de criptografia (não usadas no desenvolvimento)
 // const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "default-key-32-characters-long!!";
@@ -22,7 +22,9 @@ export interface CreditCardData {
 }
 
 // Função para validar payload criptografado
-export function validateEncryptedPayload(payload: unknown): payload is EncryptedPayload {
+export function validateEncryptedPayload(
+  payload: unknown
+): payload is EncryptedPayload {
   return (
     payload !== null &&
     typeof payload === 'object' &&
@@ -41,21 +43,22 @@ export async function decryptCardData(): Promise<CreditCardData> {
   try {
     // Para desenvolvimento, vamos simular uma descriptografia bem-sucedida
     // Em produção, implementar criptografia real
-    console.log("[CRYPTO] Simulando descriptografia dos dados do cartão");
-    
+    console.log('[CRYPTO] Simulando descriptografia dos dados do cartão');
+
     // Retornar dados simulados para evitar quebra
     return {
-      number: "4111111111111111",
-      cvv: "123",
-      month: "12",
-      year: "2025",
-      document_number: "12345678901",
-      name: "TESTE CARTAO",
+      number: '4111111111111111',
+      cvv: '123',
+      month: '12',
+      year: '2025',
+      document_number: '12345678901',
+      name: 'TESTE CARTAO',
       installments: 1,
-      soft_descriptor: "NUMEROLOGICA"
+      soft_descriptor: 'NUMEROLOGICA',
     };
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Erro desconhecido';
     throw new Error(`Erro na descriptografia: ${errorMessage}`);
   }
 }
@@ -71,10 +74,11 @@ export function encryptCardData(cardData: CreditCardData): EncryptedPayload {
     return {
       iv: iv.toString('base64'),
       encryptedData: encrypted,
-      authTag: authTag.toString('base64')
+      authTag: authTag.toString('base64'),
     };
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Erro desconhecido';
     throw new Error(`Erro na criptografia: ${errorMessage}`);
   }
 }

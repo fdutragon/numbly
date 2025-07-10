@@ -15,6 +15,6 @@ export const db = {
     update: async (query: DBQuery) => {
       console.log('Mock DB update:', query);
       return { id: 1 };
-    }
-  }
+    },
+  },
 };

@@ -1,11 +1,11 @@
 import Groq from 'groq-sdk';
-import { 
-  detectIntention, 
-  sendEmailViaResend, 
+import {
+  detectIntention,
+  sendEmailViaResend,
   generateEmailContent,
   validateEmail,
   intentionResponses,
-  type IntentionResult
+  type IntentionResult,
 } from '@/lib/intention-detector';
 import { type ClaraState } from '@/lib/chat-store';
 
@@ -23,7 +23,14 @@ export interface ClaraResponse {
   emailSent: boolean;
   intention: string;
   confidence: number;
-  nextAction?: 'wait' | 'advance' | 'checkout' | 'email' | 'objection' | 'qualify' | 'urgency';
+  nextAction?:
+    | 'wait'
+    | 'advance'
+    | 'checkout'
+    | 'email'
+    | 'objection'
+    | 'qualify'
+    | 'urgency';
   scriptStage: string;
   reasoning: string;
   userData?: {
@@ -42,7 +49,6 @@ export interface ClaraResponse {
   };
 }
 
-
 // Scripts otimizados para automação WhatsApp
 interface ScriptStage {
   content: string;
@@ -59,9 +65,9 @@ Aquele lead que chega no fim de semana? Eu converto.
 
 Quer parar de perder vendas por "não estar online"?`,
     triggers: ['sim', 'quero', 'interessado', 'como', 'funciona'],
-    nextStage: 'pain_point'
+    nextStage: 'pain_point',
   },
-  
+
   pain_point: {
     content: `Vou ser direta: **enquanto você dorme, seus concorrentes vendem.**
 
@@ -73,9 +79,9 @@ A Clara resolve isso. Trabalha 24/7, responde em segundos, converte leads quente
 
 Quer ver como?`,
     triggers: ['sim', 'quero', 'ver', 'como', 'funciona', 'interessado'],
-    nextStage: 'solution'
+    nextStage: 'solution',
   },
-  
+
   solution: {
     content: `🤖 **Clara = Seu vendedor que nunca tira férias**
 
@@ -90,9 +96,9 @@ Tudo no SEU WhatsApp. Sem chatbot genérico.
 
 Pronto para multiplicar suas vendas?`,
     triggers: ['sim', 'pronto', 'quero', 'quanto', 'preço', 'valor'],
-    nextStage: 'pricing'
+    nextStage: 'pricing',
   },
-  
+
   pricing: {
     content: `💰 **Investimento:** R$ 247/mês
 
@@ -104,9 +110,9 @@ ROI de 4.000%. Matemática simples.
 
 **Quer ativar hoje?** Link do checkout vai na próxima mensagem.`,
     triggers: ['sim', 'ativar', 'quero', 'vamos', 'aceito'],
-    nextStage: 'closing'
+    nextStage: 'closing',
   },
-  
+
   closing: {
     content: `🎉 **PERFEITO!** Checkout liberado!
 
@@ -117,8 +123,8 @@ ROI de 4.000%. Matemática simples.
 
 Clique e ative agora. Em 24h você estará vendendo no automático!`,
     triggers: ['ativar', 'checkout', 'pagar'],
-    nextStage: 'closing'
-  }
+    nextStage: 'closing',
+  },
 };
 
 const objectionHandling = {
@@ -129,7 +135,7 @@ Uma única venda perdida por falta de resposta rápida vale mais que isso.
 Clara se paga na primeira semana. Resto é LUCRO PURO.
 
 Quer continuar perdendo vendas ou quer multiplicar?`,
-  
+
   trust: `Entendo a desconfiança. Por isso:
 
 ✅ 7 dias de garantia total
@@ -138,20 +144,20 @@ Quer continuar perdendo vendas ou quer multiplicar?`,
 ✅ Pode cancelar quando quiser
 
 Risco zero. Só resultado.`,
-  
+
   time: `"Vou pensar" = seus concorrentes agradecem 🙏
 
 Cada hora sem Clara = leads perdidos.
 Cada dia sem automação = dinheiro que não volta.
 
 Decide agora ou continua perdendo?`,
-  
+
   need: `"Não preciso"? 
 
 Seus concorrentes pensavam igual.
 Hoje eles vendem 300% mais com automação.
 
-Quer ficar para trás ou liderar?`
+Quer ficar para trás ou liderar?`,
 };
 
 export async function processUserMessage(
@@ -161,9 +167,12 @@ export async function processUserMessage(
   try {
     // 1. Detectar intenção com IA
     const intentionResult = await detectIntention(message);
-    
+
     // 2. Processar intenções especiais primeiro
-    if (intentionResult.intention === 'payment' && intentionResult.confidence > 0.7) {
+    if (
+      intentionResult.intention === 'payment' &&
+      intentionResult.confidence > 0.7
+    ) {
       return {
         content: intentionResponses.payment.general,
         shouldShowPaymentModal: true,
@@ -172,13 +181,16 @@ export async function processUserMessage(
         confidence: intentionResult.confidence,
         nextAction: 'checkout',
         scriptStage: 'closing',
-        reasoning: 'Usuário demonstrou intenção clara de pagamento'
+        reasoning: 'Usuário demonstrou intenção clara de pagamento',
       };
     }
-    
-    if (intentionResult.intention === 'email' && intentionResult.confidence > 0.7) {
+
+    if (
+      intentionResult.intention === 'email' &&
+      intentionResult.confidence > 0.7
+    ) {
       const emailRecipient = intentionResult.extractedData?.email;
-      
+
       if (emailRecipient && validateEmail(emailRecipient)) {
         try {
           const emailContent = generateEmailContent();
@@ -187,16 +199,18 @@ export async function processUserMessage(
             'Clara IA - Automação WhatsApp Profissional',
             emailContent
           );
-          
+
           return {
-            content: emailResult.success ? intentionResponses.email.success : intentionResponses.email.error,
+            content: emailResult.success
+              ? intentionResponses.email.success
+              : intentionResponses.email.error,
             shouldShowPaymentModal: false,
             emailSent: emailResult.success,
             intention: 'email',
             confidence: intentionResult.confidence,
             nextAction: 'wait',
             scriptStage: currentState.currentStage,
-            reasoning: `Email ${emailResult.success ? 'enviado com sucesso' : 'falhou'} para ${emailRecipient}`
+            reasoning: `Email ${emailResult.success ? 'enviado com sucesso' : 'falhou'} para ${emailRecipient}`,
           };
         } catch {
           return {
@@ -207,7 +221,7 @@ export async function processUserMessage(
             confidence: intentionResult.confidence,
             nextAction: 'wait',
             scriptStage: currentState.currentStage,
-            reasoning: 'Erro ao enviar email'
+            reasoning: 'Erro ao enviar email',
           };
         }
       } else {
@@ -219,16 +233,21 @@ export async function processUserMessage(
           confidence: intentionResult.confidence,
           nextAction: 'wait',
           scriptStage: currentState.currentStage,
-          reasoning: 'Email inválido ou não fornecido'
+          reasoning: 'Email inválido ou não fornecido',
         };
       }
     }
-    
+
     // 3. Detectar objeções
-    if (intentionResult.intention === 'objection' && intentionResult.confidence > 0.6) {
-      const objectionType = intentionResult.extractedData?.objectionType || 'price';
-      const objectionResponse = objectionHandling[objectionType as keyof typeof objectionHandling];
-      
+    if (
+      intentionResult.intention === 'objection' &&
+      intentionResult.confidence > 0.6
+    ) {
+      const objectionType =
+        intentionResult.extractedData?.objectionType || 'price';
+      const objectionResponse =
+        objectionHandling[objectionType as keyof typeof objectionHandling];
+
       return {
         content: objectionResponse,
         shouldShowPaymentModal: false,
@@ -237,23 +256,28 @@ export async function processUserMessage(
         confidence: intentionResult.confidence,
         nextAction: 'objection',
         scriptStage: 'objection_handling',
-        reasoning: `Objeção detectada: ${objectionType}`
+        reasoning: `Objeção detectada: ${objectionType}`,
       };
     }
-    
+
     // 4. Processar com IA contextual avançada
-    const contextualResponse = await generateContextualResponse(message, currentState, intentionResult);
-    
+    const contextualResponse = await generateContextualResponse(
+      message,
+      currentState,
+      intentionResult
+    );
+
     return contextualResponse;
-    
   } catch (error) {
     console.error('Clara AI Engine error:', error);
-    
+
     // Fallback para script padrão
-    const fallbackContent = currentState.currentStage !== 'objection_handling' 
-      ? claraSalesScript[currentState.currentStage]?.content || claraSalesScript.intro.content
-      : objectionHandling.price;
-      
+    const fallbackContent =
+      currentState.currentStage !== 'objection_handling'
+        ? claraSalesScript[currentState.currentStage]?.content ||
+          claraSalesScript.intro.content
+        : objectionHandling.price;
+
     return {
       content: fallbackContent,
       shouldShowPaymentModal: false,
@@ -262,7 +286,7 @@ export async function processUserMessage(
       confidence: 0.5,
       nextAction: 'wait',
       scriptStage: currentState.currentStage,
-      reasoning: 'Fallback devido a erro'
+      reasoning: 'Fallback devido a erro',
     };
   }
 }
@@ -282,21 +306,21 @@ async function generateContextualResponse(
       confidence: intentionResult.confidence,
       nextAction: 'wait',
       scriptStage: 'objection_handling',
-      reasoning: 'Lidando com objeção'
+      reasoning: 'Lidando com objeção',
     };
   }
 
   const currentScript = claraSalesScript[currentState.currentStage];
-  
+
   // Detectar triggers para avançar no script
-  const hasPositiveTrigger = currentScript.triggers.some((trigger: string) => 
+  const hasPositiveTrigger = currentScript.triggers.some((trigger: string) =>
     message.toLowerCase().includes(trigger.toLowerCase())
   );
-  
+
   if (hasPositiveTrigger) {
     const nextStage = currentScript.nextStage;
     const nextScript = claraSalesScript[nextStage];
-    
+
     return {
       content: nextScript.content,
       shouldShowPaymentModal: nextStage === 'closing',
@@ -305,10 +329,10 @@ async function generateContextualResponse(
       confidence: 0.9,
       nextAction: 'advance',
       scriptStage: nextStage,
-      reasoning: `Trigger positivo detectado, avançando para ${nextStage}`
+      reasoning: `Trigger positivo detectado, avançando para ${nextStage}`,
     };
   }
-  
+
   // Usar IA para resposta contextual personalizada
   const prompt = `
 Você é Clara, IA de vendas especializada em AUTOMAÇÃO WHATSAPP.
@@ -339,7 +363,9 @@ Responda como Clara:
   try {
     // Ensure groq is initialized (server-side only)
     if (!groq) {
-      throw new Error('Groq client not initialized - this should only run on server side');
+      throw new Error(
+        'Groq client not initialized - this should only run on server side'
+      );
     }
 
     const completion = await groq.chat.completions.create({
@@ -351,9 +377,10 @@ Responda como Clara:
       temperature: 0.7,
       max_tokens: 200,
     });
-    
-    const aiResponse = completion.choices[0]?.message?.content || currentScript.content;
-    
+
+    const aiResponse =
+      completion.choices[0]?.message?.content || currentScript.content;
+
     return {
       content: aiResponse,
       shouldShowPaymentModal: false,
@@ -362,12 +389,11 @@ Responda como Clara:
       confidence: intentionResult.confidence,
       nextAction: 'wait',
       scriptStage: currentState.currentStage,
-      reasoning: 'Resposta contextual gerada por IA'
+      reasoning: 'Resposta contextual gerada por IA',
     };
-    
   } catch (error) {
     console.error('Groq API error:', error);
-    
+
     return {
       content: currentScript.content,
       shouldShowPaymentModal: false,
@@ -376,7 +402,7 @@ Responda como Clara:
       confidence: intentionResult.confidence,
       nextAction: 'wait',
       scriptStage: currentState.currentStage,
-      reasoning: 'Fallback para script padrão'
+      reasoning: 'Fallback para script padrão',
     };
   }
 }
@@ -387,56 +413,104 @@ export function updateClaraState(
   claraResponse: ClaraResponse
 ): ClaraState {
   const now = Date.now();
-  
+
   return {
     ...currentState,
     currentStage: claraResponse.scriptStage as ClaraState['currentStage'],
     conversationHistory: [
       ...currentState.conversationHistory,
       { role: 'user', content: userMessage, timestamp: now },
-      { role: 'assistant', content: claraResponse.content, timestamp: now }
+      { role: 'assistant', content: claraResponse.content, timestamp: now },
     ],
     userSentiment: detectSentiment(userMessage),
-    objectionCount: claraResponse.intention === 'objection' ? currentState.objectionCount + 1 : currentState.objectionCount,
-    engagementLevel: calculateEngagementLevel(userMessage, claraResponse.confidence),
+    objectionCount:
+      claraResponse.intention === 'objection'
+        ? currentState.objectionCount + 1
+        : currentState.objectionCount,
+    engagementLevel: calculateEngagementLevel(
+      userMessage,
+      claraResponse.confidence
+    ),
     lastInteraction: now,
     salesMetrics: {
       ...currentState.salesMetrics,
       lastActiveTime: now,
       touchPoints: currentState.salesMetrics.touchPoints + 1,
       conversionProbability: claraResponse.confidence,
-      objectionTypes: claraResponse.intention === 'objection' 
-        ? [...currentState.salesMetrics.objectionTypes, claraResponse.intention]
-        : currentState.salesMetrics.objectionTypes,
+      objectionTypes:
+        claraResponse.intention === 'objection'
+          ? [
+              ...currentState.salesMetrics.objectionTypes,
+              claraResponse.intention,
+            ]
+          : currentState.salesMetrics.objectionTypes,
     },
   };
 }
 
-function detectSentiment(message: string): 'positive' | 'negative' | 'hesitant' | 'neutral' {
-  const positive = ['sim', 'yes', 'quero', 'vamos', 'aceito', 'ok', 'interessado', 'legal', 'ótimo', 'perfeito'];
-  const negative = ['não', 'no', 'nao', 'nunca', 'jamais', 'recuso', 'pare', 'chega', 'cancelar'];
-  const hesitant = ['talvez', 'não sei', 'preciso pensar', 'depois', 'mais tarde', 'dúvida', 'hmm', 'ah'];
-  
+function detectSentiment(
+  message: string
+): 'positive' | 'negative' | 'hesitant' | 'neutral' {
+  const positive = [
+    'sim',
+    'yes',
+    'quero',
+    'vamos',
+    'aceito',
+    'ok',
+    'interessado',
+    'legal',
+    'ótimo',
+    'perfeito',
+  ];
+  const negative = [
+    'não',
+    'no',
+    'nao',
+    'nunca',
+    'jamais',
+    'recuso',
+    'pare',
+    'chega',
+    'cancelar',
+  ];
+  const hesitant = [
+    'talvez',
+    'não sei',
+    'preciso pensar',
+    'depois',
+    'mais tarde',
+    'dúvida',
+    'hmm',
+    'ah',
+  ];
+
   const lowerMessage = message.toLowerCase();
-  
+
   if (positive.some(word => lowerMessage.includes(word))) return 'positive';
   if (negative.some(word => lowerMessage.includes(word))) return 'negative';
   if (hesitant.some(word => lowerMessage.includes(word))) return 'hesitant';
-  
+
   return 'neutral';
 }
 
-function calculateEngagementLevel(message: string, confidence: number): 'low' | 'medium' | 'high' {
+function calculateEngagementLevel(
+  message: string,
+  confidence: number
+): 'low' | 'medium' | 'high' {
   const wordCount = message.split(' ').length;
   const hasQuestions = message.includes('?');
-  const hasEmojis = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/u.test(message);
-  
+  const hasEmojis =
+    /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/u.test(
+      message
+    );
+
   let score = 0;
   if (wordCount > 5) score += 1;
   if (hasQuestions) score += 1;
   if (hasEmojis) score += 1;
   if (confidence > 0.7) score += 1;
-  
+
   if (score >= 3) return 'high';
   if (score >= 2) return 'medium';
   return 'low';

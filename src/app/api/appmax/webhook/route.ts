@@ -1,6 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { authGuard, logSecurityEvent, checkRateLimit } from '@/lib/security/auth-guard';
+import {
+  authGuard,
+  logSecurityEvent,
+  checkRateLimit,
+} from '@/lib/security/auth-guard';
 import type { SecurityContext } from '@/lib/security/auth-guard';
 import { z } from 'zod';
 import crypto from 'crypto';
@@ -36,21 +40,27 @@ export const dynamic = 'force-dynamic';
 // Rate limiting para webhooks (mais permissivo)
 const WEBHOOK_RATE_LIMIT = {
   window: 60000, // 1 minuto
-  max: 50 // 50 webhooks por minuto
+  max: 50, // 50 webhooks por minuto
 } as const;
 
 // Schema de validação para webhook
 const webhookSchema = z.object({
   event: z.string().min(1, 'Event é obrigatório'),
-  data: z.object({
-    customer: z.object({
-      email: z.string().email('Email inválido'),
-      name: z.string().optional(),
-    }).optional(),
-    order: z.object({
-      amount: z.number().optional(),
-    }).optional(),
-  }).optional(),
+  data: z
+    .object({
+      customer: z
+        .object({
+          email: z.string().email('Email inválido'),
+          name: z.string().optional(),
+        })
+        .optional(),
+      order: z
+        .object({
+          amount: z.number().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -59,9 +69,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * 📧 Helper para determinar email de destino baseado no ambiente
  */
 function getTestEmail(originalEmail: string): string {
-  const isDevMode = process.env.NODE_ENV === 'development' || 
-                   (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production');
-  
+  const isDevMode =
+    process.env.NODE_ENV === 'development' ||
+    (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production');
+
   return isDevMode ? 'delivered@resend.dev' : originalEmail;
 }
 
@@ -69,15 +80,21 @@ function getTestEmail(originalEmail: string): string {
  * 🔐 Função para fazer hash SHA-256 do email
  */
 function hashEmail(email: string): string {
-  return crypto.createHash('sha256').update(email.toLowerCase().trim()).digest('hex');
+  return crypto
+    .createHash('sha256')
+    .update(email.toLowerCase().trim())
+    .digest('hex');
 }
 
 /**
  * 🎯 Enviar evento Purchase para o TikTok Pixel
  */
-async function sendTikTokPurchaseEvent(email: string, amount: number = 17): Promise<PixelResponse> {
+async function sendTikTokPurchaseEvent(
+  email: string,
+  amount: number = 17
+): Promise<PixelResponse> {
   console.log(`[TikTok Pixel] Enviando evento para ${email} (R$ ${amount})`);
-  
+
   try {
     if (!process.env.TT_PIXEL_ID || !process.env.TT_ACCESS_TOKEN) {
       return {
@@ -86,57 +103,72 @@ async function sendTikTokPurchaseEvent(email: string, amount: number = 17): Prom
         error: {
           message: 'Credenciais TikTok Pixel não configuradas',
           TT_PIXEL_ID: !!process.env.TT_PIXEL_ID,
-          TT_ACCESS_TOKEN: !!process.env.TT_ACCESS_TOKEN
-        }
+          TT_ACCESS_TOKEN: !!process.env.TT_ACCESS_TOKEN,
+        },
       };
     }
 
     const hashedEmail = hashEmail(email);
     const eventTime = Math.floor(Date.now() / 1000);
-    
+
     const payload = {
-      event_source: "web",
+      event_source: 'web',
       event_source_id: process.env.TT_PIXEL_ID,
       data: [
         {
-          event: "Purchase",
+          event: 'Purchase',
           event_time: eventTime,
           user: { email: hashedEmail },
-          properties: { currency: "BRL", value: amount, content_type: "product" },
-          page: { url: "https://numbly.life" }
-        }
-      ]
+          properties: {
+            currency: 'BRL',
+            value: amount,
+            content_type: 'product',
+          },
+          page: { url: 'https://numbly.life' },
+        },
+      ],
     };
 
-    const response = await fetch('https://business-api.tiktok.com/open_api/v1.3/event/track/', {
-      method: 'POST',
-      headers: {
-        'Access-Token': process.env.TT_ACCESS_TOKEN,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+    const response = await fetch(
+      'https://business-api.tiktok.com/open_api/v1.3/event/track/',
+      {
+        method: 'POST',
+        headers: {
+          'Access-Token': process.env.TT_ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
     const responseBody = await response.json();
-    
+
     if (response.ok) {
       return { success: true, status: response.status, data: responseBody };
     } else {
       return { success: false, status: response.status, error: responseBody };
     }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
-    return { success: false, status: 0, error: { message: errorMessage, stack: errorStack } };
+    return {
+      success: false,
+      status: 0,
+      error: { message: errorMessage, stack: errorStack },
+    };
   }
 }
 
 /**
  * 📘 Enviar evento Purchase para o Meta Pixel (Facebook)
  */
-async function sendMetaPurchaseEvent(email: string, amount: number = 17): Promise<PixelResponse> {
+async function sendMetaPurchaseEvent(
+  email: string,
+  amount: number = 17
+): Promise<PixelResponse> {
   console.log(`[Meta Pixel] Enviando evento para ${email} (R$ ${amount})`);
-  
+
   try {
     if (!process.env.META_PIXEL_ID || !process.env.META_CAPI_TOKEN) {
       return {
@@ -145,52 +177,55 @@ async function sendMetaPurchaseEvent(email: string, amount: number = 17): Promis
         error: {
           message: 'Credenciais Meta Pixel não configuradas',
           META_PIXEL_ID: !!process.env.META_PIXEL_ID,
-          META_CAPI_TOKEN: !!process.env.META_CAPI_TOKEN
-        }
+          META_CAPI_TOKEN: !!process.env.META_CAPI_TOKEN,
+        },
       };
     }
 
     const hashedEmail = hashEmail(email);
     const eventTime = Math.floor(Date.now() / 1000);
-    
+
     const payload = {
       data: [
         {
-          event_name: "Purchase",
+          event_name: 'Purchase',
           event_time: eventTime,
-          action_source: "website",
+          action_source: 'website',
           user_data: { em: hashedEmail },
-          custom_data: { currency: "BRL", value: amount }
-        }
+          custom_data: { currency: 'BRL', value: amount },
+        },
       ],
-      test_event_code: process.env.META_TEST_EVENT_CODE || ""
+      test_event_code: process.env.META_TEST_EVENT_CODE || '',
     };
 
     const apiUrl = `https://graph.facebook.com/v18.0/${process.env.META_PIXEL_ID}/events`;
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.META_CAPI_TOKEN}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${process.env.META_CAPI_TOKEN}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     const responseBody = await response.json();
-    
+
     if (response.ok) {
       return { success: true, status: response.status, data: responseBody };
     } else {
       return { success: false, status: response.status, error: responseBody };
     }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
-    return { success: false, status: 0, error: { message: errorMessage, stack: errorStack } };
+    return {
+      success: false,
+      status: 0,
+      error: { message: errorMessage, stack: errorStack },
+    };
   }
 }
-
-
 
 // Template do email de boas-vindas
 const WELCOME_EMAIL_TEMPLATE = {
@@ -230,16 +265,18 @@ const WELCOME_EMAIL_TEMPLATE = {
         </div>
       </div>
     </div>
-  `
+  `,
 };
 
 /**
  * 💳 POST - Webhook da AppMax para processar pagamentos
  * POST /api/appmax/webhook
  */
-export async function POST(req: NextRequest): Promise<NextResponse<WebhookResponse>> {
+export async function POST(
+  req: NextRequest
+): Promise<NextResponse<WebhookResponse>> {
   let securityContext: SecurityContext | undefined;
-  
+
   try {
     // 1. 🛡️ Validação de segurança (mais permissiva para webhooks)
     try {
@@ -247,29 +284,45 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
     } catch (error: unknown) {
       console.error('Auth guard error:', error);
       securityContext = {
-        ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+        ip:
+          req.headers.get('x-forwarded-for') ||
+          req.headers.get('x-real-ip') ||
+          'unknown',
         userAgent: req.headers.get('user-agent') || '',
         timestamp: Date.now(),
-        requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       };
     }
 
     // 2. 🚦 Rate limiting para webhooks
     if (securityContext) {
       const webhookKey = `webhook_appmax_${securityContext.ip}`;
-      if (!checkRateLimit(webhookKey, WEBHOOK_RATE_LIMIT.window, WEBHOOK_RATE_LIMIT.max)) {
-        logSecurityEvent('RATE_LIMITED', securityContext, 'AppMax webhook rate limit exceeded');
-        return NextResponse.json<WebhookResponse>({
-          received: true,
-          error: 'Rate limit excedido',
-          timestamp: new Date().toISOString()
-        }, { status: 429 });
+      if (
+        !checkRateLimit(
+          webhookKey,
+          WEBHOOK_RATE_LIMIT.window,
+          WEBHOOK_RATE_LIMIT.max
+        )
+      ) {
+        logSecurityEvent(
+          'RATE_LIMITED',
+          securityContext,
+          'AppMax webhook rate limit exceeded'
+        );
+        return NextResponse.json<WebhookResponse>(
+          {
+            received: true,
+            error: 'Rate limit excedido',
+            timestamp: new Date().toISOString(),
+          },
+          { status: 429 }
+        );
       }
     }
 
     // 3. 📝 Parsear e validar payload
     const body = await req.json().catch(() => ({}));
-    console.log("[Appmax Webhook] Recebido:", body);
+    console.log('[Appmax Webhook] Recebido:', body);
 
     let validatedData: z.infer<typeof webhookSchema>;
     try {
@@ -277,51 +330,73 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
     } catch (error) {
       if (error instanceof z.ZodError) {
         if (securityContext) {
-          logSecurityEvent('SUSPICIOUS', securityContext, `Invalid webhook data: ${error.errors.map(e => e.message).join(', ')}`);
+          logSecurityEvent(
+            'SUSPICIOUS',
+            securityContext,
+            `Invalid webhook data: ${error.errors.map(e => e.message).join(', ')}`
+          );
         }
-        
-        return NextResponse.json<WebhookResponse>({
-          received: true,
-          error: 'Dados inválidos',
-          timestamp: new Date().toISOString()
-        }, { status: 400 });
+
+        return NextResponse.json<WebhookResponse>(
+          {
+            received: true,
+            error: 'Dados inválidos',
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
       }
       throw error;
     }
 
     // 4. 🎯 Processar eventos de pagamento
-    const paymentEvents = ["OrderPaidByPix", "OrderApproved", "OrderAuthorized", "OrderPaid"];
-    
+    const paymentEvents = [
+      'OrderPaidByPix',
+      'OrderApproved',
+      'OrderAuthorized',
+      'OrderPaid',
+    ];
+
     if (paymentEvents.includes(validatedData.event)) {
       const email = validatedData.data?.customer?.email;
       const customerName = validatedData.data?.customer?.name;
       const orderAmount = validatedData.data?.order?.amount || 47;
-      
+
       if (!email) {
-        console.error("[Appmax Webhook] Email do cliente não encontrado no payload.");
-        return NextResponse.json<WebhookResponse>({
-          received: true,
-          error: 'Email não encontrado',
-          timestamp: new Date().toISOString()
-        }, { status: 400 });
+        console.error(
+          '[Appmax Webhook] Email do cliente não encontrado no payload.'
+        );
+        return NextResponse.json<WebhookResponse>(
+          {
+            received: true,
+            error: 'Email não encontrado',
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
       }
 
       console.log(`[Appmax Webhook] 📧 Processando email: ${email}`);
 
       // 5.  Enviar email de boas-vindas
       let emailSent = false;
-      
+
       if (process.env.RESEND_API_KEY) {
         try {
           const targetEmail = getTestEmail(email);
-          const firstName = customerName ? customerName.split(' ')[0] : 'Amigo(a)';
-          const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://numbly.life';
+          const firstName = customerName
+            ? customerName.split(' ')[0]
+            : 'Amigo(a)';
+          const baseUrl =
+            process.env.NEXTAUTH_URL ||
+            process.env.NEXT_PUBLIC_BASE_URL ||
+            'https://numbly.life';
           const dashboardLink = `${baseUrl}/dashboard`;
-          
+
           const personalizedHtml = WELCOME_EMAIL_TEMPLATE.html
             .replace(/{{{FIRST_NAME}}}/g, firstName)
             .replace(/{{{DASHBOARD_LINK}}}/g, dashboardLink);
-          
+
           const emailResult = await resend.emails.send({
             from: 'Numbly <noreply@numbly.life>',
             to: [targetEmail],
@@ -330,27 +405,37 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
             headers: {
               'X-Welcome-Email': 'true',
               'X-User-Email': email,
-              'X-Customer-Name': customerName || 'N/A'
-            }
+              'X-Customer-Name': customerName || 'N/A',
+            },
           });
-          
-          console.log(`[Appmax Webhook] Email de boas-vindas enviado para ${targetEmail}:`, emailResult);
+
+          console.log(
+            `[Appmax Webhook] Email de boas-vindas enviado para ${targetEmail}:`,
+            emailResult
+          );
           emailSent = true;
         } catch (emailError) {
-          console.error(`[Appmax Webhook] Erro ao enviar email de boas-vindas:`, emailError);
+          console.error(
+            `[Appmax Webhook] Erro ao enviar email de boas-vindas:`,
+            emailError
+          );
         }
       }
 
       // 6. 🎯 Enviar eventos para pixels
       const pixelResponses = {
         tiktok: null as PixelResponse | null,
-        meta: null as PixelResponse | null
+        meta: null as PixelResponse | null,
       };
 
       try {
-        pixelResponses.tiktok = await sendTikTokPurchaseEvent(email, orderAmount);
+        pixelResponses.tiktok = await sendTikTokPurchaseEvent(
+          email,
+          orderAmount
+        );
       } catch (tiktokError: unknown) {
-        const errorMessage = tiktokError instanceof Error ? tiktokError.message : 'Unknown error';
+        const errorMessage =
+          tiktokError instanceof Error ? tiktokError.message : 'Unknown error';
         console.error(`[Appmax Webhook] Erro TikTok:`, errorMessage);
         pixelResponses.tiktok = { success: false, error: errorMessage };
       }
@@ -358,14 +443,19 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
       try {
         pixelResponses.meta = await sendMetaPurchaseEvent(email, orderAmount);
       } catch (metaError: unknown) {
-        const errorMessage = metaError instanceof Error ? metaError.message : 'Unknown error';
+        const errorMessage =
+          metaError instanceof Error ? metaError.message : 'Unknown error';
         console.error(`[Appmax Webhook] Erro Meta:`, errorMessage);
         pixelResponses.meta = { success: false, error: errorMessage };
       }
 
       // 7. ✅ Log de sucesso
       if (securityContext) {
-        logSecurityEvent('AUTH_SUCCESS', securityContext, `AppMax payment processed for ${email}`);
+        logSecurityEvent(
+          'AUTH_SUCCESS',
+          securityContext,
+          `AppMax payment processed for ${email}`
+        );
       }
 
       return NextResponse.json<WebhookResponse>({
@@ -376,31 +466,39 @@ export async function POST(req: NextRequest): Promise<NextResponse<WebhookRespon
         event: validatedData.event,
         pixels: pixelResponses,
         emailSent: emailSent,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-
     } else {
-      console.log(`[Appmax Webhook] ⚠️ Evento não reconhecido: ${validatedData.event}`);
+      console.log(
+        `[Appmax Webhook] ⚠️ Evento não reconhecido: ${validatedData.event}`
+      );
       return NextResponse.json<WebhookResponse>({
         received: true,
         event: validatedData.event,
-        message: "Evento não processado",
-        timestamp: new Date().toISOString()
+        message: 'Evento não processado',
+        timestamp: new Date().toISOString(),
       });
     }
-
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error("[Appmax Webhook] Erro:", errorMessage);
-    
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Appmax Webhook] Erro:', errorMessage);
+
     if (securityContext) {
-      logSecurityEvent('SUSPICIOUS', securityContext, `AppMax webhook error: ${errorMessage}`);
+      logSecurityEvent(
+        'SUSPICIOUS',
+        securityContext,
+        `AppMax webhook error: ${errorMessage}`
+      );
     }
-    
-    return NextResponse.json<WebhookResponse>({
-      received: true,
-      error: "Erro no processamento do webhook",
-      timestamp: new Date().toISOString()
-    }, { status: 500 });
+
+    return NextResponse.json<WebhookResponse>(
+      {
+        received: true,
+        error: 'Erro no processamento do webhook',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    );
   }
 }

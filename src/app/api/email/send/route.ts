@@ -8,8 +8,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Schema de validação para email
 const emailSchema = z.object({
   to: z.string().email('Email do destinatário inválido'),
-  subject: z.string().min(1, 'Assunto é obrigatório').max(200, 'Assunto muito longo'),
-  content: z.string().min(10, 'Conteúdo muito curto').max(10000, 'Conteúdo muito longo'),
+  subject: z
+    .string()
+    .min(1, 'Assunto é obrigatório')
+    .max(200, 'Assunto muito longo'),
+  content: z
+    .string()
+    .min(10, 'Conteúdo muito curto')
+    .max(10000, 'Conteúdo muito longo'),
   from: z.string().email('Email do remetente inválido').optional(),
 });
 
@@ -17,17 +23,20 @@ export async function POST(request: NextRequest) {
   try {
     // Obter contexto de segurança
     const securityContext = await authGuard(request);
-    
+
     // Verificar rate limiting
     const rateLimitKey = `email:${securityContext.ip}`;
     const rateLimitAllowed = checkRateLimit(rateLimitKey, 60000, 5); // 5 emails por minuto
 
     if (!rateLimitAllowed) {
-      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
     }
 
     const body = await request.json();
-    
+
     // Validar dados do email
     const validationResult = emailSchema.safeParse(body);
     if (!validationResult.success) {
@@ -50,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     // Domínio verificado para envio
     const fromEmail = from || 'clara@numbly.com.br';
-    
+
     // Criar HTML do email
     const htmlContent = `
 <!DOCTYPE html>
@@ -168,19 +177,21 @@ export async function POST(request: NextRequest) {
       message: 'Email enviado com sucesso',
       emailId: result.data?.id,
     });
-
   } catch (error) {
     console.error('Erro ao enviar email:', error);
-    
+
     // Tratamento específico para diferentes tipos de erro
     if (error instanceof Error) {
       if (error.message.includes('rate limit')) {
         return NextResponse.json(
-          { error: 'Limite de emails excedido. Tente novamente em alguns minutos.' },
+          {
+            error:
+              'Limite de emails excedido. Tente novamente em alguns minutos.',
+          },
           { status: 429 }
         );
       }
-      
+
       if (error.message.includes('domain')) {
         return NextResponse.json(
           { error: 'Domínio de email não verificado' },
@@ -208,7 +219,7 @@ export async function GET() {
 
     return NextResponse.json({
       status: 'Email service is running',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
     console.error('Email service error:', error);

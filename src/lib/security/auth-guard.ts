@@ -18,17 +18,23 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 /**
  * Security logging levels
  */
-type SecurityEventType = 'AUTH_SUCCESS' | 'AUTH_FAILURE' | 'RATE_LIMITED' | 'SUSPICIOUS' | 'ERROR';
+type SecurityEventType =
+  | 'AUTH_SUCCESS'
+  | 'AUTH_FAILURE'
+  | 'RATE_LIMITED'
+  | 'SUSPICIOUS'
+  | 'ERROR';
 
 /**
  * Auth guard for API routes
  */
 export async function authGuard(req: NextRequest): Promise<SecurityContext> {
-  const ip = req.headers.get('x-forwarded-for') || 
-            req.headers.get('x-real-ip') || 
-            req.headers.get('cf-connecting-ip') || 
-            'unknown';
-  
+  const ip =
+    req.headers.get('x-forwarded-for') ||
+    req.headers.get('x-real-ip') ||
+    req.headers.get('cf-connecting-ip') ||
+    'unknown';
+
   const userAgent = req.headers.get('user-agent') || 'unknown';
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -38,38 +44,41 @@ export async function authGuard(req: NextRequest): Promise<SecurityContext> {
   }
 
   // Check for suspicious patterns
-  const suspiciousPatterns = [
-    /bot/i,
-    /crawler/i,
-    /scanner/i,
-    /hack/i
-  ];
+  const suspiciousPatterns = [/bot/i, /crawler/i, /scanner/i, /hack/i];
 
-  const isSuspicious = suspiciousPatterns.some(pattern => 
-    pattern.test(userAgent) || pattern.test(ip)
+  const isSuspicious = suspiciousPatterns.some(
+    pattern => pattern.test(userAgent) || pattern.test(ip)
   );
 
   if (isSuspicious) {
-    logSecurityEvent('SUSPICIOUS', {
-      ip,
-      userAgent,
-      timestamp: Date.now(),
-      requestId
-    }, 'Suspicious request detected');
+    logSecurityEvent(
+      'SUSPICIOUS',
+      {
+        ip,
+        userAgent,
+        timestamp: Date.now(),
+        requestId,
+      },
+      'Suspicious request detected'
+    );
   }
 
   return {
     ip: ip.split(',')[0].trim(), // Get first IP if multiple
     userAgent,
     timestamp: Date.now(),
-    requestId
+    requestId,
   };
 }
 
 /**
  * Rate limiting check
  */
-export function checkRateLimit(key: string, windowMs: number, maxRequests: number): boolean {
+export function checkRateLimit(
+  key: string,
+  windowMs: number,
+  maxRequests: number
+): boolean {
   const now = Date.now();
   const entry = rateLimitStore.get(key);
 
@@ -77,7 +86,7 @@ export function checkRateLimit(key: string, windowMs: number, maxRequests: numbe
     // First request
     rateLimitStore.set(key, {
       count: 1,
-      resetTime: now + windowMs
+      resetTime: now + windowMs,
     });
     return true;
   }
@@ -86,7 +95,7 @@ export function checkRateLimit(key: string, windowMs: number, maxRequests: numbe
     // Window expired, reset
     rateLimitStore.set(key, {
       count: 1,
-      resetTime: now + windowMs
+      resetTime: now + windowMs,
     });
     return true;
   }
@@ -118,7 +127,7 @@ export function logSecurityEvent(
     ip: context.ip,
     userAgent: context.userAgent,
     requestId: context.requestId,
-    metadata: metadata || {}
+    metadata: metadata || {},
   };
 
   // In production, send to security monitoring service
@@ -129,7 +138,7 @@ export function logSecurityEvent(
     // In production, store in database or security service
     console.warn(`🚨 Security Alert: ${message}`, {
       ip: context.ip,
-      userAgent: context.userAgent
+      userAgent: context.userAgent,
     });
   }
 }

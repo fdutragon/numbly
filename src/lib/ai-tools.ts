@@ -14,7 +14,7 @@ export const aiTools: AiTool[] = [
     id: 'summarize',
     name: 'Resumir',
     description: 'Gera um resumo do texto informado.',
-    run: async (input) => {
+    run: async input => {
       // Aqui pode integrar com API real de AI
       return `Resumo: ${input.slice(0, 100)}...`;
     },
@@ -23,7 +23,7 @@ export const aiTools: AiTool[] = [
     id: 'translate',
     name: 'Traduzir',
     description: 'Traduz o texto informado para inglês.',
-    run: async (input) => {
+    run: async input => {
       // Aqui pode integrar com API real de AI
       return `Tradução (en): ${input}`;
     },
@@ -40,7 +40,8 @@ export const aiTools: AiTool[] = [
   {
     id: 'sun-time',
     name: 'Tempo Solar',
-    description: 'Exibe o horário do nascer e pôr do sol para a localização padrão (São Paulo, BR).',
+    description:
+      'Exibe o horário do nascer e pôr do sol para a localização padrão (São Paulo, BR).',
     run: async () => {
       // Exemplo fixo para São Paulo, BR
       return 'Nascer do sol: 06:45\nPôr do sol: 17:35';

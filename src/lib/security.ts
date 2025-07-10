@@ -13,6 +13,6 @@ export function addSecurityLog(
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] [${level.toUpperCase()}] ${message}`, {
     ...context,
-    data
+    data,
   });
 }
