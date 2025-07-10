@@ -565,10 +565,9 @@ export function Chat() {
                               alert('Erro ao criar push subscription: ' + (err instanceof Error ? err.message : String(err)));
                               return;
                             }
-                            const isProd = window.location.hostname === 'www.numbly.life';
-                            const endpoint = isProd
-                              ? 'https://www.numbly.life/api/push/demo'
-                              : '/api/push/demo';
+                            const isProd = typeof window !== 'undefined' && window.location.hostname === 'www.numbly.life';
+                            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (isProd ? 'https://www.numbly.life' : 'http://localhost:3000');
+                            const endpoint = `${baseUrl}/api/push/demo`;
                             const resp = await fetch(endpoint, {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
