@@ -3,7 +3,7 @@
 // Adiciona a tipagem para VAPID_PUBLIC_KEY no objeto window
 declare global {
   interface Window {
-    VAPID_PUBLIC_KEY?: string;
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY?: string;
   }
 }
 
@@ -535,33 +535,40 @@ export function Chat() {
                       <button
                         onClick={async () => {
                           const reg = await navigator.serviceWorker.ready;
-                          let vapidKey = process.env.VAPID_PUBLIC_KEY || window.VAPID_PUBLIC_KEY || '';
-                          // Remove espaços e quebras de linha acidentais
-                          vapidKey = vapidKey.replace(/\s/g, '');
-                          if (!vapidKey) {
-                            alert('VAPID_PUBLIC_KEY não configurada.');
+                          let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || window.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+                          // Sanitize: remove espaços, quebras de linha e caracteres invisíveis
+                          vapidKey = (vapidKey || '').replace(/\s|\n|\r|\t|\u200B|\uFEFF/g, '');
+                          console.log('VAPID_PUBLIC_KEY (sanitized):', vapidKey, 'length:', vapidKey.length);
+                          if (!vapidKey || vapidKey.length < 40) {
+                            alert('NEXT_PUBLIC_VAPID_PUBLIC_KEY não configurada ou inválida. Verifique o .env.production e o build.');
                             return;
                           }
                           let appServerKey;
                           try {
                             appServerKey = urlBase64ToUint8Array(vapidKey);
                           } catch (e) {
-                            alert('VAPID_PUBLIC_KEY inválida.');
+                            alert('NEXT_PUBLIC_VAPID_PUBLIC_KEY inválida (erro na conversão).');
                             return;
                           }
-                          const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: appServerKey
-                          });
-                          const isProd = window.location.hostname === 'www.numbly.life';
-                          const endpoint = isProd
-                            ? 'https://www.numbly.life/api/push/demo'
-                            : '/api/push/demo';
-                          await fetch(endpoint, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ subscription: sub }),
-                          });
+                          try {
+                            const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({
+                              userVisibleOnly: true,
+                              applicationServerKey: appServerKey
+                            });
+                            const isProd = window.location.hostname === 'www.numbly.life';
+                            const endpoint = isProd
+                              ? 'https://www.numbly.life/api/push/demo'
+                              : '/api/push/demo';
+                            await fetch(endpoint, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ subscription: sub }),
+                            });
+                            alert('Push subscription criada e notificação enviada!');
+                          } catch (err) {
+                            console.error('Erro ao configurar push subscription:', err);
+                            alert('Erro ao configurar push subscription: ' + (err instanceof Error ? err.message : String(err)));
+                          }
                         }}
                         className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-primary font-bold rounded-lg shadow transition-colors"
                       >
