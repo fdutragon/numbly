@@ -72,13 +72,10 @@ export function ChatInput({
 
   return (
     <motion.div
-      className="relative safe-area-bottom"
+      className="relative"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      style={{
-        paddingBottom: `max(12px, env(safe-area-inset-bottom))`
-      }}
     >
       <form onSubmit={handleSubmit} className="relative">
         <div className="relative flex items-end bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 focus-within:border-indigo-500 dark:focus-within:border-indigo-400">
