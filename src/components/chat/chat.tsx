@@ -47,17 +47,6 @@ export function Chat() {
   const [checkoutPlan, setCheckoutPlan] = useState<'basic' | 'pro'>('basic');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   
-  // Estado para ajuste dinâmico do teclado virtual
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
-
-  const suggestionQuestions = [
-    'Como automatizar meu atendimento no WhatsApp?',
-    'Quais campanhas de marketing posso integrar?',
-    'Como acessar relatórios de atendimentos?',
-    'Quero contratar o plano Pro',
-    'Clara, envie informações para meu@email.com',
-  ];
-
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
     const newThreadId = createThread();
@@ -68,32 +57,32 @@ export function Chat() {
   // Sempre scrolla para o final ao adicionar mensagem ou typing
   useEffect(() => {
     const scrollToBottom = () => {
-      try {
-        if (messagesEndRef.current) {
-          // Tenta scrollIntoView com opções modernas primeiro
-          if (messagesEndRef.current.scrollIntoView) {
-            messagesEndRef.current.scrollIntoView({
-              behavior: 'smooth',
-              block: 'end',
-              inline: 'end',
-            });
-          } else {
-            // Fallback para dispositivos antigos
-            messagesEndRef.current.scrollIntoView();
-          }
-        }
-      } catch (error) {
-        // Fallback manual para scroll
-        console.warn('ScrollIntoView failed, using manual scroll:', error);
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop =
-            messagesContainerRef.current.scrollHeight;
-        }
+      if (messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        container.scrollTop = container.scrollHeight;
       }
     };
-    const timer = setTimeout(scrollToBottom, 100);
+    
+    // Delay para garantir que o DOM foi atualizado
+    const timer = setTimeout(scrollToBottom, 50);
     return () => clearTimeout(timer);
   }, [currentThread?.messages, isTyping]);
+
+  // Scroll adicional após envio de mensagem
+  useEffect(() => {
+    if (currentThread?.messages.length && currentThread.messages.length > 0) {
+      const lastMessage = currentThread.messages[currentThread.messages.length - 1];
+      if (lastMessage.role === 'user') {
+        // Scroll imediato após mensagem do usuário
+        setTimeout(() => {
+          if (messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            container.scrollTop = container.scrollHeight;
+          }
+        }, 100);
+      }
+    }
+  }, [currentThread?.messages]);
 
   useEffect(() => {
     if (currentThread?.messages.length) return;
@@ -125,36 +114,16 @@ export function Chat() {
   }, [introIndex, introChar, introPhrases.length]);
 
   const handleSendMessage = async (content: string) => {
-    // Fecha o teclado após envio da mensagem com compatibilidade para dispositivos antigos
-    try {
-      if (inputRef.current) {
-        inputRef.current.blur();
-        // Força o blur em dispositivos antigos
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.blur();
-          }
-          // Força o fechamento do teclado
-          const activeElement = document.activeElement as HTMLElement;
-          if (activeElement && typeof activeElement.blur === 'function') {
-            activeElement.blur();
-          }
-        }, 200);
-      }
-    } catch (error) {
-      console.warn('Blur failed:', error);
-    }
-
-    // Força scroll para mensagens após envio
+    // Chama a função original handleSend
+    await handleSend(content);
+    
+    // Força scroll para o final após envio
     setTimeout(() => {
       if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop =
-          messagesContainerRef.current.scrollHeight;
+        const container = messagesContainerRef.current;
+        container.scrollTop = container.scrollHeight;
       }
-    }, 100);
-
-    // Chama a função original handleSend
-    return handleSend(content);
+    }, 150);
   };
 
   // Função para focar no input com segurança
@@ -394,23 +363,6 @@ export function Chat() {
     return () => window.removeEventListener('resize', updateHeaderHeight);
   }, []);
   
-  // Detecção de teclado virtual para ajuste dinâmico
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const offset = window.innerHeight - window.visualViewport.height;
-        setKeyboardOffset(offset > 0 ? offset : 0);
-      }
-    };
-    
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      return () => {
-        window.visualViewport?.removeEventListener('resize', handleResize);
-      };
-    }
-  }, []);
-
   // Use header variables to avoid unused variable warnings
   console.log('Header state:', { showHeader, headerHeight });
 
@@ -418,17 +370,19 @@ export function Chat() {
     console.log('Chat component rendered');
   });
 
+  const suggestionQuestions: string[] = [
+    'Como automatizar meu atendimento no WhatsApp?',
+    'Quais campanhas de marketing posso integrar?',
+    'Como acessar relatórios de atendimentos?',
+    'Quero contratar o plano Pro',
+    'Clara, envie informações para meu@email.com',
+  ];
+
   return (
     <>
-      <div 
-        className="flex flex-col w-full bg-background overflow-hidden"
-        style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
-      >
+      <div className="flex flex-col h-screen w-full bg-background overflow-hidden">
         {/* Header fixo sempre visível */}
-        <div
-          className="flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0"
-          style={{ position: 'sticky', top: 0, zIndex: 40 }}
-        >
+        <div className="flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0">
           <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -454,9 +408,9 @@ export function Chat() {
         {/* Messages - Área com scroll */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar"
+          className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]"
         >
-          <div className="p-4 pb-0">
+          <div className="p-4">
             <div className="max-w-2xl mx-auto space-y-6">
               <AnimatePresence initial={false}>
                 {currentThread?.messages.length === 0 ? (
@@ -517,28 +471,14 @@ export function Chat() {
               </AnimatePresence>
               <div
                 ref={messagesEndRef}
-                className="h-4"
-                style={{ paddingBottom: 20 }}
+                className="h-8"
               />
             </div>
           </div>
         </div>
 
         {/* Input - Fixo no bottom */}
-        <div
-          className="bg-background border-t border-border px-4 py-3 flex-shrink-0"
-          style={{
-            position: 'fixed',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 100,
-            width: '100vw',
-            maxWidth: '100vw',
-            transform: `translateY(-${keyboardOffset}px)`,
-            transition: 'bottom 0.3s ease-in-out, transform 0.3s ease-in-out',
-          }}
-        >
+        <div className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3 z-50">
           <div className="max-w-2xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
