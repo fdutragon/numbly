@@ -191,8 +191,7 @@ export class CartRecoverySystem {
     this.trackEvent('cart_recovery_started', {
       sessionId,
       deviceId: session.deviceId,
-      cartValue: session.totalValue,
-      itemCount: session.items.length
+      cartValue: session.totalValue
     });
   }
 
@@ -235,8 +234,7 @@ export class CartRecoverySystem {
     this.trackEvent('cart_completed', {
       sessionId,
       deviceId: session.deviceId,
-      cartValue: session.totalValue,
-      recoveryMessagesReceived: session.messagesSent
+      cartValue: session.totalValue
     });
   }
 
@@ -301,8 +299,7 @@ export class CartRecoverySystem {
       this.trackEvent('cart_recovery_message_sent', {
         sessionId,
         deviceId: session.deviceId,
-        messageNumber: session.messagesSent,
-        messageTitle: messageConfig.title
+        cartValue: session.totalValue
       });
 
     } catch (error) {
