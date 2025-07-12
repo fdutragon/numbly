@@ -14,6 +14,8 @@ import { ChatInput } from '@/components/chat/chat-input';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { CheckoutComponent } from '@/components/clara/checkout-component';
 import { TypingIndicator } from '@/components/chat/typing-indicator';
+import { SalesFlowDemo } from '@/components/chat/sales-flow-demo';
+import { PWAIntegration } from '@/components/chat/pwa-integration';
 import { useChatStore, createInitialClaraState } from '@/lib/chat-store';
 import { Bot, CheckCircle } from 'lucide-react';
 import { usePWA } from '@/lib/pwa-manager';
