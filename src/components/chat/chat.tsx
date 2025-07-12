@@ -16,6 +16,7 @@ import { CheckoutComponent } from '@/components/clara/checkout-component';
 import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { SalesFlowDemo } from '@/components/chat/sales-flow-demo';
 import { PWAIntegration } from '@/components/chat/pwa-integration';
+import { PWAFeatures } from '@/components/pwa/pwa-features';
 import { useChatStore, createInitialClaraState } from '@/lib/chat-store';
 import { Bot, CheckCircle } from 'lucide-react';
 import { usePWA } from '@/lib/pwa-manager';
@@ -652,6 +653,35 @@ export function Chat() {
                           >
                             Explorar PWA
                           </button>
+      {/* PWA Features Modal */}
+      <AnimatePresence>
+        {showPWAIntegration && (
+          <motion.div
+            key="pwa-features-modal"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowPWAIntegration(false)}
+          >
+            <div
+              className="bg-background rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-0 relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-3 right-3 z-10 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setShowPWAIntegration(false)}
+                aria-label="Fechar"
+                type="button"
+              >
+                <span className="text-2xl">×</span>
+              </button>
+              <PWAFeatures />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
                         </div>
                       </div>
                     </div>
