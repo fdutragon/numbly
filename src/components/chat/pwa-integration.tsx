@@ -35,13 +35,28 @@ export function PWAIntegration({ isVisible, onClose }: PWAIntegrationProps) {
   if (!isVisible) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-    >
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="modal-container">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="modal-overlay z-modal bg-black/80 dark:bg-black/90 backdrop-blur-md"
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        className="modal-content z-modal-content elevation-5 bg-background"
+      >
+        <button
+          onClick={onClose}
+          className="w-10 h-10 rounded-full hover:bg-muted/50 transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground fixed top-4 right-4 z-10"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
         <div className="p-6 text-center">
           {step === 1 && (
             <motion.div
@@ -203,7 +218,7 @@ export function PWAIntegration({ isVisible, onClose }: PWAIntegrationProps) {
             </motion.div>
           )}
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

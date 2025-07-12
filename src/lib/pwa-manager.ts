@@ -16,10 +16,13 @@ export class PWAManager {
       return 'ssr-user-' + nanoid();
     }
     
-    let userId = localStorage.getItem('donna-user-id');
+    let userId = localStorage.getItem('donna-device-id');
     if (!userId) {
-      userId = nanoid();
+      userId = 'device-' + nanoid();
+      localStorage.setItem('donna-device-id', userId);
+      // Manter compatibilidade com nome antigo
       localStorage.setItem('donna-user-id', userId);
+      console.log('🆔 Novo Device ID criado:', userId);
     }
     return userId;
   }
@@ -149,19 +152,27 @@ export class PWAManager {
   }
 
   // Iniciar cart recovery
-  startCartRecovery(): void {
+  startCartRecovery(productInfo?: { name: string; price: number; plan: string }): void {
     if (typeof window === 'undefined') return;
     
     if (this.serviceWorker && !this.isCartRecoveryActive) {
       this.isCartRecoveryActive = true;
       this.serviceWorker.active?.postMessage({
         type: 'START_CART_RECOVERY',
-        userId: this.userId
+        userId: this.userId,
+        productInfo
       });
       
-      // Salvar estado no localStorage
+      // Salvar estado no localStorage com informações do produto
       localStorage.setItem('donna-cart-recovery-active', 'true');
       localStorage.setItem('donna-cart-recovery-start', Date.now().toString());
+      localStorage.setItem('donna-cart-recovery-device-id', this.userId);
+      
+      if (productInfo) {
+        localStorage.setItem('donna-cart-product-info', JSON.stringify(productInfo));
+      }
+      
+      console.log('🛒 Cart recovery iniciado para device:', this.userId);
     }
   }
 
@@ -179,6 +190,10 @@ export class PWAManager {
       // Limpar estado do localStorage
       localStorage.removeItem('donna-cart-recovery-active');
       localStorage.removeItem('donna-cart-recovery-start');
+      localStorage.removeItem('donna-cart-recovery-device-id');
+      localStorage.removeItem('donna-cart-product-info');
+      
+      console.log('🛒 Cart recovery parado para device:', this.userId);
     }
   }
 
@@ -212,13 +227,19 @@ export class PWAManager {
     notificationPermission: NotificationPermission;
     isCartRecoveryActive: boolean;
     userId: string;
+    deviceId: string;
+    hasValidSubscription: boolean;
   } {
+    const hasValidSubscription = typeof window !== 'undefined' && localStorage.getItem('donna-push-subscription') !== null;
+    
     return {
       isStandalone: this.isStandalone(),
       canInstall: this.canInstall(),
       notificationPermission: typeof window !== 'undefined' ? Notification.permission : 'default',
       isCartRecoveryActive: this.isCartRecoveryRunning(),
-      userId: this.userId
+      userId: this.userId,
+      deviceId: this.userId, // Device ID é o mesmo que userId para simplificação
+      hasValidSubscription
     };
   }
 
@@ -258,11 +279,12 @@ export function usePWA() {
   return {
     sendFunNotification: () => pwaManager.sendFunNotification(),
     sendLocalPush: (title: string, body: string) => pwaManager.sendLocalPush(title, body),
-    startCartRecovery: () => pwaManager.startCartRecovery(),
+    startCartRecovery: (productInfo?: { name: string; price: number; plan: string }) => pwaManager.startCartRecovery(productInfo),
     stopCartRecovery: () => pwaManager.stopCartRecovery(),
     isCartRecoveryActive: pwaManager.isCartRecoveryRunning(),
     getPWAInfo: () => pwaManager.getPWAInfo(),
     requestNotificationPermission: () => pwaManager.requestNotificationPermission(),
-    showInstallPrompt: () => pwaManager.showInstallPrompt()
+    showInstallPrompt: () => pwaManager.showInstallPrompt(),
+    getDeviceId: () => pwaManager.userId
   };
 }

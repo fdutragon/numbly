@@ -112,7 +112,7 @@ export function SalesFlowDemo({ isVisible, onClose, onStartDemo }: SalesFlowDemo
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          className="modal-content z-modal-content elevation-5"
+          className="modal-content z-modal-content elevation-5 bg-background"
         >
           {/* Features Cards Destacados */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

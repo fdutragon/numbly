@@ -535,52 +535,85 @@ export function Chat() {
                       <button
                         onClick={async () => {
                           try {
-                            const reg = await navigator.serviceWorker.ready;
-                            let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || window.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-                            vapidKey = vapidKey.replace(/\s/g, '');
-                            console.log('VAPID Key (sanitized):', vapidKey, 'Length:', vapidKey.length);
-                            if (!vapidKey || vapidKey.length < 40) {
-                              alert('NEXT_PUBLIC_VAPID_PUBLIC_KEY não configurada ou inválida.');
-                              return;
-                            }
-                            let appServerKey;
-                            try {
-                              appServerKey = urlBase64ToUint8Array(vapidKey);
-                              console.log('appServerKey type:', typeof appServerKey, appServerKey);
-                              console.log('appServerKey instanceof Uint8Array:', appServerKey instanceof Uint8Array);
-                            } catch (e) {
-                              alert('NEXT_PUBLIC_VAPID_PUBLIC_KEY inválida (conversão falhou).');
-                              return;
-                            }
-                            let sub;
-                            try {
-                              sub = await reg.pushManager.getSubscription();
-                              if (!sub) {
-                                sub = await reg.pushManager.subscribe({
-                                  userVisibleOnly: true,
-                                  applicationServerKey: appServerKey
+                            console.log('🔔 Iniciando teste de push notification...');
+                            
+                            // Primeiro, tentar notificação local via Service Worker
+                            if ('serviceWorker' in navigator) {
+                              const reg = await navigator.serviceWorker.ready;
+                              if (reg.active) {
+                                reg.active.postMessage({
+                                  type: 'SEND_FUN_NOTIFICATION',
+                                  data: {
+                                    title: '🎉 Notificação Local Funcionando!',
+                                    body: 'Esta é uma notificação local via Service Worker. Agora vamos tentar push real...'
+                                  }
                                 });
+                                console.log('✅ Notificação local enviada');
                               }
-                            } catch (err) {
-                              alert('Erro ao criar push subscription: ' + (err instanceof Error ? err.message : String(err)));
-                              return;
                             }
-                            const isProd = typeof window !== 'undefined' && window.location.hostname === 'www.numbly.life';
-                            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (isProd ? 'https://www.numbly.life' : 'http://localhost:3000');
-                            const endpoint = `${baseUrl}/api/push/demo`;
-                            const resp = await fetch(endpoint, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ subscription: sub }),
-                            });
-                            if (!resp.ok) {
-                              const text = await resp.text();
-                              alert('Erro ao enviar subscription para backend: ' + text);
-                            } else {
-                              alert('Push subscription criada e enviada com sucesso!');
-                            }
+                            
+                            // Aguardar um pouco e tentar push real
+                            setTimeout(async () => {
+                              try {
+                                const reg = await navigator.serviceWorker.ready;
+                                let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || window.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+                                vapidKey = vapidKey.replace(/\s/g, '');
+                                console.log('VAPID Key (sanitized):', vapidKey, 'Length:', vapidKey.length);
+                                
+                                if (!vapidKey || vapidKey.length < 40) {
+                                  console.warn('VAPID key não configurada, usando apenas notificação local');
+                                  return;
+                                }
+                                
+                                let appServerKey;
+                                try {
+                                  appServerKey = urlBase64ToUint8Array(vapidKey);
+                                  console.log('✅ VAPID key convertida com sucesso');
+                                } catch (e) {
+                                  console.error('Erro na conversão da VAPID key:', e);
+                                  return;
+                                }
+                                
+                                let sub;
+                                try {
+                                  sub = await reg.pushManager.getSubscription();
+                                  if (!sub) {
+                                    sub = await reg.pushManager.subscribe({
+                                      userVisibleOnly: true,
+                                      applicationServerKey: appServerKey
+                                    });
+                                  }
+                                  console.log('✅ Push subscription obtida');
+                                } catch (err) {
+                                  console.error('Erro ao criar push subscription:', err);
+                                  return;
+                                }
+                                
+                                const isProd = typeof window !== 'undefined' && window.location.hostname === 'www.numbly.life';
+                                const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (isProd ? 'https://www.numbly.life' : 'http://localhost:3000');
+                                const endpoint = `${baseUrl}/api/push/demo`;
+                                
+                                console.log('📡 Enviando para:', endpoint);
+                                
+                                const resp = await fetch(endpoint, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ subscription: sub }),
+                                });
+                                
+                                if (resp.ok) {
+                                  console.log('✅ Push notification enviada com sucesso!');
+                                } else {
+                                  const errorText = await resp.text();
+                                  console.error('❌ Erro no servidor:', resp.status, errorText);
+                                }
+                              } catch (err) {
+                                console.error('❌ Erro ao enviar push:', err);
+                              }
+                            }, 2000);
+                            
                           } catch (err) {
-                            alert('Erro inesperado ao configurar push: ' + (err instanceof Error ? err.message : String(err)));
+                            console.error('❌ Erro geral:', err);
                           }
                         }}
                         className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-primary font-bold rounded-lg shadow transition-colors"

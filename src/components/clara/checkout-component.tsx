@@ -264,19 +264,20 @@ export function CheckoutComponent({
   if (!isOpen) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 z-50"
-      onClick={onClose}
-    >
+    <div className="modal-container">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="modal-overlay z-modal bg-black/80 dark:bg-black/90 backdrop-blur-md"
+        onClick={onClose}
+      />
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         onClick={e => e.stopPropagation()}
-        className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-md max-h-[90vh] overflow-auto"
+        className="modal-content z-modal-content elevation-5 bg-background w-full max-w-md mx-auto my-8 rounded-lg shadow-lg"
       >
         <Card className="border-0 shadow-none">
           <CardHeader className="relative p-4 pb-2">
@@ -558,6 +559,6 @@ export function CheckoutComponent({
           </CardContent>
         </Card>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

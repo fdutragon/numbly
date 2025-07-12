@@ -1,27 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import webpush from 'web-push';
 
-// Importação dinâmica para funcionar em Node (não Edge)
-let webpush: typeof import('web-push') | undefined;
-(async () => {
-  try {
-    const mod = await import('web-push');
-    webpush = mod.default || mod;
-  } catch (err) {
-    console.error('Erro ao importar web-push:', err);
-    webpush = undefined;
-  }
-})();
+// Forçar uso do Node.js runtime
+export const runtime = 'nodejs';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:your-email@domain.com';
 
-if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-  console.error('VAPID keys ausentes. VAPID_PUBLIC_KEY:', VAPID_PUBLIC_KEY, 'VAPID_PRIVATE_KEY:', VAPID_PRIVATE_KEY);
-}
-
-if (webpush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+// Configurar VAPID keys
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  console.log('✅ Web-push configurado com VAPID keys');
+} else {
+  console.error('❌ VAPID keys ausentes. PUBLIC:', !!VAPID_PUBLIC_KEY, 'PRIVATE:', !!VAPID_PRIVATE_KEY);
 }
 
 export async function OPTIONS() {
@@ -38,11 +30,14 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   try {
-    if (!webpush) {
-      return NextResponse.json({ error: 'web-push não disponível no runtime atual' }, { status: 500 });
-    }
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-      return NextResponse.json({ error: 'VAPID keys ausentes no backend' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'VAPID keys ausentes no backend',
+        debug: {
+          hasPublicKey: !!VAPID_PUBLIC_KEY,
+          hasPrivateKey: !!VAPID_PRIVATE_KEY
+        }
+      }, { status: 500 });
     }
     const { subscription, recovery } = await req.json();
     if (!subscription) {
