@@ -27,6 +27,7 @@ export function ChatInput({
   onChange,
 }: ChatInputProps) {
   const [internalValue, setInternalValue] = useState('');
+  const [animationDone, setAnimationDone] = useState(false);
   const controlled =
     typeof value === 'string' && typeof onChange === 'function';
   const textareaValue = controlled ? value : internalValue;
@@ -92,6 +93,7 @@ export function ChatInput({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      onAnimationComplete={() => setAnimationDone(true)}
     >
       <form onSubmit={handleSubmit} className="relative">
         <div className="relative flex items-end bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 focus-within:border-indigo-500 dark:focus-within:border-indigo-400">
@@ -104,22 +106,19 @@ export function ChatInput({
             placeholder={
               isLoading ? 'Clara está pensando...' : 'Digite sua mensagem...'
             }
-            disabled={isLoading || disabled}
+            disabled={isLoading || disabled || !animationDone}
             className="flex-1 bg-transparent border-0 outline-none resize-none px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm leading-relaxed min-h-[44px] max-h-[120px]"
             rows={1}
-            style={{
-              height: 'auto',
-              overflowY: 'hidden',
-            }}
+            style={{ height: 'auto', overflowY: 'hidden' }}
           />
 
           <div className="flex items-end p-2">
             <Button
               type="submit"
               size="sm"
-              disabled={!canSend}
+              disabled={!canSend || !animationDone}
               className={`h-8 w-8 rounded-xl p-0 transition-all duration-200 ${
-                canSend
+                canSend && animationDone
                   ? 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-sm hover:shadow-md'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
               }`}

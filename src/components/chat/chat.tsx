@@ -14,14 +14,13 @@ import { ChatInput } from '@/components/chat/chat-input';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { CheckoutComponent } from '@/components/clara/checkout-component';
 import { TypingIndicator } from '@/components/chat/typing-indicator';
-import { SalesFlowDemo } from '@/components/chat/sales-flow-demo';
-import { PWAIntegration } from '@/components/chat/pwa-integration';
 import { PWAFeatures } from '@/components/pwa/pwa-features';
 import { useChatStore, createInitialClaraState } from '@/lib/chat-store';
 import { Bot, CheckCircle } from 'lucide-react';
-import { usePWA } from '@/lib/pwa-manager';
 
 export function Chat() {
+  // Estado para controlar se as sugestões terminaram de animar
+  const [suggestionsDone, setSuggestionsDone] = useState(false);
   const {
     currentThreadId,
     isLoading,
@@ -35,8 +34,6 @@ export function Chat() {
     getCurrentThread,
     updateClaraState,
   } = useChatStore();
-  const { sendFunNotification } = usePWA();
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -58,7 +55,6 @@ export function Chat() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showPWAIntegration, setShowPWAIntegration] = useState(false);
-  const [showSalesDemo, setShowSalesDemo] = useState(false);
 
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
@@ -467,17 +463,6 @@ export function Chat() {
   }, [isDesktop, isMounted]);
 
 
-  // Helper para converter VAPID para Uint8Array
-  function urlBase64ToUint8Array(base64String: string) {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }
 
   return (
     <>
@@ -531,162 +516,6 @@ export function Chat() {
                     {isKeyboardVisible && currentThread?.messages.length === 0 && (
                       <div key="keyboard-spacer" style={{ height: Math.min(keyboardHeight * 0.3, 100) }} />
                     )}
-                    {/* Cards destacados para Push e PWA Features */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                      {/* Card Push Notification */}
-                      <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-6 text-white shadow-lg border border-blue-400/30 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-                        <div className="relative">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                              <span className="text-xl">🔔</span>
-                            </div>
-                            <h3 className="font-bold text-lg text-white">Push Notifications</h3>
-                          </div>
-                          <p className="text-blue-100 text-sm mb-4 leading-relaxed">
-                            Teste notificações push reais e veja como seus clientes receberão alertas personalizados!
-                          </p>
-                          <button
-                            onClick={async () => {
-                              try {
-                                console.log('🔔 Iniciando teste de push notification...');
-                                
-                                // Primeiro, tentar notificação local via Service Worker
-                                if ('serviceWorker' in navigator) {
-                                  const reg = await navigator.serviceWorker.ready;
-                                  if (reg.active) {
-                                    reg.active.postMessage({
-                                      type: 'SEND_FUN_NOTIFICATION',
-                                      data: {
-                                        title: '🎉 Push Demo Funcionando!',
-                                        body: 'Esta é uma demonstração do sistema de notificações da Donna AI!'
-                                      }
-                                    });
-                                    console.log('✅ Notificação local enviada');
-                                  }
-                                }
-                                
-                                // Aguardar um pouco e tentar push real
-                                setTimeout(async () => {
-                                  try {
-                                    const reg = await navigator.serviceWorker.ready;
-                                    let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || window.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-                                    vapidKey = vapidKey.replace(/\s/g, '');
-                                    
-                                    if (!vapidKey || vapidKey.length < 40) {
-                                      console.warn('VAPID key não configurada, usando apenas notificação local');
-                                      return;
-                                    }
-                                    
-                                    let appServerKey;
-                                    try {
-                                      appServerKey = urlBase64ToUint8Array(vapidKey);
-                                      console.log('✅ VAPID key convertida com sucesso');
-                                    } catch (e) {
-                                      console.error('Erro na conversão da VAPID key:', e);
-                                      return;
-                                    }
-                                    
-                                    let sub;
-                                    try {
-                                      sub = await reg.pushManager.getSubscription();
-                                      if (!sub) {
-                                        sub = await reg.pushManager.subscribe({
-                                          userVisibleOnly: true,
-                                          applicationServerKey: appServerKey
-                                        });
-                                      }
-                                      console.log('✅ Push subscription obtida');
-                                    } catch (err) {
-                                      console.error('Erro ao criar push subscription:', err);
-                                      return;
-                                    }
-                                    
-                                    const isProd = typeof window !== 'undefined' && window.location.hostname === 'www.numbly.life';
-                                    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (isProd ? 'https://www.numbly.life' : 'http://localhost:3000');
-                                    const endpoint = `${baseUrl}/api/push/demo`;
-                                    
-                                    const resp = await fetch(endpoint, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ subscription: sub }),
-                                    });
-                                    
-                                    if (resp.ok) {
-                                      console.log('✅ Push notification enviada com sucesso!');
-                                    } else {
-                                      const errorText = await resp.text();
-                                      console.error('❌ Erro no servidor:', resp.status, errorText);
-                                    }
-                                  } catch (err) {
-                                    console.error('❌ Erro ao enviar push:', err);
-                                  }
-                                }, 1000);
-                                
-                              } catch (err) {
-                                console.error('❌ Erro geral:', err);
-                              }
-                            }}
-                            className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20"
-                          >
-                            Testar Push Agora
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Card PWA Features */}
-                      <div className="bg-gradient-to-br from-green-500 to-teal-600 rounded-xl p-6 text-white shadow-lg border border-green-400/30 relative overflow-hidden">
-                        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -ml-10 -mb-10"></div>
-                        <div className="relative">
-                          <div className="flex items-center gap-3 mb-3">
-                            <h3 className="font-bold text-lg text-white flex items-center gap-2">
-                              <span className="text-xl">📱</span>
-                              PWA Features
-                            </h3>
-                          </div>
-                          <p className="text-green-100 text-sm mb-4 leading-relaxed">
-                            Descubra como transformar seu chat em um app nativo com recursos avançados!
-                          </p>
-                          <button
-                            onClick={() => setShowPWAIntegration(true)}
-                            className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20"
-                          >
-                            Explorar PWA
-                          </button>
-      {/* PWA Features Modal */}
-      <AnimatePresence>
-        {showPWAIntegration && (
-          <motion.div
-            key="pwa-features-modal"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowPWAIntegration(false)}
-          >
-            <div
-              className="bg-background rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-0 relative max-h-[90vh] flex flex-col"
-              onClick={e => e.stopPropagation()}
-            >
-              <button
-                className="absolute top-3 right-3 z-10 text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setShowPWAIntegration(false)}
-                aria-label="Fechar"
-                type="button"
-              >
-                <span className="text-2xl">×</span>
-              </button>
-              <div className="overflow-y-auto p-0 max-h-[85vh] scrollbar-thin scrollbar-thumb-black/60 scrollbar-track-transparent">
-                <PWAFeatures />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-                        </div>
-                      </div>
-                    </div>
                     {/* Logo Donna IA */}
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
                       <Bot className="w-8 h-8 text-white" />
@@ -706,6 +535,7 @@ export function Chat() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
                         className="space-y-3 w-full max-w-md mx-auto"
+                        onAnimationComplete={() => setSuggestionsDone(true)}
                       >
                         {suggestionQuestions.map((q, i) => (
                           <motion.button
@@ -758,16 +588,18 @@ export function Chat() {
         </div>
 
         {/* Input - Fixo no bottom */}
-        <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 z-50 sticky bottom-0 min-h-0">
-          <div className="max-w-2xl mx-auto">
-            <ChatInput
-              onSend={handleSendMessage}
-              isLoading={isLoading}
-              inputRef={inputRef}
-              onFocus={handleInputFocus}
-            />
+        {(suggestionsDone || (currentThread?.messages.length ?? 0) > 0) && (
+          <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 z-50 sticky bottom-0 min-h-0">
+            <div className="max-w-2xl mx-auto">
+              <ChatInput
+                onSend={handleSendMessage}
+                isLoading={isLoading}
+                inputRef={inputRef}
+                onFocus={handleInputFocus}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Checkout Modal */}
@@ -776,6 +608,24 @@ export function Chat() {
         onClose={() => setShowCheckout(false)}
         onSuccess={handleCheckoutSuccess}
       />
+
+      {/* PWA Features Modal - Full Screen */}
+      <AnimatePresence>
+        {showPWAIntegration && (
+          <motion.div
+            key="pwa-features-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[100] bg-background"
+          >
+            <div className="h-full w-full overflow-y-auto">
+              <PWAFeatures />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Success Message */}
       <AnimatePresence>

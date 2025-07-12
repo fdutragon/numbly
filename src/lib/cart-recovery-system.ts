@@ -438,13 +438,13 @@ export class CartRecoverySystem {
   }
 
   // Analytics (para implementar integração)
-  private trackEvent(event: string, data: any): void {
+  private trackEvent(event: string, data: { sessionId?: string; deviceId?: string; cartValue?: number }): void {
     // Implementar integração com Google Analytics, Mixpanel, etc.
     console.log(`📊 Analytics Event: ${event}`, data);
     
     // Exemplo para Google Analytics
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', event, {
+    if (typeof window !== 'undefined' && (window as typeof window & { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as typeof window & { gtag: (...args: unknown[]) => void }).gtag('event', event, {
         custom_parameter_1: data.sessionId,
         custom_parameter_2: data.deviceId,
         value: data.cartValue
