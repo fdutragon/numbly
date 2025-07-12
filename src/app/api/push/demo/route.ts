@@ -29,18 +29,33 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+  console.log('🚀 Push Demo endpoint chamado');
+  
   try {
+    console.log('📋 Verificando VAPID keys...');
+    console.log('VAPID_PUBLIC_KEY exists:', !!VAPID_PUBLIC_KEY);
+    console.log('VAPID_PRIVATE_KEY exists:', !!VAPID_PRIVATE_KEY);
+    console.log('VAPID_SUBJECT:', VAPID_SUBJECT);
+    
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+      console.error('❌ VAPID keys missing');
       return NextResponse.json({ 
         error: 'VAPID keys ausentes no backend',
         debug: {
           hasPublicKey: !!VAPID_PUBLIC_KEY,
-          hasPrivateKey: !!VAPID_PRIVATE_KEY
+          hasPrivateKey: !!VAPID_PRIVATE_KEY,
+          subject: VAPID_SUBJECT,
+          env: process.env.NODE_ENV
         }
       }, { status: 500 });
     }
+    
+    console.log('📦 Parsing request body...');
     const { subscription, recovery } = await req.json();
+    console.log('Subscription endpoint:', subscription?.endpoint?.substring(0, 50) + '...');
+    
     if (!subscription) {
+      console.error('❌ No subscription provided');
       return NextResponse.json({ error: 'Subscription não enviada' }, { status: 400 });
     }
 
