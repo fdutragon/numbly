@@ -218,6 +218,7 @@ export function PWAIntegration({ isVisible, onClose }: PWAIntegrationProps) {
             </motion.div>
           )}
         </div>
+        </div>
       </motion.div>
     </div>
   );

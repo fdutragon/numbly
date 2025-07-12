@@ -461,10 +461,6 @@ export function Chat() {
     }
   }, [isDesktop, isMounted]);
 
-  // Card de sugestão para push notification
-  const handleSendPushDemo = async () => {
-    await sendFunNotification();
-  };
 
   // Helper para converter VAPID para Uint8Array
   function urlBase64ToUint8Array(base64String: string) {

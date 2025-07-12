@@ -220,6 +220,11 @@ export class PWAManager {
     return isActive;
   }
 
+  // Obter Device ID (público)
+  getDeviceId(): string {
+    return this.userId;
+  }
+
   // Obter informações da PWA
   getPWAInfo(): {
     isStandalone: boolean;
@@ -285,6 +290,6 @@ export function usePWA() {
     getPWAInfo: () => pwaManager.getPWAInfo(),
     requestNotificationPermission: () => pwaManager.requestNotificationPermission(),
     showInstallPrompt: () => pwaManager.showInstallPrompt(),
-    getDeviceId: () => pwaManager.userId
+    getDeviceId: () => pwaManager.getDeviceId()
   };
 }
