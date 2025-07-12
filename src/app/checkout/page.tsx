@@ -348,7 +348,7 @@ export default function CheckoutPage() {
   }, [customerName, customerEmail, customerPhone, customerCpf]);
 
   return (
-    <div className="min-h-screen bg-background h-screen overflow-y-auto max-h-dvh">
+    <div className="min-h-screen bg-background h-screen overflow-y-auto scrollbar-none max-h-dvh">
       {/* Alerta de contato */}
       <div className="w-full bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 px-4 py-3 text-sm mb-2">
         Em até 24 horas úteis entraremos em contato para implementar o chat direto no seu WhatsApp!
