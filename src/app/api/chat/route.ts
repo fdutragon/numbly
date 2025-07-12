@@ -5,7 +5,7 @@ import {
   updateDonnaState,
   createInitialDonnaState,
   type DonnaResponse,
-} from '@/lib/donna-ai-engine';
+} from '@/lib/donna-ai-engine-v2';
 import { type ClaraState } from '@/lib/chat-store';
 
 // Simples storage em memória para contexto por threadId com TTL
