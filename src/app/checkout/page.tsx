@@ -591,6 +591,27 @@ export default function CheckoutPage() {
                 ) : null}
                 Pagar {planDetails[plan].price}
               </Button>
+
+              {/* Botão de ajuda via WhatsApp sempre visível após o método Cartão */}
+              <div className="sticky bottom-0 z-40 bg-background/90 pt-2 pb-2 mt-4">
+                <Card className="p-4">
+                  <div className="text-center">
+                    <Button
+                      onClick={() =>
+                        window.open(
+                          'https://wa.me/5511999999999?text=Olá! Preciso de ajuda com minha assinatura Donna IA',
+                          '_blank'
+                        )
+                      }
+                      variant="outline"
+                      className="w-full h-9 text-sm"
+                    >
+                      <MessageCircle className="h-3 w-3 mr-1" />
+                      Ajuda via WhatsApp
+                    </Button>
+                  </div>
+                </Card>
+              </div>
             </TabsContent>
 
             <TabsContent value="pix" className="space-y-3">
