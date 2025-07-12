@@ -54,6 +54,8 @@ export function Chat() {
   // Estados para funcionalidades de intenção
   const [showCheckout, setShowCheckout] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showPWAIntegration, setShowPWAIntegration] = useState(false);
+  const [showSalesDemo, setShowSalesDemo] = useState(false);
 
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
@@ -526,98 +528,130 @@ export function Chat() {
                     {isKeyboardVisible && currentThread?.messages.length === 0 && (
                       <div key="keyboard-spacer" style={{ height: Math.min(keyboardHeight * 0.3, 100) }} />
                     )}
-                    {/* Card de envio de push notification - AGORA ACIMA DO LOGO DONNA */}
-                    <div className="rounded-2xl bg-gradient-to-r from-primary/80 to-pink-500/80 p-4 flex items-center gap-4 shadow-lg border border-primary/30 mb-8 justify-center">
-                      <button
-                        onClick={async () => {
-                          try {
-                            console.log('🔔 Iniciando teste de push notification...');
-                            
-                            // Primeiro, tentar notificação local via Service Worker
-                            if ('serviceWorker' in navigator) {
-                              const reg = await navigator.serviceWorker.ready;
-                              if (reg.active) {
-                                reg.active.postMessage({
-                                  type: 'SEND_FUN_NOTIFICATION',
-                                  data: {
-                                    title: '🎉 Notificação Local Funcionando!',
-                                    body: 'Esta é uma notificação local via Service Worker. Agora vamos tentar push real...'
-                                  }
-                                });
-                                console.log('✅ Notificação local enviada');
-                              }
-                            }
-                            
-                            // Aguardar um pouco e tentar push real
-                            setTimeout(async () => {
+                    {/* Cards destacados para Push e PWA Features */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                      {/* Card Push Notification */}
+                      <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-6 text-white shadow-lg border border-blue-400/30 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+                        <div className="relative">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                              <span className="text-xl">🔔</span>
+                            </div>
+                            <h3 className="font-bold text-lg text-white">Push Notifications</h3>
+                          </div>
+                          <p className="text-blue-100 text-sm mb-4 leading-relaxed">
+                            Teste notificações push reais e veja como seus clientes receberão alertas personalizados!
+                          </p>
+                          <button
+                            onClick={async () => {
                               try {
-                                const reg = await navigator.serviceWorker.ready;
-                                let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || window.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-                                vapidKey = vapidKey.replace(/\s/g, '');
-                                console.log('VAPID Key (sanitized):', vapidKey, 'Length:', vapidKey.length);
+                                console.log('🔔 Iniciando teste de push notification...');
                                 
-                                if (!vapidKey || vapidKey.length < 40) {
-                                  console.warn('VAPID key não configurada, usando apenas notificação local');
-                                  return;
-                                }
-                                
-                                let appServerKey;
-                                try {
-                                  appServerKey = urlBase64ToUint8Array(vapidKey);
-                                  console.log('✅ VAPID key convertida com sucesso');
-                                } catch (e) {
-                                  console.error('Erro na conversão da VAPID key:', e);
-                                  return;
-                                }
-                                
-                                let sub;
-                                try {
-                                  sub = await reg.pushManager.getSubscription();
-                                  if (!sub) {
-                                    sub = await reg.pushManager.subscribe({
-                                      userVisibleOnly: true,
-                                      applicationServerKey: appServerKey
+                                // Primeiro, tentar notificação local via Service Worker
+                                if ('serviceWorker' in navigator) {
+                                  const reg = await navigator.serviceWorker.ready;
+                                  if (reg.active) {
+                                    reg.active.postMessage({
+                                      type: 'SEND_FUN_NOTIFICATION',
+                                      data: {
+                                        title: '🎉 Push Demo Funcionando!',
+                                        body: 'Esta é uma demonstração do sistema de notificações da Donna AI!'
+                                      }
                                     });
+                                    console.log('✅ Notificação local enviada');
                                   }
-                                  console.log('✅ Push subscription obtida');
-                                } catch (err) {
-                                  console.error('Erro ao criar push subscription:', err);
-                                  return;
                                 }
                                 
-                                const isProd = typeof window !== 'undefined' && window.location.hostname === 'www.numbly.life';
-                                const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (isProd ? 'https://www.numbly.life' : 'http://localhost:3000');
-                                const endpoint = `${baseUrl}/api/push/demo`;
+                                // Aguardar um pouco e tentar push real
+                                setTimeout(async () => {
+                                  try {
+                                    const reg = await navigator.serviceWorker.ready;
+                                    let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || window.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+                                    vapidKey = vapidKey.replace(/\s/g, '');
+                                    
+                                    if (!vapidKey || vapidKey.length < 40) {
+                                      console.warn('VAPID key não configurada, usando apenas notificação local');
+                                      return;
+                                    }
+                                    
+                                    let appServerKey;
+                                    try {
+                                      appServerKey = urlBase64ToUint8Array(vapidKey);
+                                      console.log('✅ VAPID key convertida com sucesso');
+                                    } catch (e) {
+                                      console.error('Erro na conversão da VAPID key:', e);
+                                      return;
+                                    }
+                                    
+                                    let sub;
+                                    try {
+                                      sub = await reg.pushManager.getSubscription();
+                                      if (!sub) {
+                                        sub = await reg.pushManager.subscribe({
+                                          userVisibleOnly: true,
+                                          applicationServerKey: appServerKey
+                                        });
+                                      }
+                                      console.log('✅ Push subscription obtida');
+                                    } catch (err) {
+                                      console.error('Erro ao criar push subscription:', err);
+                                      return;
+                                    }
+                                    
+                                    const isProd = typeof window !== 'undefined' && window.location.hostname === 'www.numbly.life';
+                                    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (isProd ? 'https://www.numbly.life' : 'http://localhost:3000');
+                                    const endpoint = `${baseUrl}/api/push/demo`;
+                                    
+                                    const resp = await fetch(endpoint, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ subscription: sub }),
+                                    });
+                                    
+                                    if (resp.ok) {
+                                      console.log('✅ Push notification enviada com sucesso!');
+                                    } else {
+                                      const errorText = await resp.text();
+                                      console.error('❌ Erro no servidor:', resp.status, errorText);
+                                    }
+                                  } catch (err) {
+                                    console.error('❌ Erro ao enviar push:', err);
+                                  }
+                                }, 1000);
                                 
-                                console.log('📡 Enviando para:', endpoint);
-                                
-                                const resp = await fetch(endpoint, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ subscription: sub }),
-                                });
-                                
-                                if (resp.ok) {
-                                  console.log('✅ Push notification enviada com sucesso!');
-                                } else {
-                                  const errorText = await resp.text();
-                                  console.error('❌ Erro no servidor:', resp.status, errorText);
-                                }
                               } catch (err) {
-                                console.error('❌ Erro ao enviar push:', err);
+                                console.error('❌ Erro geral:', err);
                               }
-                            }, 2000);
-                            
-                          } catch (err) {
-                            console.error('❌ Erro geral:', err);
-                          }
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-primary font-bold rounded-lg shadow transition-colors"
-                      >
-                        <span role="img" aria-label="notificação">🔔</span>
-                        Testar Notificação Push
-                      </button>
-                      <span className="text-white font-medium text-sm">Receba uma notificação real agora!</span>
+                            }}
+                            className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20"
+                          >
+                            Testar Push Agora
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Card PWA Features */}
+                      <div className="bg-gradient-to-br from-green-500 to-teal-600 rounded-xl p-6 text-white shadow-lg border border-green-400/30 relative overflow-hidden">
+                        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -ml-10 -mb-10"></div>
+                        <div className="relative">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                              <span className="text-xl">📱</span>
+                            </div>
+                            <h3 className="font-bold text-lg text-white">PWA Features</h3>
+                          </div>
+                          <p className="text-green-100 text-sm mb-4 leading-relaxed">
+                            Descubra como transformar seu chat em um app nativo com recursos avançados!
+                          </p>
+                          <button
+                            onClick={() => setShowPWAIntegration(true)}
+                            className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20"
+                          >
+                            Explorar PWA
+                          </button>
+                        </div>
+                      </div>
                     </div>
                     {/* Logo Donna IA */}
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">

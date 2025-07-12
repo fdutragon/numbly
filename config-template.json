@@ -1,0 +1,30 @@
+{
+  "push_notifications": {
+    "vapid_keys": {
+      "public_key": "<your-public-key>",
+      "private_key": "<your-private-key>"
+    },
+    "endpoint": "<your-push-api-endpoint>"
+  },
+  "device_management": {
+    "local_storage_key": "donna-device-id",
+    "cart_recovery_messages": 5,
+    "message_interval": "<interval-in-ms>"
+  },
+  "modals": {
+    "fullscreen": true,
+    "background_color": "#000000"
+  },
+  "pwa": {
+    "manifest": "manifest.json",
+    "service_worker": "sw.js"
+  },
+  "frontend_settings": {
+    "test_push_notification_button": true
+  },
+  "build_config": {
+    "target": "production",
+    "optimize": true
+  }
+}
+
