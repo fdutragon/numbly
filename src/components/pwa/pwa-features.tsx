@@ -47,7 +47,6 @@ export function PWAFeatures() {
 
   const features = [
     {
-      icon: <Download className="w-6 h-6" />,
       title: "📱 App Nativo",
       description: "Instale a Donna AI como um app em seu dispositivo",
       action: "Instalar PWA",
@@ -55,7 +54,6 @@ export function PWAFeatures() {
       enabled: pwaInfo?.canInstall && !pwaInfo?.isStandalone
     },
     {
-      icon: <Bell className="w-6 h-6" />,
       title: "🔔 Notificações Push",
       description: "Receba lembretes e ofertas diretamente no seu dispositivo",
       action: notificationSent ? "Notificação Enviada! 🎉" : "Testar Notificação",
@@ -63,7 +61,6 @@ export function PWAFeatures() {
       enabled: pwaInfo?.notificationPermission !== 'denied'
     },
     {
-      icon: <ShoppingCart className="w-6 h-6" />,
       title: "🛒 Recuperação de Carrinho",
       description: "Sistema inteligente que lembra você de finalizar sua compra",
       action: isCartRecoveryActive ? "Parar Recuperação" : "Iniciar Recuperação",
@@ -71,7 +68,6 @@ export function PWAFeatures() {
       enabled: true
     },
     {
-      icon: <Zap className="w-6 h-6" />,
       title: "⚡ Acesso Rápido",
       description: "Abra a Donna AI instantaneamente, mesmo offline",
       action: "Sempre Disponível",
@@ -81,7 +77,21 @@ export function PWAFeatures() {
   ];
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6 bg-background/95 rounded-2xl shadow-xl">
+    <div className="w-full max-w-6xl mx-auto p-6 bg-background/95 rounded-2xl shadow-xl relative">
+      <button
+        className="absolute top-4 left-4 z-50 text-muted-foreground hover:text-foreground transition-colors bg-white/70 dark:bg-black/40 rounded-full p-2 shadow-md"
+        onClick={() => {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            window.location.reload();
+          }
+        }}
+        aria-label="Fechar"
+        type="button"
+      >
+        <span className="text-2xl leading-none">×</span>
+      </button>
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold mb-4">
           🚀 Donna AI - Sua Vendedora no Bolso
@@ -95,8 +105,7 @@ export function PWAFeatures() {
         {features.map((feature, index) => (
           <Card key={index} className="hover:shadow-lg transition-shadow bg-card/90 dark:bg-card/80 border border-thin">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                {feature.icon}
+              <CardTitle className="text-lg font-semibold text-foreground mb-1">
                 {feature.title}
               </CardTitle>
             </CardHeader>
@@ -138,46 +147,6 @@ export function PWAFeatures() {
         </CardContent>
       </Card>
 
-      {/* Diferencial de Negócio */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <Star className="w-6 h-6 text-yellow-500" />
-            💼 Diferencial Competitivo
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-              <div>
-                <h4 className="font-semibold">Seu Próprio Chat App</h4>
-                <p className="text-gray-600">
-                  Seus clientes podem instalar sua loja como um app e ter acesso direto à Donna AI
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-              <div>
-                <h4 className="font-semibold">Notificações Inteligentes</h4>
-                <p className="text-gray-600">
-                  Envie promoções, lembretes e ofertas diretamente para seus clientes
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-              <div>
-                <h4 className="font-semibold">Recuperação Automática</h4>
-                <p className="text-gray-600">
-                  5 notificações estratégicas para recuperar vendas perdidas sem banco de dados
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Cronograma de Recuperação */}
       {isCartRecoveryActive && (

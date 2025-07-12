@@ -639,10 +639,10 @@ export function Chat() {
                         <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -ml-10 -mb-10"></div>
                         <div className="relative">
                           <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                            <h3 className="font-bold text-lg text-white flex items-center gap-2">
                               <span className="text-xl">📱</span>
-                            </div>
-                            <h3 className="font-bold text-lg text-white">PWA Features</h3>
+                              PWA Features
+                            </h3>
                           </div>
                           <p className="text-green-100 text-sm mb-4 leading-relaxed">
                             Descubra como transformar seu chat em um app nativo com recursos avançados!
@@ -666,7 +666,7 @@ export function Chat() {
             onClick={() => setShowPWAIntegration(false)}
           >
             <div
-              className="bg-background rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-0 relative"
+              className="bg-background rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-0 relative max-h-[90vh] flex flex-col"
               onClick={e => e.stopPropagation()}
             >
               <button
@@ -677,7 +677,9 @@ export function Chat() {
               >
                 <span className="text-2xl">×</span>
               </button>
-              <PWAFeatures />
+              <div className="overflow-y-auto p-0 max-h-[85vh] scrollbar-thin scrollbar-thumb-black/60 scrollbar-track-transparent">
+                <PWAFeatures />
+              </div>
             </div>
           </motion.div>
         )}
