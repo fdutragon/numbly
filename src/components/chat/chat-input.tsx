@@ -33,6 +33,7 @@ export function ChatInput({
   const textareaValue = controlled ? value : internalValue;
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || internalRef;
+  const [shouldAutofocus, setShouldAutofocus] = useState(false);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -51,6 +52,19 @@ export function ChatInput({
       }
     }
   }, [textareaValue, textareaRef]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Desktop: largura mínima 768px
+      if (window.innerWidth >= 768) {
+        setShouldAutofocus(true);
+        // Foca imediatamente se possível
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 100);
+      }
+    }
+  }, [textareaRef]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,6 +124,7 @@ export function ChatInput({
             className="flex-1 bg-transparent border-0 outline-none resize-none px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm leading-relaxed min-h-[44px] max-h-[120px]"
             rows={1}
             style={{ height: 'auto', overflowY: 'hidden' }}
+            autoFocus={shouldAutofocus}
           />
 
           <div className="flex items-end p-2">

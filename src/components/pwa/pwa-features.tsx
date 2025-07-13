@@ -24,10 +24,14 @@ export function PWAFeatures() {
   } = usePWA();
 
   useEffect(() => {
-    setPWAInfo(getPWAInfo());
+    const updatePWAInfo = () => {
+      setPWAInfo(getPWAInfo());
+    };
+    
+    updatePWAInfo();
     // Se quiser atualizar dinamicamente, adicione listeners customizados aqui
-    // Exemplo: window.addEventListener('appinstalled', () => setPWAInfo(getPWAInfo()));
-  }, []); // Correto: roda só no mount
+    // Exemplo: window.addEventListener('appinstalled', updatePWAInfo);
+  }, [getPWAInfo]); // Adicionada dependência
 
   const handleSendNotification = async () => {
     await sendFunNotification();

@@ -12,10 +12,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChatMessage } from '@/components/chat/chat-message';
 import { ChatInput } from '@/components/chat/chat-input';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { CheckoutComponent } from '@/components/clara/checkout-component';
+import { CheckoutComponent } from '@/components/donna/checkout-component';
 import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { PWAFeatures } from '@/components/pwa/pwa-features';
-import { useChatStore, createInitialClaraState } from '@/lib/chat-store';
+import { useChatStore } from '@/lib/chat-store';
 import { Bot, CheckCircle } from 'lucide-react';
 
 export function Chat() {
@@ -54,6 +54,7 @@ export function Chat() {
   // Estados para funcionalidades de intenção
   const [showCheckout, setShowCheckout] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showPWAIntegration, setShowPWAIntegration] = useState(false);
 
   // Sempre inicia uma nova conversa ao montar o componente
@@ -62,32 +63,9 @@ export function Chat() {
     if (!currentThreadId) {
       const newThreadId = createThread();
       setCurrentThread(newThreadId);
-    } else {
-      // Limpa as mensagens da thread atual ao recarregar
-      if (currentThreadId && currentThread) {
-        // Executa updateClaraState apenas no client para evitar mismatch de Date.now()
-        if (typeof window !== 'undefined') {
-          updateClaraState(currentThreadId, {
-            ...createInitialClaraState(),
-            lastInteraction: currentThread.claraState?.lastInteraction || Date.now(),
-            salesMetrics: {
-              ...createInitialClaraState().salesMetrics,
-              lastActiveTime: currentThread.claraState?.salesMetrics?.lastActiveTime || Date.now(),
-            },
-          });
-        }
-        // Limpa as mensagens mantendo o threadId
-        if (currentThread.messages.length > 0) {
-          useChatStore.setState(state => ({
-            threads: state.threads.map(thread =>
-              thread.id === currentThreadId
-                ? { ...thread, messages: [] }
-                : thread
-            ),
-          }));
-        }
-      }
     }
+    // NÃO faz mais nada se já existe thread!
+    // NÃO reseta mensagens, NÃO reseta estado!
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
