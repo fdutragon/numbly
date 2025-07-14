@@ -16,8 +16,8 @@ if (!GROQ_API_KEY && !GEMINI_API_KEY) {
 function getGitDiff() {
   try {
     return execSync('git diff --cached', { encoding: 'utf8' });
-  } catch (e) {
-    console.error('Erro ao obter diff do git:', e.message);
+  } catch (error) {
+    console.error('Erro ao obter diff do git:', error.message);
     process.exit(1);
   }
 }

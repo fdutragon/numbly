@@ -16,11 +16,18 @@ import { CheckoutComponent } from '@/components/donna/checkout-component';
 import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { PWAFeatures } from '@/components/pwa/pwa-features';
 import { useChatStore } from '@/lib/chat-store';
+import { useFunnelAnalytics } from '@/lib/funnel-analytics';
+import { ChatIntroCards } from '@/components/chat/chat-intro-cards';
+import { generateDisruptiveResponse } from '@/lib/disruptive-donna-engine';
 import { Bot, CheckCircle } from 'lucide-react';
 
 export function Chat() {
   // Estado para controlar se as sugestões terminaram de animar
   const [suggestionsDone, setSuggestionsDone] = useState(false);
+  // Estado para controlar o fluxo inicial dos cards
+  const [showCards, setShowCards] = useState(true);
+  // Estado para controlar o estágio do fluxo disruptivo
+  const [currentFlowStage, setCurrentFlowStage] = useState<string>('');
   const {
     currentThreadId,
     isLoading,
@@ -34,17 +41,23 @@ export function Chat() {
     getCurrentThread,
     updateClaraState,
   } = useChatStore();
+  
+  // Analytics do funil de vendas
+  const { metrics, advanceStage, recordTouchpoint, recordConversion, increaseLeadScore } = useFunnelAnalytics(currentThreadId || '');
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Garante que currentThread sempre existe
   const currentThread = getCurrentThread();
 
   const [introTyping, setIntroTyping] = useState('');
   const introPhrases = useMemo(
     () => [
-      'Oi! 👋 Eu sou a Donna, sua vendedora digital 24/7.',
-      'Transformo seu WhatsApp numa máquina de vendas que nunca para.\n',
-      'Pronta para multiplicar suas vendas? 🚀',
+      'Oi! 👋 Sou a Donna, especialista em automação WhatsApp.',
+      'Ajudo empresários a vender R$ 50k+/mês no automático.\n',
+      'Qual seu maior desafio nas vendas? 🎯',
     ],
     []
   );
@@ -54,26 +67,37 @@ export function Chat() {
   // Estados para funcionalidades de intenção
   const [showCheckout, setShowCheckout] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showPWAIntegration, setShowPWAIntegration] = useState(false);
 
   // Sempre inicia uma nova conversa ao montar o componente
   useEffect(() => {
-    // Só cria novo thread se não existir um currentThreadId
+    // Garante que sempre temos um thread válido apenas na montagem inicial
     if (!currentThreadId) {
       const newThreadId = createThread();
       setCurrentThread(newThreadId);
     }
-    // NÃO faz mais nada se já existe thread!
-    // NÃO reseta mensagens, NÃO reseta estado!
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentThreadId, createThread, setCurrentThread]); // Adicionando dependências necessárias
+
+  // Listener para fechar modal PWA via evento customizado
+  useEffect(() => {
+    const handleClosePWAModal = () => {
+      setShowPWAIntegration(false);
+    };
+
+    window.addEventListener('closePWAModal', handleClosePWAModal);
+    
+    return () => {
+      window.removeEventListener('closePWAModal', handleClosePWAModal);
+    };
   }, []);
 
-  // Debug: log do threadId atual
+  // Debug: log do threadId atual - apenas quando muda
   useEffect(() => {
-    console.log('Current Thread ID:', currentThreadId);
-    console.log('Current Thread:', currentThread);
-  }, [currentThreadId, currentThread]);
+    if (currentThreadId) {
+      console.log('Current Thread ID:', currentThreadId);
+      console.log('Current Thread:', getCurrentThread());
+    }
+  }, [currentThreadId, getCurrentThread]); // Adicionando getCurrentThread às dependências
 
   // Scroll automático inteligente - sempre mostra a última mensagem completamente
   const scrollToBottom = (force = false, delay = 0) => {
@@ -101,24 +125,23 @@ export function Chat() {
                      introChar === introPhrases[introPhrases.length - 1].length;
     if (isFinished && !hasTypingFinished) {
       setHasTypingFinished(true);
-      // Removido: não faz scroll ao terminar o typing effect
-      // O scroll só ocorre quando há mensagens reais
     }
-  }, [introIndex, introChar, introPhrases, hasTypingFinished]);
+  }, [introIndex, introChar, introPhrases, hasTypingFinished]); // Adicionando introPhrases completo
 
   // Scroll ao receber nova mensagem (não durante intro)
+  const messagesLength = currentThread?.messages.length || 0;
   useEffect(() => {
-    if (currentThread?.messages.length && currentThread.messages.length > 0) {
+    if (messagesLength > 0) {
       scrollToBottom(true, 100);
     }
-  }, [currentThread?.messages.length]);
+  }, [messagesLength]); // Use a length como dependência ao invés do array completo
 
   // Remove todos os scrolls automáticos exceto após mensagem do usuário
 
   // Typing effect robusto: requestAnimationFrame + setTimeout para evitar travamentos
   useEffect(() => {
     // Não executa typing se já há mensagens ou se já terminou
-    if (currentThread?.messages.length) return;
+    if (messagesLength > 0) return;
     if (introIndex >= introPhrases.length) return;
     if (hasTypingFinished) return;
     
@@ -151,7 +174,7 @@ export function Chat() {
       if (rafId) cancelAnimationFrame(rafId);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [introChar, introIndex, introPhrases, currentThread?.messages.length, hasTypingFinished]);
+  }, [introChar, introIndex, introPhrases, messagesLength, hasTypingFinished]); // Usar messagesLength ao invés do array completo
 
   useEffect(() => {
     if (
@@ -163,10 +186,146 @@ export function Chat() {
     }
   }, [introIndex, introChar, introPhrases.length]);
 
+  // Função para lidar com cliques nos cards iniciais
+  const handleCardClick = (cardType: string) => {
+    setShowCards(false);
+    setCurrentFlowStage(cardType);
+    
+    // Usar o motor disruptivo para gerar resposta
+    const { response, nextAction, leadScoreIncrease } = generateDisruptiveResponse(
+      '', 
+      cardType
+    );
+    
+    // Aumentar lead score
+    if (leadScoreIncrease > 0) {
+      increaseLeadScore(leadScoreIncrease);
+    }
+    
+    // Criar thread se necessário
+    const threadId = currentThreadId || createThread();
+    if (!currentThreadId) {
+      setCurrentThread(threadId);
+    }
+    
+    // Adicionar resposta da Donna
+    addMessage(threadId, {
+      role: 'assistant',
+      content: response,
+    });
+    
+    // Executar próxima ação se necessária
+    if (nextAction) {
+      setTimeout(() => {
+        executeNextAction(nextAction);
+      }, 2000);
+    }
+  };
+
+  // Função para executar ações do fluxo
+  const executeNextAction = (action: string) => {
+    switch (action) {
+      case 'request_notifications':
+        // Solicitar permissão para notificações
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              handleCardClick('notifications_granted');
+            }
+          });
+        }
+        break;
+      case 'demo_whatsapp':
+        // Trigger demo notifications
+        const demoEvent = new CustomEvent('triggerDemoNotifications');
+        window.dispatchEvent(demoEvent);
+        break;
+      case 'show_analytics':
+        // Mostrar analytics no debug panel (já está visível)
+        break;
+      case 'push_app_download':
+        // Mostrar modal de download do app
+        break;
+      case 'open_checkout':
+        setShowCheckout(true);
+        break;
+    }
+  };
+
   const handleSendMessage = async (content: string) => {
-    await handleSend(content);
-    // Força scroll para mostrar a nova mensagem com delay maior
-    setTimeout(() => scrollToBottom(true), 200);
+    // Oculta cards quando primeira mensagem é enviada
+    if (showCards) {
+      setShowCards(false);
+    }
+    
+    // Registra touchpoint no analytics
+    recordTouchpoint('user_message');
+    
+    // Verificar se deve usar o motor disruptivo
+    const { response, nextAction, leadScoreIncrease } = generateDisruptiveResponse(
+      content, 
+      currentFlowStage
+    );
+    
+    // Se há resposta disruptiva específica, usar ela ao invés da API
+    if (response && currentFlowStage) {
+      // Criar thread se necessário
+      const threadId = currentThreadId || createThread();
+      if (!currentThreadId) {
+        setCurrentThread(threadId);
+      }
+      
+      // Adicionar mensagem do usuário
+      addMessage(threadId, {
+        role: 'user',
+        content,
+      });
+      
+      // Aumentar lead score
+      if (leadScoreIncrease > 0) {
+        increaseLeadScore(leadScoreIncrease);
+      }
+      
+      // Adicionar resposta da Donna
+      setTimeout(() => {
+        addMessage(threadId, {
+          role: 'assistant',
+          content: response,
+        });
+        
+        // Executar próxima ação se necessária
+        if (nextAction) {
+          setTimeout(() => {
+            executeNextAction(nextAction);
+          }, 2000);
+        }
+      }, 500);
+      
+      return;
+    }
+    
+    // Usar fluxo normal da API
+    try {
+      await handleSend(content);
+      // Força scroll para mostrar a nova mensagem com delay maior
+      setTimeout(() => scrollToBottom(true), 200);
+      
+      // Auto-foco apenas no desktop
+      if (isDesktop) {
+        setShouldRefocus(true);
+      }
+    } catch (error) {
+      console.error('Error in handleSendMessage:', error);
+      setLoading(false);
+      setTyping(false);
+      
+      // Adiciona mensagem de erro para o usuário
+      const threadId = currentThreadId || createThread();
+      addMessage(threadId, {
+        role: 'assistant',
+        content: 'Desculpe, houve um erro. Tente novamente em alguns instantes.',
+      });
+    }
   };
 
   // Função para focar no input com segurança
@@ -186,26 +345,74 @@ export function Chat() {
     }, 300);
   };
 
-  async function handleSend(content: string) {
-    // Garante que sempre temos um threadId válido
-    let threadId = currentThreadId;
-    if (!threadId) {
-      threadId = createThread();
-      setCurrentThread(threadId);
+  async function handleSend(content: string): Promise<void> {
+    // Validação de entrada
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      console.error('Invalid content provided to handleSend');
+      return;
     }
 
-    const thread = getCurrentThread();
-    const claraState = thread?.claraState || {};
+    // Garante que sempre temos um threadId válido ANTES de qualquer operação
+    let threadId: string = currentThreadId || '';
+    if (!threadId) {
+      try {
+        threadId = createThread();
+        setCurrentThread(threadId);
+      } catch (error) {
+        console.error('Failed to create thread:', error);
+        return;
+      }
+    }
+
+    // Verifica se a thread existe no store com tipo seguro
+    let thread: ReturnType<typeof getCurrentThread> = getCurrentThread();
+    if (!thread) {
+      // Se não existe, força a criação
+      try {
+        threadId = createThread();
+        setCurrentThread(threadId);
+        thread = getCurrentThread();
+      } catch (error) {
+        console.error('Failed to create thread in fallback:', error);
+        return;
+      }
+    }
+
+    // Fallback final: se ainda não existe, cria thread com estrutura mínima
+    if (!thread) {
+      console.error('Failed to create thread, using final fallback');
+      try {
+        threadId = createThread();
+        setCurrentThread(threadId);
+        thread = getCurrentThread(); // Usa a thread criada pelo store
+      } catch (error) {
+        console.error('All thread creation attempts failed:', error);
+        return;
+      }
+    }
+
+    const claraState: Record<string, unknown> = thread?.claraState || {};
 
     console.log('Sending message with threadId:', threadId);
     console.log('Current thread state:', thread);
     console.log('Clara state:', claraState);
 
-    // Add user message
-    addMessage(threadId, {
-      role: 'user',
-      content,
-    });
+    // Add user message with null check
+    try {
+      addMessage(threadId, {
+        role: 'user',
+        content,
+      });
+    } catch (error) {
+      console.error('Error adding message:', error);
+      // Recria thread se falhar
+      threadId = createThread();
+      setCurrentThread(threadId);
+      addMessage(threadId, {
+        role: 'user',
+        content,
+      });
+    }
 
     setLoading(true);
     setTyping(true);
@@ -227,16 +434,22 @@ export function Chat() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: content, // apenas a mensagem atual
-          threadId, // sempre envia o threadId
+          message: content,
+          threadId,
+          claraState: claraState
         }),
       });
 
-      console.log('API Request:', { message: content, threadId });
-      if (!response.ok) throw new Error('Failed to get response');
+      console.log('API Request:', { message: content, threadId, claraState });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const reader = response.body?.getReader();
-      if (!reader) throw new Error('No reader available');
+      if (!reader) {
+        throw new Error('No reader available from response');
+      }
 
       let assistantMessageId: string | null = null;
       let fullContent = '';
@@ -253,6 +466,10 @@ export function Chat() {
       assistantMessageId =
         updatedThread?.messages[updatedThread.messages.length - 1]?.id || null;
 
+      if (!assistantMessageId) {
+        throw new Error('Failed to create assistant message');
+      }
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -264,7 +481,8 @@ export function Chat() {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.content) {
+              
+              if (data.content && typeof data.content === 'string') {
                 fullContent += data.content;
                 if (assistantMessageId) {
                   updateMessage(threadId, assistantMessageId, {
@@ -273,6 +491,7 @@ export function Chat() {
                   });
                 }
               }
+              
               if (data.done && assistantMessageId) {
                 updateMessage(threadId, assistantMessageId, {
                   content: fullContent,
@@ -280,7 +499,7 @@ export function Chat() {
                 });
 
                 // Update Clara state/contexto da thread
-                if (data.claraState) {
+                if (data.claraState && typeof data.claraState === 'object') {
                   console.log(
                     'Updating Clara state for thread:',
                     threadId,
@@ -289,13 +508,23 @@ export function Chat() {
                   updateClaraState(threadId, data.claraState);
                 }
 
+                // Analytics: avança stage do funil se mudou
+                if (data.funnelStage && typeof data.funnelStage === 'string' && 
+                    data.funnelStage !== metrics?.currentStage) {
+                  advanceStage(data.funnelStage);
+                  console.log('🚀 Funil stage updated:', data.funnelStage);
+                }
+
                 // Garante que o threadId seja mantido
                 if (threadId && threadId !== currentThreadId) {
                   setCurrentThread(threadId);
                 }
 
                 // Handle payment modal
-                if (data.shouldShowPaymentModal) {
+                if (data.shouldShowPaymentModal === true) {
+                  // Analytics: registra conversão
+                  recordConversion('payment_modal_shown');
+                  
                   const userMessageLower = content.toLowerCase();
                   const plan =
                     userMessageLower.includes('pro') ||
@@ -307,12 +536,13 @@ export function Chat() {
                 }
 
                 // Handle email sent confirmation
-                if (data.emailSent) {
+                if (data.emailSent === true) {
                   setShowSuccessMessage(true);
                   setTimeout(() => setShowSuccessMessage(false), 3000);
                 }
               }
-            } catch {
+            } catch (parseError) {
+              console.warn('Failed to parse chunk:', parseError);
               // Ignore parsing errors for incomplete chunks
             }
           }
@@ -320,10 +550,14 @@ export function Chat() {
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+      }
+      
       addMessage(threadId, {
         role: 'assistant',
-        content:
-          'Desculpe, houve um erro. Tente novamente em alguns instantes.',
+        content: 'Desculpe, houve um erro de conexão. Tente novamente em alguns instantes.',
       });
     } finally {
       // Limpa o timeout
@@ -354,11 +588,11 @@ export function Chat() {
     introChar === introPhrases[introPhrases.length - 1].length;
 
   const suggestionQuestions: string[] = [
-    '🚀 Como Donna pode multiplicar minhas vendas?',
-    '💰 Quanto custa para ter Donna trabalhando 24/7?',
-    '⚡ Quanto tempo leva para implementar?',
-    '📧 Envie mais informações para meu email',
-    '🎯 Quero fazer um teste grátis agora!',
+    '� Quanto custa para ter vendas automáticas 24h?',
+    '⚡ Em quantos dias vou ver os primeiros resultados?',
+    '🚀 Como funciona na prática? Quero ver demonstração',
+    '📊 Tem casos reais de clientes que multiplicaram vendas?',
+    '🎯 Posso testar GRÁTIS por 7 dias sem compromisso?',
   ];
 
   // Controla montagem para evitar problemas de hidratação do ThemeToggle
@@ -368,10 +602,11 @@ export function Chat() {
   }, []);
 
   // Detecta altura do teclado (mobile) e gerencia scroll inteligente
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     let initialViewportHeight = window.innerHeight;
     
     function handleViewportChange() {
@@ -380,12 +615,10 @@ export function Chat() {
         const heightDifference = initialViewportHeight - currentHeight;
         
         if (heightDifference > 150) { // Teclado provavelmente visível
-          setKeyboardHeight(heightDifference);
           setIsKeyboardVisible(true);
           // Scroll para mostrar a última mensagem quando o teclado aparecer
           setTimeout(() => scrollToBottom(true), 300);
         } else {
-          setKeyboardHeight(0);
           setIsKeyboardVisible(false);
         }
       }
@@ -411,7 +644,6 @@ export function Chat() {
     const handleFocusOut = () => {
       setTimeout(() => {
         setIsKeyboardVisible(false);
-        setKeyboardHeight(0);
       }, 300);
     };
     
@@ -424,21 +656,38 @@ export function Chat() {
       document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('focusout', handleFocusOut);
     };
-  }, [isKeyboardVisible]);
+  }, [isKeyboardVisible]); // Adicionando isKeyboardVisible às dependências
 
   // Detecta se é desktop
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsDesktop(window.matchMedia('(pointer: fine)').matches);
+      const checkDesktop = () => {
+        setIsDesktop(window.matchMedia('(pointer: fine)').matches && window.innerWidth > 768);
+      };
+      checkDesktop();
+      window.addEventListener('resize', checkDesktop);
+      return () => window.removeEventListener('resize', checkDesktop);
     }
   }, []);
 
+  // Foco inicial apenas no desktop
   useEffect(() => {
-    if (isDesktop && inputRef.current) {
+    if (isDesktop && inputRef.current && isMounted) {
       inputRef.current.focus();
     }
   }, [isDesktop, isMounted]);
+
+  // Auto-foco após enviar mensagem (apenas desktop)
+  const [shouldRefocus, setShouldRefocus] = useState(false);
+  useEffect(() => {
+    if (shouldRefocus && isDesktop && inputRef.current && !isLoading) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+        setShouldRefocus(false);
+      }, 100);
+    }
+  }, [shouldRefocus, isDesktop, isLoading]);
 
 
 
@@ -447,7 +696,7 @@ export function Chat() {
       <div className="fixed inset-0 flex flex-col bg-background overflow-hidden max-h-dvh h-full w-full min-h-0">
         {/* Header fixo sempre visível no topo */}
         <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-background/95 backdrop-blur-sm border-b border-border z-50">
-          <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
+          <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
@@ -462,12 +711,21 @@ export function Chat() {
                   Donna IA
                 </h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-
                   Sua Vendedora 24/7
                 </p>
               </div>
             </div>
-            {isMounted && <ThemeToggle />}
+            <div className="flex items-center gap-2">
+              {/* Banner Features */}
+              <button
+                id="pwa-button"
+                onClick={() => setShowPWAIntegration(true)}
+                className="px-3 py-1.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white text-xs font-medium rounded-full hover:from-violet-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                ✨ Features
+              </button>
+              {isMounted && <ThemeToggle />}
+            </div>
           </div>
         </div>
 
@@ -480,19 +738,47 @@ export function Chat() {
             transition: 'padding 0.3s ease-in-out'
           }}
         >
-          <div className="p-4">
-            <div className="max-w-2xl mx-auto w-full space-y-6">
+          <div className="p-4 lg:p-6">
+            <div className="max-w-4xl mx-auto w-full space-y-6">
               <AnimatePresence initial={false}>
-                {/* Sempre mostra a introdução e cards, mesmo com mensagens */}
-                <motion.div
-                  key="intro-section"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-12"
-                >
-                    {/* Espaçamento inteligente para o teclado */}
-                    {isKeyboardVisible && currentThread?.messages.length === 0 && (
-                      <div key="keyboard-spacer" style={{ height: Math.min(keyboardHeight * 0.3, 100) }} />
+                {/* Cards Iniciais - só aparecem se não há mensagens */}
+                {showCards && (currentThread?.messages?.length ?? 0) === 0 && (
+                  <motion.div
+                    key="intro-cards"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className="px-4"
+                  >
+                    <ChatIntroCards isVisible={showCards} onCardClick={handleCardClick} />
+                  </motion.div>
+                )}
+                
+                {/* Introdução da Donna - só mostra se não há cards e não há mensagens */}
+                {!showCards && (currentThread?.messages?.length ?? 0) === 0 && (
+                  <motion.div
+                    key="intro"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex-shrink-0 flex flex-col items-center justify-center text-center px-6 py-8"
+                  >
+                    {!isIntroFinished && (
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className="mb-8"
+                      >
+                        <div className="relative">
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-600/20 blur-xl animate-pulse"></div>
+                          <div className="relative w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-2xl">
+                            <Bot className="w-10 h-10 text-white" />
+                          </div>
+                        </div>
+                      </motion.div>
                     )}
                     {/* Logo Donna IA */}
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -528,10 +814,10 @@ export function Chat() {
                             }}
                             whileTap={{ scale: 0.98 }}
                             type="button"
-                            className="group w-full px-5 py-4 rounded-xl text-left transition-all duration-200 bg-gradient-to-r from-background to-muted/50 hover:from-violet-50 hover:to-purple-50 dark:hover:from-violet-950/20 dark:hover:to-purple-950/20 border border-border/50 hover:border-violet-200 dark:hover:border-violet-800 shadow-sm hover:shadow-md text-foreground/80 hover:text-foreground backdrop-blur-sm"
+                            className="group w-full px-5 py-4 lg:px-6 lg:py-5 rounded-xl text-left transition-all duration-200 bg-gradient-to-r from-background to-muted/50 hover:from-violet-50 hover:to-purple-50 dark:hover:from-violet-950/20 dark:hover:to-purple-950/20 border border-border/50 hover:border-violet-200 dark:hover:border-violet-800 shadow-sm hover:shadow-md text-foreground/80 hover:text-foreground backdrop-blur-sm"
                             onClick={() => handleSendMessage(q)}
                           >
-                            <span className="text-sm font-medium leading-relaxed group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">
+                            <span className="text-sm lg:text-base font-medium leading-relaxed group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">
                               {q}
                             </span>
                             <div className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -541,20 +827,21 @@ export function Chat() {
                         ))}
                       </motion.div>
                     )}
-                </motion.div>
+                  </motion.div>
+                )}
                 
-                {/* Mensagens do chat */}
+                {/* Mensagens do chat - com null check */}
                 {currentThread?.messages
-                  .filter(message => message.id && message.id.trim() !== '') // Filtra mensagens sem ID válido
-                  .map((message, index) => (
+                  ?.filter(message => message.id && message.id.trim() !== '') // Filtra mensagens sem ID válido
+                  ?.map((message, index) => (
                   <ChatMessage
                     key={`msg-${message.id}-${index}`} // Combina ID com índice para garantir unicidade
                     message={message}
                     isLatest={
-                      index === (currentThread?.messages.length ?? 0) - 1
+                      index === (currentThread?.messages?.length ?? 0) - 1
                     }
                   />
-                ))}
+                )) || []}
                 {isTyping && <TypingIndicator key="typing-indicator" />}
               </AnimatePresence>
               <div
@@ -566,9 +853,9 @@ export function Chat() {
         </div>
 
         {/* Input - Fixo no bottom */}
-        {(suggestionsDone || (currentThread?.messages.length ?? 0) > 0) && (
-          <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 z-50 sticky bottom-0 min-h-0">
-            <div className="max-w-2xl mx-auto">
+        {(suggestionsDone || (currentThread?.messages?.length ?? 0) > 0) && (
+          <div className="flex-shrink-0 bg-background border-t border-border px-4 lg:px-6 py-3 z-50 sticky bottom-0 min-h-0">
+            <div className="max-w-4xl mx-auto">
               <ChatInput
                 onSend={handleSendMessage}
                 isLoading={isLoading}
@@ -587,7 +874,7 @@ export function Chat() {
         onSuccess={handleCheckoutSuccess}
       />
 
-      {/* PWA Features Modal - Full Screen */}
+      {/* PWA Features Modal - Full Screen com z-index máximo */}
       <AnimatePresence>
         {showPWAIntegration && (
           <motion.div
@@ -596,9 +883,10 @@ export function Chat() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[100] bg-background"
+            className="fixed inset-0 z-[9999] bg-background"
+            style={{ zIndex: 9999 }}
           >
-            <div className="h-full w-full overflow-y-auto">
+            <div className="h-full w-full overflow-hidden">
               <PWAFeatures />
             </div>
           </motion.div>
@@ -620,6 +908,12 @@ export function Chat() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Debug do Funil - Desabilitado para limpeza visual */}
+      
+      {/* Sistema Progressivo - Desabilitado para limpeza visual */}
+      
+      {/* Demonstração de Notificações - Desabilitado para limpeza visual */}
     </>
   );
 }

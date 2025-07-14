@@ -112,6 +112,7 @@ export function ChatInput({
       <form onSubmit={handleSubmit} className="relative">
         <div className="relative flex items-end bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 focus-within:border-indigo-500 dark:focus-within:border-indigo-400">
           <textarea
+            id="chat-input"
             ref={textareaRef}
             value={textareaValue}
             onChange={handleTextareaChange}

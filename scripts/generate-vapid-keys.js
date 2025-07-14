@@ -41,7 +41,7 @@ APPMAX_SECRET=your_appmax_secret_here
   try {
     fs.writeFileSync('.env.example', envExample);
     console.log('📝 Arquivo .env.example criado com as VAPID keys!\n');
-  } catch (error) {
+  } catch {
     console.log('⚠️  Não foi possível criar .env.example, mas as keys foram geradas!\n');
   }
 

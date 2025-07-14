@@ -314,14 +314,54 @@ export class CartRecoverySystem {
     session: CartSession
   ): Promise<void> {
     try {
+      // Estratégia 1: Tentar push notification via PWA (se disponível)
+      const pwaNotificationSent = await this.tryPWAPushNotification(deviceId, message, session);
+      
+      if (pwaNotificationSent) {
+        console.log('🚀 Push notification enviada via PWA');
+        return;
+      }
+
+      // Estratégia 2: Fallback para notificação nativa do navegador
+      const browserNotificationSent = await this.tryBrowserNotification(message, session);
+      
+      if (browserNotificationSent) {
+        console.log('🔔 Notificação do navegador enviada');
+        return;
+      }
+
+      // Estratégia 3: Fallback para email/webhook (futuro)
+      console.log('📧 Fallback: considerando email ou webhook para cart recovery');
+      
+      // Por ora, apenas registrar no console
+      console.log('📝 Cart Recovery Message:', {
+        title: message.title,
+        body: message.body,
+        sessionId: session.sessionId,
+        cartValue: session.totalValue,
+        deviceId
+      });
+
+    } catch (error) {
+      console.error('❌ Erro geral ao enviar notificação de cart recovery:', error);
+    }
+  }
+
+  // Tentar enviar via PWA (Service Worker + Push API)
+  private async tryPWAPushNotification(
+    deviceId: string, 
+    message: CartRecoveryMessage, 
+    session: CartSession
+  ): Promise<boolean> {
+    try {
       // Verificar se Service Worker está disponível
       if (!('serviceWorker' in navigator)) {
-        throw new Error('Service Worker não suportado');
+        return false;
       }
 
       const registration = await navigator.serviceWorker.ready;
       if (!registration) {
-        throw new Error('Service Worker não registrado');
+        return false;
       }
 
       // Buscar subscription existente
@@ -348,11 +388,7 @@ export class CartRecoverySystem {
           })
         });
 
-        if (!response.ok) {
-          throw new Error('Erro no servidor de push');
-        }
-
-        console.log('🚀 Push notification enviada via servidor');
+        return response.ok;
       } else {
         // Fallback: notificação local via Service Worker
         registration.active?.postMessage({
@@ -366,22 +402,57 @@ export class CartRecoverySystem {
           }
         });
 
-        console.log('📱 Notificação local enviada via Service Worker');
+        return true;
       }
 
     } catch (error) {
-      console.error('❌ Erro ao enviar push notification:', error);
-      
-      // Fallback final: tentar notificação do navegador
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(message.title, {
-          body: message.body,
-          icon: message.icon,
-          tag: `cart-recovery-${session.sessionId}`,
-          requireInteraction: message.requireInteraction
-        });
-        console.log('🔔 Notificação do navegador enviada como fallback');
+      console.log('⚠️ PWA push notification não disponível:', error instanceof Error ? error.message : 'Erro desconhecido');
+      return false;
+    }
+  }
+
+  // Tentar notificação nativa do navegador
+  private async tryBrowserNotification(message: CartRecoveryMessage, session: CartSession): Promise<boolean> {
+    try {
+      if (!('Notification' in window)) {
+        return false;
       }
+
+      // Verificar permissão
+      let permission = Notification.permission;
+      
+      if (permission === 'default') {
+        permission = await Notification.requestPermission();
+      }
+
+      if (permission === 'granted') {
+        const notification = new Notification(message.title, {
+          body: message.body,
+          icon: message.icon || '/icons/icon-192x192.png',
+          tag: `cart-recovery-${session.sessionId}`,
+          requireInteraction: message.requireInteraction,
+          data: {
+            sessionId: session.sessionId,
+            actionUrl: message.actionUrl
+          }
+        });
+
+        // Adicionar click handler
+        notification.onclick = () => {
+          if (message.actionUrl) {
+            window.open(message.actionUrl, '_blank');
+          }
+          notification.close();
+        };
+
+        return true;
+      }
+
+      return false;
+
+    } catch (error) {
+      console.log('⚠️ Notificação do navegador não disponível:', error instanceof Error ? error.message : 'Erro desconhecido');
+      return false;
     }
   }
 

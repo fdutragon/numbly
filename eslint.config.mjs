@@ -24,6 +24,8 @@ const eslintConfig = [
       'public/sw.js.map',
       'public/workbox-*.js',
       'public/workbox-*.js.map',
+      'scripts/**/*.js',
+      'auto-commit-groq.js',
     ],
   },
   {
