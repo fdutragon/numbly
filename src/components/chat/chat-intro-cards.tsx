@@ -1,13 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  MessageSquare, 
-  BarChart3, 
-  Bell,
   ArrowRight,
-  Sparkles
 } from 'lucide-react';
 
 interface IntroCard {
@@ -26,7 +21,7 @@ interface ChatIntroCardsProps {
 }
 
 export function ChatIntroCards({ onCardClick, isVisible }: ChatIntroCardsProps) {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  // Removed unused state - hoveredCard and setHoveredCard
 
   const introCards: IntroCard[] = [
     {

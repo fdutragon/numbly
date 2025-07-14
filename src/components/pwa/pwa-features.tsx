@@ -20,8 +20,7 @@ export function PWAFeatures() {
   const {
     sendFunNotification,
     getPWAInfo,
-    showInstallPrompt,
-    requestNotificationPermission
+    showInstallPrompt
   } = usePWA();
   
   const {
@@ -96,7 +95,7 @@ export function PWAFeatures() {
       window.removeEventListener('openAnalyticsModal', handleOpenAnalytics);
       window.removeEventListener('closeAnalyticsModal', handleCloseAnalytics);
     };
-  }, []); // Array vazio - executar apenas na montagem
+  }, [getCurrentSession, getPWAInfo]); // Adicionando dependências necessárias
 
   const handleSendNotification = async () => {
     console.log('🔔 Iniciando teste de notificação...');

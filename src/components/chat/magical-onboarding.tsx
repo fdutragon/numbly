@@ -1,12 +1,6 @@
 'use client';
 
-interface MagicalOnboardingProps {
-  currentStage: string;
-  leadScore: number;
-  touchpoints: number;
-}
-
-export function MagicalOnboarding({ leadScore, touchpoints }: MagicalOnboardingProps) {
+export function MagicalOnboarding() {
   // Componente desabilitado - retorna null para limpeza visual
   return null;
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ConversationSimulation {
@@ -79,22 +78,7 @@ export function AnalyticsModal() {
   const [selectedConversation, setSelectedConversation] = useState<ConversationSimulation | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'conversations' | 'insights'>('overview');
 
-  const renderConversation = (conversation: ConversationSimulation) => (
-    <div className="space-y-3">
-      {conversation.messages.map((msg, idx) => (
-        <div key={idx} className={`flex ${msg.sender === 'donna' ? 'justify-end' : 'justify-start'}`}>
-          <div className={`max-w-xs px-4 py-2 rounded-lg ${
-            msg.sender === 'donna' 
-              ? 'bg-violet-500 text-white' 
-              : 'bg-gray-100 dark:bg-gray-800 text-foreground'
-          }`}>
-            <p className="text-sm">{msg.message}</p>
-            <p className="text-xs opacity-70 mt-1">{msg.timestamp}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  // Removed unused function - renderConversation
 
   return (
     <div className="w-full h-full min-h-screen bg-background relative overflow-y-auto">
@@ -136,7 +120,7 @@ export function AnalyticsModal() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'overview' | 'conversations' | 'insights')}
               className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                 activeTab === tab.id
                   ? 'bg-background text-foreground shadow-sm'
