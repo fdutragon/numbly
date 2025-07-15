@@ -22,7 +22,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { PWAFeatures } from '@/components/pwa/pwa-features';
-import { SalesFunnelDebug } from '@/components/chat/sales-funnel-debug';
+import { FunnelThermometer } from '@/components/chat/funnel-thermometer';
 import { Bot, CheckCircle } from 'lucide-react';
 
 export function Chat() {
@@ -115,9 +115,12 @@ export function Chat() {
     try {
       await handleSend(content);
       setTimeout(() => scrollToBottom(true), 200);
-      if (isDesktop) {
-        setShouldRefocus(true);
-      }
+      // Foca o input após cada envio, independente de plataforma
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 250);
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
     }
@@ -185,8 +188,9 @@ export function Chat() {
       // Update sales data
       if (data.leadData) {
         setSalesData(data.leadData);
-        setShowFunnelDebug(true);
       }
+      
+      // Não expande funil automaticamente. O usuário controla a abertura.
 
       // Show payment modal if needed
       if (data.shouldShowPaymentModal) {
@@ -303,16 +307,12 @@ export function Chat() {
     }
   }, [isDesktop, isMounted]);
 
-  // Auto-foco após enviar mensagem (apenas desktop)
-  const [shouldRefocus, setShouldRefocus] = useState(false);
+  // Auto-foco inicial apenas no desktop
   useEffect(() => {
-    if (shouldRefocus && isDesktop && inputRef.current && !isLoading) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-        setShouldRefocus(false);
-      }, 100);
+    if (isDesktop && inputRef.current && isMounted) {
+      inputRef.current.focus();
     }
-  }, [shouldRefocus, isDesktop, isLoading]);
+  }, [isDesktop, isMounted]);
 
 
 
@@ -345,50 +345,50 @@ export function Chat() {
               <button
                 id="pwa-button"
                 onClick={() => setShowPWAIntegration(true)}
-                className="px-3 py-1.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white text-xs font-medium rounded-full hover:from-violet-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="w-auto px-4 h-9 flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white text-base font-medium rounded-md hover:from-violet-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md p-0"
+                aria-label="Features"
               >
-                ✨ Features
+                <span className="text-sm font-base">Features</span>
               </button>
               {isMounted && <ThemeToggle />}
             </div>
           </div>
         </div>
 
-        {/* Messages - Área com scroll */}
-        <div
-          ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0"
-          style={{
-            padding: 0,
-            transition: 'padding 0.3s ease-in-out'
-          }}
-        >
-          <div className="p-4 lg:p-6">
-            <div className="max-w-4xl mx-auto w-full space-y-6">
-              <AnimatePresence initial={false}>
-                {/* Cards e introdução removidos */}
-                
-                {/* Mensagens do chat - com null check */}
-                {currentThread?.messages
-                  ?.filter(message => message.id && message.id.trim() !== '') // Filtra mensagens sem ID válido
-                  ?.map((message, index) => (
-                  <ChatMessage
-                    key={`msg-${message.id}-${index}`} // Combina ID com índice para garantir unicidade
-                    message={message}
-                    isLatest={
-                      index === (currentThread?.messages?.length ?? 0) - 1
-                    }
-                  />
-                )) || []}
-                {isTyping && <TypingIndicator key="typing-indicator" />}
-              </AnimatePresence>
-              <div
-                ref={messagesEndRef}
-                style={{ height: isKeyboardVisible ? 0 : 20 }}
-              />
-            </div>
+      {/* Messages - Área com scroll */}
+      <div className="relative flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0" ref={messagesContainerRef} style={{ padding: 0, transition: 'padding 0.3s ease-in-out' }}>
+        {/* Termômetro do funil */}
+        <FunnelThermometer
+          score={salesData.score}
+          stage={salesData.stage}
+          leadData={salesData}
+          expanded={showFunnelDebug}
+          onExpand={() => setShowFunnelDebug((v) => !v)}
+        />
+        <div className="p-4 lg:p-6">
+          <div className="max-w-4xl mx-auto w-full space-y-6">
+            <AnimatePresence initial={false}>
+              {/* Mensagens do chat - com null check */}
+              {currentThread?.messages
+                ?.filter(message => message.id && message.id.trim() !== '')
+                ?.map((message, index) => (
+                <ChatMessage
+                  key={`msg-${message.id}-${index}`}
+                  message={message}
+                  isLatest={
+                    index === (currentThread?.messages?.length ?? 0) - 1
+                  }
+                />
+              )) || []}
+              {isTyping && <TypingIndicator key="typing-indicator" />}
+            </AnimatePresence>
+            <div
+              ref={messagesEndRef}
+              style={{ height: isKeyboardVisible ? 0 : 20 }}
+            />
           </div>
         </div>
+      </div>
 
         {/* Input - Fixo no bottom */}
         <div className="flex-shrink-0 bg-background border-t border-border px-4 lg:px-6 py-3 z-50 sticky bottom-0 min-h-0">
@@ -440,11 +440,7 @@ export function Chat() {
         )}
       </AnimatePresence>
 
-      {/* Debug do Funil de Vendas */}
-      <SalesFunnelDebug 
-        salesData={salesData} 
-        isVisible={showFunnelDebug} 
-      />
+      {/* Debug do Funil de Vendas removido, agora integrado ao termômetro */}
       
       {/* Sistema Progressivo - Desabilitado para limpeza visual */}
       

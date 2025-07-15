@@ -106,10 +106,14 @@ function analyzeMessageAndUpdateScore(threadId: string, userMessage: string): vo
   let scoreIncrease = 0;
   const newInterests: string[] = [];
   
+  // Log para debug
+  console.log('🔍 Analyzing message:', message);
+  console.log('📊 Current score:', thread.salesData.score);
+  
   // Análise de interesse em automação
   if (message.includes('automação') || message.includes('automatizar') || message.includes('bot')) {
     if (!thread.salesData.interests.includes('automação')) {
-      scoreIncrease += 10;
+      scoreIncrease += 15;
       newInterests.push('automação');
     }
   }
@@ -125,7 +129,7 @@ function analyzeMessageAndUpdateScore(threadId: string, userMessage: string): vo
   // Análise de orçamento
   if (message.includes('quanto custa') || message.includes('preço') || message.includes('investimento') || message.includes('valor')) {
     if (!thread.salesData.interests.includes('orçamento')) {
-      scoreIncrease += 20;
+      scoreIncrease += 25;
       newInterests.push('orçamento');
     }
   }
@@ -133,34 +137,154 @@ function analyzeMessageAndUpdateScore(threadId: string, userMessage: string): vo
   // Análise de urgência
   if (message.includes('urgente') || message.includes('preciso agora') || message.includes('hoje') || message.includes('amanhã')) {
     if (thread.salesData.urgency !== 'high') {
-      scoreIncrease += 15;
+      scoreIncrease += 20;
       thread.salesData.urgency = 'high';
     }
   } else if (message.includes('semana') || message.includes('mês')) {
     if (thread.salesData.urgency === 'low') {
-      scoreIncrease += 5;
+      scoreIncrease += 10;
       thread.salesData.urgency = 'medium';
     }
   }
   
-  // Análise de pronto para comprar
+  // Análise de intenção de compra
   if (message.includes('quero comprar') || message.includes('vamos fechar') || message.includes('aceito') || message.includes('concordo')) {
     if (!thread.salesData.interests.includes('pronto_comprar')) {
-      scoreIncrease += 20;
+      scoreIncrease += 30;
       newInterests.push('pronto_comprar');
     }
   }
   
-  // Só atualiza se houver aumento de score
-  if (scoreIncrease > 0) {
-    thread.salesData.score = Math.min(100, thread.salesData.score + scoreIncrease);
-    thread.salesData.interests = [...new Set([...thread.salesData.interests, ...newInterests])];
+  // Palavras que indicam interesse geral
+  if (message.includes('quero') || message.includes('preciso') || message.includes('interessado') || message.includes('gostaria')) {
+    if (!thread.salesData.interests.includes('interesse_geral')) {
+      scoreIncrease += 8;
+      newInterests.push('interesse_geral');
+    }
+  }
+  
+  // Aumenta score base para qualquer mensagem (engajamento) - reduzido para evitar score muito alto
+  if (scoreIncrease === 0) {
+    scoreIncrease = 3; // Score mínimo por engajamento (reduzido de 5 para 3)
+  }
+  
+  // Atualiza score sempre, mas com limite mais controlado
+  thread.salesData.score = Math.min(100, thread.salesData.score + scoreIncrease);
+  thread.salesData.interests = [...new Set([...thread.salesData.interests, ...newInterests])];
+  thread.salesData.lastScoreUpdate = Date.now();
+  
+  // Atualiza stage baseado no score
+  updateSalesStage(threadId);
+  
+  console.log(`📈 Score updated: +${scoreIncrease} points. New score: ${thread.salesData.score}, Stage: ${thread.salesData.stage}`);
+}
+
+async function analyzeIntentionWithAI(message: string): Promise<{ score: number; interests: string[]; urgency: 'low' | 'medium' | 'high' }> {
+  try {
+    const intentionPrompt = `Analise esta mensagem e retorne APENAS um JSON válido com a intenção de compra:
+Mensagem: "${message}"
+
+Retorne no formato exato:
+{
+  "score": [número de 0 a 30 baseado na intenção de compra],
+  "interests": ["lista", "de", "interesses", "identificados"],
+  "urgency": "low|medium|high"
+}
+
+Critérios de score:
+- 0-5: Mensagem neutra/casual
+- 6-10: Interesse inicial
+- 11-15: Interesse específico
+- 16-20: Considerando compra
+- 21-25: Pronto para comprar
+- 26-30: Urgência alta para comprar
+
+Interesses possíveis: automação, vendas, orçamento, whatsapp, lead, faturamento, roi, demo, suporte, garantia`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: intentionPrompt }],
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.1,
+        max_tokens: 200,
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Intention API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content.trim();
+    
+    // Try to parse JSON from the response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const result = JSON.parse(jsonMatch[0]);
+      return {
+        score: Math.max(0, Math.min(30, result.score || 3)),
+        interests: Array.isArray(result.interests) ? result.interests : [],
+        urgency: ['low', 'medium', 'high'].includes(result.urgency) ? result.urgency : 'low'
+      };
+    }
+    
+    throw new Error('Invalid JSON response');
+  } catch (error) {
+    console.error('🔍 Intention analysis failed:', error);
+    // Fallback to simple analysis
+    return {
+      score: 3,
+      interests: [],
+      urgency: 'low'
+    };
+  }
+}
+
+async function analyzeMessageAndUpdateScoreWithAI(threadId: string, userMessage: string): Promise<void> {
+  const thread = getOrCreateThread(threadId);
+  
+  console.log('🔍 Analyzing message with AI:', userMessage);
+  console.log('📊 Current score:', thread.salesData.score);
+  
+  try {
+    const analysis = await analyzeIntentionWithAI(userMessage);
+    
+    // Update score
+    thread.salesData.score = Math.min(100, thread.salesData.score + analysis.score);
+    
+    // Update interests (only add new ones)
+    const newInterests = analysis.interests.filter(interest => 
+      !thread.salesData.interests.includes(interest)
+    );
+    thread.salesData.interests = [...thread.salesData.interests, ...newInterests];
+    
+    // Update urgency (only if higher)
+    const urgencyLevels = { low: 0, medium: 1, high: 2 };
+    const currentUrgencyLevel = urgencyLevels[thread.salesData.urgency];
+    const newUrgencyLevel = urgencyLevels[analysis.urgency];
+    
+    if (newUrgencyLevel > currentUrgencyLevel) {
+      thread.salesData.urgency = analysis.urgency;
+    }
+    
     thread.salesData.lastScoreUpdate = Date.now();
     
-    // Atualiza stage baseado no score
+    // Update stage based on score
     updateSalesStage(threadId);
     
-    console.log(`Score updated: +${scoreIncrease} points. New score: ${thread.salesData.score}`);
+    console.log(`📈 AI Score updated: +${analysis.score} points. New score: ${thread.salesData.score}, Stage: ${thread.salesData.stage}`);
+    console.log(`🎯 Interests: ${analysis.interests.join(', ')}, Urgency: ${analysis.urgency}`);
+    
+  } catch (error) {
+    console.error('🚨 AI analysis failed, using fallback:', error);
+    // Fallback to old method
+    analyzeMessageAndUpdateScore(threadId, userMessage);
   }
 }
 
@@ -294,8 +418,8 @@ export async function POST(req: Request) {
     // Get or create thread and add user message
     const thread = getOrCreateThread(threadId);
     
-    // Analyze message and update score
-    analyzeMessageAndUpdateScore(threadId, message);
+    // Analyze message and update score with AI
+    await analyzeMessageAndUpdateScoreWithAI(threadId, message);
     
     addMessageToThread(threadId, {
       role: 'user',
@@ -341,6 +465,63 @@ export async function POST(req: Request) {
     });
 
     if (!groqResponse.ok) {
+      // Se for erro 429 (rate limit), espera um pouco e tenta novamente
+      if (groqResponse.status === 429) {
+        console.log('🔄 Rate limit atingido, aguardando 2 segundos...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Tenta novamente
+        const retryResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            messages: updatedThread.messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            })),
+            model: 'llama-3.1-8b-instant',
+            temperature: 0.7,
+            max_tokens: 500,
+            stream: false
+          })
+        });
+        
+        if (!retryResponse.ok) {
+          throw new Error(`Groq API error after retry: ${retryResponse.status}`);
+        }
+        
+        const retryData = await retryResponse.json();
+        const content = retryData.choices[0].message.content;
+        
+        // Add assistant response to thread
+        if (content.trim()) {
+          addMessageToThread(threadId, {
+            role: 'assistant',
+            content: content,
+            timestamp: Date.now()
+          });
+        }
+        
+        const currentThread = getOrCreateThread(threadId);
+        
+        return NextResponse.json({
+          content: content,
+          shouldShowPaymentModal: currentThread.salesData.stage === 'closing',
+          funnelStage: currentThread.salesData.stage,
+          nextAction: getNextAction(currentThread.salesData),
+          leadData: currentThread.salesData,
+          salesData: currentThread.salesData,
+          claraState: {
+            currentStage: currentThread.salesData.stage,
+            leadData: currentThread.salesData,
+            lastUpdate: Date.now()
+          }
+        });
+      }
+      
       throw new Error(`Groq API error: ${groqResponse.status}`);
     }
 
@@ -366,6 +547,7 @@ export async function POST(req: Request) {
       funnelStage: currentThread.salesData.stage,
       nextAction: getNextAction(currentThread.salesData),
       leadData: currentThread.salesData,
+      salesData: currentThread.salesData, // Adiciona salesData para compatibilidade
       claraState: {
         currentStage: currentThread.salesData.stage,
         leadData: currentThread.salesData,
