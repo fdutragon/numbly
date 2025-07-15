@@ -379,8 +379,7 @@ export function Chat() {
       {/* Messages - Área com scroll */}
       <div className="relative flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0" ref={messagesContainerRef} style={{ 
         padding: 0, 
-        transition: 'padding 0.3s ease-in-out',
-        paddingBottom: isKeyboardVisible ? `${Math.max(keyboardHeight - 100, 0)}px` : '0px'
+        transition: 'padding 0.3s ease-in-out'
       }}>
         {/* Termômetro do funil */}
         <FunnelThermometer
@@ -390,7 +389,9 @@ export function Chat() {
           expanded={showFunnelDebug}
           onExpand={() => setShowFunnelDebug((v) => !v)}
         />
-        <div className="p-4 lg:p-6">
+        <div className="p-4 lg:p-6" style={{
+          paddingBottom: isKeyboardVisible ? `${Math.max(keyboardHeight - 60, 20)}px` : '24px'
+        }}>
           <div className="max-w-4xl mx-auto w-full space-y-6">
             {showInitialSuggestions && (
               <section className="w-full flex flex-col items-center justify-center py-10 animate-fade-in">
@@ -435,7 +436,7 @@ export function Chat() {
             </AnimatePresence>
             <div
               ref={messagesEndRef}
-              style={{ height: isKeyboardVisible ? Math.max(keyboardHeight + 20, 40) : 20 }}
+              style={{ height: isKeyboardVisible ? 40 : 20 }}
             />
           </div>
         </div>
