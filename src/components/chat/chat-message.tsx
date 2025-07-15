@@ -2,7 +2,13 @@
 
 import { cn } from '@/lib/utils';
 import { Bot, User } from 'lucide-react';
-import { Message } from '@/lib/chat-store';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  isTyping?: boolean;
+}
 import { MarkdownContent } from './markdown-content';
 
 interface ChatMessageProps {

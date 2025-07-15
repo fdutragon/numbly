@@ -18,9 +18,9 @@ export function MarkdownContent({ content, className = '' }: MarkdownContentProp
     const flushList = () => {
       if (currentListItems.length > 0) {
         elements.push(
-          <ul key={`list-${elements.length}`} className="list-disc list-inside space-y-1 my-2 ml-4">
+          <ul key={`list-${elements.length}`} className="list-none space-y-2 my-3 ml-0">
             {currentListItems.map((item, index) => (
-              <li key={index} className="text-sm leading-relaxed">
+              <li key={index} className="text-sm leading-relaxed flex items-start gap-2">
                 {processInlineMarkdown(item)}
               </li>
             ))}
@@ -37,31 +37,31 @@ export function MarkdownContent({ content, className = '' }: MarkdownContentProp
       if (trimmedLine.startsWith('## ')) {
         flushList();
         elements.push(
-          <h2 key={index} className="text-base font-bold mt-4 mb-2 text-violet-700 dark:text-violet-300">
+          <h2 key={index} className="text-lg font-bold mt-4 mb-3 text-violet-700 dark:text-violet-300 border-b border-violet-200 dark:border-violet-700 pb-1">
             {processInlineMarkdown(trimmedLine.slice(3))}
           </h2>
         );
       } else if (trimmedLine.startsWith('### ')) {
         flushList();
         elements.push(
-          <h3 key={index} className="text-sm font-semibold mt-3 mb-1 text-violet-600 dark:text-violet-400">
+          <h3 key={index} className="text-base font-semibold mt-3 mb-2 text-violet-600 dark:text-violet-400">
             {processInlineMarkdown(trimmedLine.slice(4))}
           </h3>
         );
       }
-      // Lista com ✅
-      else if (/^[✅❌🎯💡📊🚀⚡💰🏆]\s/.test(trimmedLine)) {
+      // Lista com emojis
+      else if (/^[✅❌🎯💡📊🚀⚡💰🏆🔥💎⭐]\s/.test(trimmedLine)) {
         currentListItems.push(trimmedLine);
       }
       // Lista com - ou *
       else if (/^[-*]\s/.test(trimmedLine)) {
-        currentListItems.push(trimmedLine.slice(2));
+        currentListItems.push('• ' + trimmedLine.slice(2));
       }
       // Linha vazia
       else if (trimmedLine === '') {
         flushList();
         if (elements.length > 0) {
-          elements.push(<br key={`br-${index}`} />);
+          elements.push(<div key={`br-${index}`} className="h-2" />);
         }
       }
       // Texto normal

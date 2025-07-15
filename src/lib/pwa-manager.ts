@@ -5,6 +5,16 @@ export class PWAManager {
   private serviceWorker: ServiceWorkerRegistration | null = null;
   private userId: string;
   private isCartRecoveryActive: boolean = false;
+  private lastPWAInfo: {
+    isStandalone: boolean;
+    canInstall: boolean;
+    notificationPermission: NotificationPermission;
+    isCartRecoveryActive: boolean;
+    userId: string;
+    deviceId: string;
+    hasValidSubscription: boolean;
+  } | null = null;
+  private pwaInfoLastUpdated: number = 0;
 
   constructor() {
     this.userId = this.getUserId();
@@ -157,6 +167,8 @@ export class PWAManager {
     
     if (this.serviceWorker && !this.isCartRecoveryActive) {
       this.isCartRecoveryActive = true;
+      this.invalidatePWAInfoCache(); // Invalidar cache
+      
       this.serviceWorker.active?.postMessage({
         type: 'START_CART_RECOVERY',
         userId: this.userId,
@@ -182,6 +194,8 @@ export class PWAManager {
     
     if (this.serviceWorker && this.isCartRecoveryActive) {
       this.isCartRecoveryActive = false;
+      this.invalidatePWAInfoCache(); // Invalidar cache
+      
       this.serviceWorker.active?.postMessage({
         type: 'STOP_CART_RECOVERY',
         userId: this.userId
@@ -225,7 +239,13 @@ export class PWAManager {
     return this.userId;
   }
 
-  // Obter informações da PWA
+  // Limpar cache do PWA Info (útil quando algo muda)
+  invalidatePWAInfoCache(): void {
+    this.lastPWAInfo = null;
+    this.pwaInfoLastUpdated = 0;
+  }
+
+  // Obter informações da PWA (com memoização)
   getPWAInfo(): {
     isStandalone: boolean;
     canInstall: boolean;
@@ -235,9 +255,17 @@ export class PWAManager {
     deviceId: string;
     hasValidSubscription: boolean;
   } {
+    const now = Date.now();
+    const cacheTime = 1000; // Cache por 1 segundo
+    
+    // Retornar cache se ainda válido
+    if (this.lastPWAInfo && (now - this.pwaInfoLastUpdated) < cacheTime) {
+      return this.lastPWAInfo;
+    }
+    
     const hasValidSubscription = typeof window !== 'undefined' && localStorage.getItem('donna-push-subscription') !== null;
     
-    return {
+    const pwaInfo = {
       isStandalone: this.isStandalone(),
       canInstall: this.canInstall(),
       notificationPermission: typeof window !== 'undefined' ? Notification.permission : 'default',
@@ -246,6 +274,12 @@ export class PWAManager {
       deviceId: this.userId, // Device ID é o mesmo que userId para simplificação
       hasValidSubscription
     };
+    
+    // Atualizar cache
+    this.lastPWAInfo = pwaInfo;
+    this.pwaInfoLastUpdated = now;
+    
+    return pwaInfo;
   }
 
   // Mostrar banner de instalação
@@ -288,6 +322,7 @@ export function usePWA() {
     stopCartRecovery: () => pwaManager.stopCartRecovery(),
     isCartRecoveryActive: pwaManager.isCartRecoveryRunning(),
     getPWAInfo: () => pwaManager.getPWAInfo(),
+    invalidatePWAInfoCache: () => pwaManager.invalidatePWAInfoCache(),
     requestNotificationPermission: () => pwaManager.requestNotificationPermission(),
     showInstallPrompt: () => pwaManager.showInstallPrompt(),
     getDeviceId: () => pwaManager.getDeviceId()

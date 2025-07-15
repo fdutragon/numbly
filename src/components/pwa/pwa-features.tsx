@@ -95,7 +95,7 @@ export function PWAFeatures() {
       window.removeEventListener('openAnalyticsModal', handleOpenAnalytics);
       window.removeEventListener('closeAnalyticsModal', handleCloseAnalytics);
     };
-  }, [getCurrentSession, getPWAInfo]); // Adicionando dependências necessárias
+  }, []); // Removendo dependências para executar apenas uma vez
 
   const handleSendNotification = async () => {
     console.log('🔔 Iniciando teste de notificação...');
