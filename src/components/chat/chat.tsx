@@ -22,31 +22,19 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { PWAFeatures } from '@/components/pwa/pwa-features';
-import { FunnelThermometer } from '@/components/chat/funnel-thermometer';
+import { SalesFunnelDebug } from '@/components/chat/sales-funnel-debug';
 import { Bot, CheckCircle } from 'lucide-react';
 
 export function Chat() {
-
-  // Sugestões iniciais para o chat
-  const initialSuggestions = [
-    'Como a automação pode aumentar minhas vendas?',
-    'Quais resultados reais clientes da Numbly já tiveram?',
-    'Quero saber como funciona a integração com WhatsApp.',
-    'Tenho dúvidas sobre preço e condições.',
-    'Me mostre um caso de sucesso.'
-  ];
-
   // Estados locais para gerenciar o chat
   const [threadId, setThreadId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
-  // Exibe sugestões se não houver mensagens do usuário
-  const showInitialSuggestions = messages.length === 0;
 
   // Thread simulada para manter compatibilidade com o código existente
   const currentThread = { messages };
@@ -127,13 +115,8 @@ export function Chat() {
     try {
       await handleSend(content);
       setTimeout(() => scrollToBottom(true), 200);
-      // Foca o input apenas no desktop
       if (isDesktop) {
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
-          }
-        }, 250);
+        setShouldRefocus(true);
       }
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
@@ -202,9 +185,8 @@ export function Chat() {
       // Update sales data
       if (data.leadData) {
         setSalesData(data.leadData);
+        setShowFunnelDebug(true);
       }
-      
-      // Não expande funil automaticamente. O usuário controla a abertura.
 
       // Show payment modal if needed
       if (data.shouldShowPaymentModal) {
@@ -249,7 +231,6 @@ export function Chat() {
 
   // Detecta altura do teclado (mobile) e gerencia scroll inteligente
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -263,14 +244,9 @@ export function Chat() {
         
         if (heightDifference > 150) {
           setIsKeyboardVisible(true);
-          setKeyboardHeight(heightDifference);
-          // Scroll mais inteligente com delay para garantir que o teclado já abriu
-          setTimeout(() => {
-            scrollToBottom(true);
-          }, 400);
+          setTimeout(() => scrollToBottom(true), 300);
         } else {
           setIsKeyboardVisible(false);
-          setKeyboardHeight(0);
         }
       }
     }
@@ -293,7 +269,6 @@ export function Chat() {
     const handleFocusOut = () => {
       setTimeout(() => {
         setIsKeyboardVisible(false);
-        setKeyboardHeight(0);
       }, 300);
     };
     
@@ -328,12 +303,16 @@ export function Chat() {
     }
   }, [isDesktop, isMounted]);
 
-  // Auto-foco inicial apenas no desktop
+  // Auto-foco após enviar mensagem (apenas desktop)
+  const [shouldRefocus, setShouldRefocus] = useState(false);
   useEffect(() => {
-    if (isDesktop && inputRef.current && isMounted) {
-      inputRef.current.focus();
+    if (shouldRefocus && isDesktop && inputRef.current && !isLoading) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+        setShouldRefocus(false);
+      }, 100);
     }
-  }, [isDesktop, isMounted]);
+  }, [shouldRefocus, isDesktop, isLoading]);
 
 
 
@@ -366,81 +345,50 @@ export function Chat() {
               <button
                 id="pwa-button"
                 onClick={() => setShowPWAIntegration(true)}
-                className="w-auto px-4 h-9 flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white text-base font-medium rounded-md hover:from-violet-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md p-0"
-                aria-label="Features"
+                className="px-3 py-1.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white text-xs font-medium hover:from-violet-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                <span className="text-sm font-base">Features</span>
+                ✨ Features
               </button>
               {isMounted && <ThemeToggle />}
             </div>
           </div>
         </div>
 
-      {/* Messages - Área com scroll */}
-      <div className="relative flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0" ref={messagesContainerRef} style={{ 
-        padding: 0, 
-        transition: 'padding 0.3s ease-in-out'
-      }}>
-        {/* Termômetro do funil */}
-        <FunnelThermometer
-          score={salesData.score}
-          stage={salesData.stage}
-          leadData={salesData}
-          expanded={showFunnelDebug}
-          onExpand={() => setShowFunnelDebug((v) => !v)}
-        />
-        <div className="p-4 lg:p-6" style={{
-          paddingBottom: isKeyboardVisible ? `${Math.max(keyboardHeight - 60, 20)}px` : '24px'
-        }}>
-          <div className="max-w-4xl mx-auto w-full space-y-6">
-            {showInitialSuggestions && (
-              <section className="w-full flex flex-col items-center justify-center py-10 animate-fade-in">
-                <div className="mb-6 text-center">
-                  <h2 className="text-2xl font-bold text-foreground mb-2">Comece sua conversa com Donna IA</h2>
-                  <p className="text-base text-muted-foreground max-w-xl mx-auto">
-                    Tire dúvidas, peça exemplos, descubra como a automação pode transformar seu negócio. Clique em uma sugestão ou escreva sua própria pergunta!
-                  </p>
-                </div>
-                <div className="flex flex-row flex-wrap gap-4 justify-center w-full max-w-3xl">
-                  {initialSuggestions.map((suggestion, idx) => (
-                    <button
-                      key={idx}
-                    className="group bg-gradient-to-br from-violet-50 to-purple-100 dark:from-zinc-900 dark:to-zinc-800 border border-violet-200 dark:border-zinc-700 hover:from-violet-100 hover:to-purple-200 dark:hover:from-zinc-800 dark:hover:to-zinc-900 text-violet-900 dark:text-violet-100 font-medium rounded-2xl px-6 py-4 shadow-sm hover:shadow-lg transition-all duration-150 text-sm flex items-center gap-2 min-w-[180px] max-w-xs focus:outline-none focus:ring-2 focus:ring-violet-400"
-                      onClick={() => handleSendMessage(suggestion)}
-                      tabIndex={0}
-                    >
-                      <span className="truncate w-full text-center group-hover:font-semibold transition-all duration-150">{suggestion}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-            <AnimatePresence initial={false}>
-              {/* Mensagens do chat - com null check */}
-              {currentThread?.messages
-                ?.filter(message => message.id && message.id.trim() !== '')
-                ?.map((message, index) => (
-                <ChatMessage
-                  key={`msg-${message.id}-${index}`}
-                  message={message}
-                  isLatest={
-                    index === (currentThread?.messages?.length ?? 0) - 1
-                  }
-                />
-              )) || []}
-              {isTyping && (
-                <div className="mb-12">
-                  <TypingIndicator key="typing-indicator" />
-                </div>
-              )}
-            </AnimatePresence>
-            <div
-              ref={messagesEndRef}
-              style={{ height: isKeyboardVisible ? 40 : 20 }}
-            />
+        {/* Messages - Área com scroll */}
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0"
+          style={{
+            padding: 0,
+            transition: 'padding 0.3s ease-in-out'
+          }}
+        >
+          <div className="p-4 lg:p-6">
+            <div className="max-w-4xl mx-auto w-full space-y-6">
+              <AnimatePresence initial={false}>
+                {/* Cards e introdução removidos */}
+                
+                {/* Mensagens do chat - com null check */}
+                {currentThread?.messages
+                  ?.filter(message => message.id && message.id.trim() !== '') // Filtra mensagens sem ID válido
+                  ?.map((message, index) => (
+                  <ChatMessage
+                    key={`msg-${message.id}-${index}`} // Combina ID com índice para garantir unicidade
+                    message={message}
+                    isLatest={
+                      index === (currentThread?.messages?.length ?? 0) - 1
+                    }
+                  />
+                )) || []}
+                {isTyping && <TypingIndicator key="typing-indicator" />}
+              </AnimatePresence>
+              <div
+                ref={messagesEndRef}
+                style={{ height: isKeyboardVisible ? 0 : 20 }}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
         {/* Input - Fixo no bottom */}
         <div className="flex-shrink-0 bg-background border-t border-border px-4 lg:px-6 py-3 z-50 sticky bottom-0 min-h-0">
@@ -492,7 +440,11 @@ export function Chat() {
         )}
       </AnimatePresence>
 
-      {/* Debug do Funil de Vendas removido, agora integrado ao termômetro */}
+      {/* Debug do Funil de Vendas */}
+      <SalesFunnelDebug 
+        salesData={salesData} 
+        isVisible={showFunnelDebug} 
+      />
       
       {/* Sistema Progressivo - Desabilitado para limpeza visual */}
       
