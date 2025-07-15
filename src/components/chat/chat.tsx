@@ -26,15 +26,27 @@ import { FunnelThermometer } from '@/components/chat/funnel-thermometer';
 import { Bot, CheckCircle } from 'lucide-react';
 
 export function Chat() {
+
+  // Sugestões iniciais para o chat
+  const initialSuggestions = [
+    'Como a automação pode aumentar minhas vendas?',
+    'Quais resultados reais clientes da Numbly já tiveram?',
+    'Quero saber como funciona a integração com WhatsApp.',
+    'Tenho dúvidas sobre preço e condições.',
+    'Me mostre um caso de sucesso.'
+  ];
+
   // Estados locais para gerenciar o chat
   const [threadId, setThreadId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Exibe sugestões se não houver mensagens do usuário
+  const showInitialSuggestions = messages.length === 0;
 
   // Thread simulada para manter compatibilidade com o código existente
   const currentThread = { messages };
@@ -115,12 +127,14 @@ export function Chat() {
     try {
       await handleSend(content);
       setTimeout(() => scrollToBottom(true), 200);
-      // Foca o input após cada envio, independente de plataforma
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 250);
+      // Foca o input apenas no desktop
+      if (isDesktop) {
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 250);
+      }
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
     }
@@ -367,6 +381,28 @@ export function Chat() {
         />
         <div className="p-4 lg:p-6">
           <div className="max-w-4xl mx-auto w-full space-y-6">
+            {showInitialSuggestions && (
+              <section className="w-full flex flex-col items-center justify-center py-10 animate-fade-in">
+                <div className="mb-6 text-center">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">Comece sua conversa com Donna IA</h2>
+                  <p className="text-base text-muted-foreground max-w-xl mx-auto">
+                    Tire dúvidas, peça exemplos, descubra como a automação pode transformar seu negócio. Clique em uma sugestão ou escreva sua própria pergunta!
+                  </p>
+                </div>
+                <div className="flex flex-row flex-wrap gap-4 justify-center w-full max-w-3xl">
+                  {initialSuggestions.map((suggestion, idx) => (
+                    <button
+                      key={idx}
+                    className="group bg-gradient-to-br from-violet-50 to-purple-100 dark:from-zinc-900 dark:to-zinc-800 border border-violet-200 dark:border-zinc-700 hover:from-violet-100 hover:to-purple-200 dark:hover:from-zinc-800 dark:hover:to-zinc-900 text-violet-900 dark:text-violet-100 font-medium rounded-2xl px-6 py-4 shadow-sm hover:shadow-lg transition-all duration-150 text-sm flex items-center gap-2 min-w-[180px] max-w-xs focus:outline-none focus:ring-2 focus:ring-violet-400"
+                      onClick={() => handleSendMessage(suggestion)}
+                      tabIndex={0}
+                    >
+                      <span className="truncate w-full text-center group-hover:font-semibold transition-all duration-150">{suggestion}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
             <AnimatePresence initial={false}>
               {/* Mensagens do chat - com null check */}
               {currentThread?.messages
