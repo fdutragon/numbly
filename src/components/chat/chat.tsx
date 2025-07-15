@@ -249,6 +249,7 @@ export function Chat() {
 
   // Detecta altura do teclado (mobile) e gerencia scroll inteligente
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -262,9 +263,14 @@ export function Chat() {
         
         if (heightDifference > 150) {
           setIsKeyboardVisible(true);
-          setTimeout(() => scrollToBottom(true), 300);
+          setKeyboardHeight(heightDifference);
+          // Scroll mais inteligente com delay para garantir que o teclado já abriu
+          setTimeout(() => {
+            scrollToBottom(true);
+          }, 400);
         } else {
           setIsKeyboardVisible(false);
+          setKeyboardHeight(0);
         }
       }
     }
@@ -287,6 +293,7 @@ export function Chat() {
     const handleFocusOut = () => {
       setTimeout(() => {
         setIsKeyboardVisible(false);
+        setKeyboardHeight(0);
       }, 300);
     };
     
@@ -370,7 +377,11 @@ export function Chat() {
         </div>
 
       {/* Messages - Área com scroll */}
-      <div className="relative flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0" ref={messagesContainerRef} style={{ padding: 0, transition: 'padding 0.3s ease-in-out' }}>
+      <div className="relative flex-1 overflow-y-auto custom-scrollbar overscroll-behavior-y-contain min-h-0" ref={messagesContainerRef} style={{ 
+        padding: 0, 
+        transition: 'padding 0.3s ease-in-out',
+        paddingBottom: isKeyboardVisible ? `${Math.max(keyboardHeight - 100, 0)}px` : '0px'
+      }}>
         {/* Termômetro do funil */}
         <FunnelThermometer
           score={salesData.score}
@@ -424,7 +435,7 @@ export function Chat() {
             </AnimatePresence>
             <div
               ref={messagesEndRef}
-              style={{ height: isKeyboardVisible ? 0 : 20 }}
+              style={{ height: isKeyboardVisible ? Math.max(keyboardHeight + 20, 40) : 20 }}
             />
           </div>
         </div>
