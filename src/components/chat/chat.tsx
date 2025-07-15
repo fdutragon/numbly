@@ -416,7 +416,11 @@ export function Chat() {
                   }
                 />
               )) || []}
-              {isTyping && <TypingIndicator key="typing-indicator" />}
+              {isTyping && (
+                <div className="mb-12">
+                  <TypingIndicator key="typing-indicator" />
+                </div>
+              )}
             </AnimatePresence>
             <div
               ref={messagesEndRef}
