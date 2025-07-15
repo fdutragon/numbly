@@ -310,6 +310,8 @@ function getContextualSystemMessage(thread: Thread): string {
   
   let contextMessage = `Você é Donna, especialista em automação WhatsApp da Numbly. 
 
+INSTRUÇÃO: Responda sempre de forma breve, objetiva e com no máximo 3 parágrafos curtos. Evite repetições, rodeios ou explicações longas. Seja direto ao ponto.
+
 CONTEXTO ATUAL DO LEAD:
 - Score: ${score}/100
 - Stage: ${stage}

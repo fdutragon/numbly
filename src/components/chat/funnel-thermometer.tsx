@@ -1,11 +1,19 @@
 import React from 'react';
 
+interface LeadData {
+  score: number;
+  stage: string;
+  interests: string[];
+  objections: string[];
+  urgency: 'low' | 'medium' | 'high';
+}
+
 interface FunnelThermometerProps {
   score: number;
   stage: string;
   onExpand: () => void;
   expanded: boolean;
-  leadData: any;
+  leadData: LeadData | null;
 }
 
 const STAGES = [
