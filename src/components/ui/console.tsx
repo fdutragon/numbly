@@ -57,15 +57,15 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
   const getIcon = useCallback((type: ValidationItem['type']) => {
     switch (type) {
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-destructive" />;
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+        return <AlertTriangle className="w-4 h-4 text-amber-500" />;
       case 'success':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'info':
         return <Info className="w-4 h-4 text-blue-500" />;
       default:
-        return <Info className="w-4 h-4" />;
+        return <Info className="w-4 h-4 text-muted-foreground" />;
     }
   }, []);
 
@@ -88,31 +88,34 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
   const warningCount = useMemo(() => displayValidations.filter(v => v.type === 'warning').length, [displayValidations]);
 
   return (
-    <div className={cn('flex flex-col h-full bg-background border rounded-lg', className)}>
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-lg font-semibold">Console de Conformidade</h2>
-        <div className="flex items-center gap-2">
+    <div className={cn('flex flex-col h-full bg-background', className)}>
+      <div className="flex items-center justify-between p-4 pb-2">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Conformidade</h2>
+        <div className="flex items-center gap-1">
           {errorCount > 0 && (
-            <Badge variant="destructive" className="text-xs">
-              {errorCount} erro{errorCount !== 1 ? 's' : ''}
-            </Badge>
+            <div className="w-2 h-2 rounded-full bg-red-500"></div>
           )}
           {warningCount > 0 && (
-            <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
-              {warningCount} aviso{warningCount !== 1 ? 's' : ''}
-            </Badge>
+            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+          )}
+          {errorCount === 0 && warningCount === 0 && (
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
           )}
         </div>
       </div>
       
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-3">
+      <ScrollArea className="flex-1 px-4">
+        <div className="space-y-2">
           {displayValidations.map((validation) => (
             <div
               key={validation.id}
               className={cn(
-                'p-3 rounded-md border-l-4 cursor-pointer hover:bg-accent/50 transition-colors',
-                getStatusColor(validation.type)
+                'group p-3 rounded-lg cursor-pointer transition-all duration-200 border shadow-sm bg-card/50 backdrop-blur-sm',
+                'hover:shadow-md hover:bg-card/80 hover:border-border/60',
+                validation.type === 'error' && 'border-red-200/60 hover:border-red-300/80 hover:bg-red-50/30 dark:border-red-800/40 dark:hover:border-red-700/60 dark:hover:bg-red-950/20',
+                validation.type === 'warning' && 'border-amber-200/60 hover:border-amber-300/80 hover:bg-amber-50/30 dark:border-amber-800/40 dark:hover:border-amber-700/60 dark:hover:bg-amber-950/20',
+                validation.type === 'success' && 'border-green-200/60 hover:border-green-300/80 hover:bg-green-50/30 dark:border-green-800/40 dark:hover:border-green-700/60 dark:hover:bg-green-950/20',
+                validation.type === 'info' && 'border-blue-200/60 hover:border-blue-300/80 hover:bg-blue-50/30 dark:border-blue-800/40 dark:hover:border-blue-700/60 dark:hover:bg-blue-950/20'
               )}
               onClick={() => {
                 // TODO: Implementar navegação para linha específica
@@ -120,18 +123,20 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
               }}
             >
               <div className="flex items-start gap-3">
-                {getIcon(validation.type)}
+                <div className="mt-0.5 flex-shrink-0">
+                  {getIcon(validation.type)}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm text-foreground leading-relaxed font-medium">
                     {validation.message}
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="secondary" className="text-xs px-2 py-0.5 font-normal">
                       {validation.clause}
-                    </span>
-                    <span className="text-xs text-muted-foreground">•</span>
-                    <span className="text-xs text-muted-foreground">
-                      Linha {validation.line}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground/50">•</span>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      L{validation.line}
                     </span>
                   </div>
                 </div>
@@ -141,11 +146,13 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t">
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>Total: {displayValidations.length} item{displayValidations.length !== 1 ? 's' : ''}</span>
-          <Button variant="ghost" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
+      <div className="px-4 py-3 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground font-medium">
+            {displayValidations.length} {displayValidations.length === 1 ? 'item' : 'itens'}
+          </span>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs hover:bg-muted/50">
+            <RefreshCw className="w-3 h-3 mr-1" />
             Revalidar
           </Button>
         </div>

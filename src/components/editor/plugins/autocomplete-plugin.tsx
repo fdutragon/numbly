@@ -15,6 +15,7 @@ import type { BaseSelection, NodeKey } from "lexical"
 import {
   $createTextNode,
   $getNodeByKey,
+  $getRoot,
   $getSelection,
   $isRangeSelection,
   $isTextNode,
@@ -66,11 +67,11 @@ function $search(selection: null | BaseSelection): [boolean, string] {
 }
 
 // TODO query should be custom
-function useQuery(): (searchText: string) => SearchPromise {
-  return useCallback((searchText: string) => {
+function useQuery(): (searchText: string, context?: string) => SearchPromise {
+  return useCallback((searchText: string, context?: string) => {
     const server = new AutocompleteServer()
     console.time("query")
-    const response = server.query(searchText)
+    const response = server.query(searchText, context)
     console.timeEnd("query")
     return response
   }, [])
@@ -152,7 +153,15 @@ export function AutocompletePlugin(): JSX.Element | null {
           return
         }
         $clearSuggestion()
-        searchPromise = query(match)
+        
+        // Get document context for better suggestions
+        let documentContext = 'Legal document'
+        const root = $getRoot()
+        const textContent = root.getTextContent()
+        // Get last 200 characters as context
+        documentContext = textContent.slice(-200) || 'Legal document'
+        
+        searchPromise = query(match, documentContext)
         searchPromise.promise
           .then((newSuggestion) => {
             if (searchPromise !== null) {
@@ -228,29 +237,99 @@ export function AutocompletePlugin(): JSX.Element | null {
 }
 
 /*
- * Simulate an asynchronous autocomplete server (typical in more common use cases like GMail where
- * the data is not static).
+ * Autocomplete server using OpenAI API with streaming support
  */
 class AutocompleteServer {
   DATABASE = DICTIONARY
-  LATENCY = 200
+  LATENCY = 300
 
-  query = (searchText: string): SearchPromise => {
+  query = (searchText: string, context?: string): SearchPromise => {
     let isDismissed = false
 
     const dismiss = () => {
       isDismissed = true
     }
-    const promise: Promise<null | string> = new Promise((resolve, reject) => {
-      setTimeout(() => {
+    const promise: Promise<null | string> = new Promise(async (resolve, reject) => {
+      try {
         if (isDismissed) {
-          // TODO cache result
           return reject("Dismissed")
         }
+        
         const searchTextLength = searchText.length
         if (searchText === "" || searchTextLength < 4) {
           return resolve(null)
         }
+
+        // Try OpenAI API first
+        const response = await fetch('/api/autocomplete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: searchText,
+            context: context || 'Legal document'
+          }),
+        })
+
+        if (!response.ok) {
+           const errorData = await response.json().catch(() => ({}))
+           if (errorData.fallback) {
+             // API key not configured, use fallback
+             throw new Error('API_KEY_NOT_CONFIGURED')
+           }
+           throw new Error('Failed to fetch autocomplete suggestions')
+         }
+
+        const reader = response.body?.getReader()
+        if (!reader) {
+          throw new Error('No response body')
+        }
+
+        let suggestion = ''
+        const decoder = new TextDecoder()
+
+        while (true) {
+          if (isDismissed) {
+            return reject("Dismissed")
+          }
+          
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value)
+          const lines = chunk.split('\n')
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+              if (data === '[DONE]') {
+                break
+              }
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.content) {
+                  suggestion += parsed.content
+                }
+              } catch (e) {
+                // Ignore parsing errors for incomplete chunks
+              }
+            }
+          }
+        }
+
+        if (suggestion.trim()) {
+          return resolve(suggestion.trim())
+        }
+
+        return resolve(null)
+      } catch (error) {
+         if (error.message === 'API_KEY_NOT_CONFIGURED') {
+           console.warn('OpenAI API key not configured, using dictionary fallback')
+         } else {
+           console.error('Autocomplete error:', error)
+         }
+         // Fallback to dictionary search
         const char0 = searchText.charCodeAt(0)
         const isCapitalized = char0 >= 65 && char0 <= 90
         const caseInsensitiveSearchText = isCapitalized
@@ -271,7 +350,7 @@ class AutocompleteServer {
           return resolve(null)
         }
         return resolve(autocompleteChunk)
-      }, this.LATENCY)
+      }
     })
 
     return {

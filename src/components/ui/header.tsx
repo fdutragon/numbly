@@ -36,6 +36,7 @@ function HeaderComponent({ className, onDownload }: HeaderProps) {
           <Download className="w-4 h-4 mr-2" />
           Exportar .docx
         </Button>
+        <ThemeToggle />
         <Button variant="ghost" size="sm">
           <Settings className="w-4 h-4" />
         </Button>

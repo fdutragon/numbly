@@ -33,6 +33,7 @@ import { ShareContentPlugin } from "@/components/editor/plugins/actions/share-co
 import { SpeechToTextPlugin } from "@/components/editor/plugins/actions/speech-to-text-plugin"
 import { TreeViewPlugin } from "@/components/editor/plugins/actions/tree-view-plugin"
 import { AutoLinkPlugin } from "@/components/editor/plugins/auto-link-plugin"
+import { OpenAIStatus } from "@/components/ui/openai-status"
 import { AutocompletePlugin } from "@/components/editor/plugins/autocomplete-plugin"
 import { CodeActionMenuPlugin } from "@/components/editor/plugins/code-action-menu-plugin"
 import { CodeHighlightPlugin } from "@/components/editor/plugins/code-highlight-plugin"
@@ -125,7 +126,7 @@ import { TABLE } from "@/components/editor/transformers/markdown-table-transform
 import { TWEET } from "@/components/editor/transformers/markdown-tweet-transformer"
 import { Separator } from "@/components/ui/separator"
 
-const placeholder = "Press / for commands..."
+const placeholder = `Digite "/" para começar`
 const maxLength = 500
 
 export function Plugins({}) {
@@ -142,7 +143,7 @@ export function Plugins({}) {
     <div className="relative">
       <ToolbarPlugin>
         {({ blockType }) => (
-          <div className="vertical-align-middle sticky top-0 z-10 h-16 flex items-center justify-center overflow-auto border-b px-4">
+          <div className="vertical-align-middle sticky top-0 z-10 h-20 flex items-center justify-center overflow-hidden px-4 py-4 bg-background/80 backdrop-blur-sm rounded-lg mx-2 mt-1 mb-2 shadow-sm">
             <div className="flex gap-2 flex-wrap justify-center">
               <HistoryToolbarPlugin />
               <Separator orientation="vertical" className="h-8" />
@@ -150,8 +151,8 @@ export function Plugins({}) {
                 <FormatParagraph />
                 <FormatHeading levels={["h1", "h2", "h3"]} />
                 <FormatNumberedList />
-                <FormatBulletedList />
-                <FormatCheckList />
+                  <FormatBulletedList />
+                  <FormatCheckList />
                 <FormatCodeBlock />
                 <FormatQuote />
               </BlockFormatDropDown>
@@ -194,7 +195,7 @@ export function Plugins({}) {
           </div>
         )}
       </ToolbarPlugin>
-      <div className="relative">
+      <div className="relative mt-2">
         <AutoFocusPlugin />
         <RichTextPlugin
           contentEditable={
@@ -202,7 +203,8 @@ export function Plugins({}) {
               <div className="" ref={onRef}>
                 <ContentEditable
                   placeholder={placeholder}
-                  className="ContentEditable__root relative block h-[830px] min-h-72 min-h-full overflow-auto px-8 py-4 focus:outline-none"
+                  className="ContentEditable__root relative block h-[830px] min-h-72 min-h-full overflow-auto px-8 py-4 focus:outline-none text-foreground/90 leading-relaxed tracking-wide font-medium text-base caret-primary"
+                  placeholderClassName="pointer-events-none absolute top-0 left-0 overflow-hidden px-8 py-4 text-ellipsis select-none font-medium text-base tracking-wide leading-relaxed text-muted-foreground/60"
                 />
               </div>
             </div>
@@ -309,6 +311,7 @@ export function Plugins({}) {
       <ActionsPlugin>
         <div className="clear-both flex items-center justify-between gap-2 overflow-auto border-t p-1">
           <div className="flex flex-1 justify-start">
+            <OpenAIStatus />
             <MaxLengthPlugin maxLength={maxLength} />
             <CharacterLimitPlugin maxLength={maxLength} charset="UTF-16" />
           </div>

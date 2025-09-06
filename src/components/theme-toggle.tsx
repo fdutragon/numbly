@@ -27,6 +27,7 @@ export function ThemeToggle() {
         size="icon"
         className="h-9 w-9"
         disabled
+        aria-label="Alternar tema"
       >
         <Sun className="h-4 w-4" />
       </Button>
@@ -34,7 +35,10 @@ export function ThemeToggle() {
   }
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    const themes = ["light", "dark", "amber-minimal"];
+    const currentIndex = themes.indexOf(theme || "light");
+    const nextIndex = (currentIndex + 1) % themes.length;
+    setTheme(themes[nextIndex]);
   };
 
   return (
@@ -46,12 +50,14 @@ export function ThemeToggle() {
             size="icon"
             onClick={toggleTheme}
             className="h-9 w-9"
-            aria-label={`Alternar para tema ${theme === "light" ? "escuro" : "claro"}`}
+            aria-label={`Alternar tema (${theme})`}
           >
             {theme === "light" ? (
               <Sun className="h-4 w-4" />
-            ) : (
+            ) : theme === "dark" ? (
               <Moon className="h-4 w-4" />
+            ) : (
+              <div className="h-4 w-4 bg-amber-500 rounded" />
             )}
           </Button>
         </TooltipTrigger>
