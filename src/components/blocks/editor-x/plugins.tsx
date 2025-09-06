@@ -18,7 +18,7 @@ import { ListPlugin } from "@lexical/react/LexicalListPlugin"
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin"
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin"
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin"
-import { TablePlugin } from "@lexical/react/LexicalTablePlugin"
+
 
 import { ContentEditable } from "@/components/editor/editor-ui/content-editable"
 import { ActionsPlugin } from "@/components/editor/plugins/actions/actions-plugin"
@@ -142,54 +142,55 @@ export function Plugins({}) {
     <div className="relative">
       <ToolbarPlugin>
         {({ blockType }) => (
-          <div className="vertical-align-middle sticky top-0 z-10 flex gap-2 overflow-auto border-b p-1">
-            <HistoryToolbarPlugin />
-            <Separator orientation="vertical" className="h-8" />
-            <BlockFormatDropDown>
-              <FormatParagraph />
-              <FormatHeading levels={["h1", "h2", "h3"]} />
-              <FormatNumberedList />
-              <FormatBulletedList />
-              <FormatCheckList />
-              <FormatCodeBlock />
-              <FormatQuote />
-            </BlockFormatDropDown>
-            {blockType === "code" ? (
-              <CodeLanguageToolbarPlugin />
-            ) : (
-              <>
-                <FontFamilyToolbarPlugin />
-                <FontSizeToolbarPlugin />
-                <Separator orientation="vertical" className="h-8" />
-                <FontFormatToolbarPlugin format="bold" />
-                <FontFormatToolbarPlugin format="italic" />
-                <FontFormatToolbarPlugin format="underline" />
-                <FontFormatToolbarPlugin format="strikethrough" />
-                <Separator orientation="vertical" className="h-8" />
-                <SubSuperToolbarPlugin />
-                <LinkToolbarPlugin />
-                <Separator orientation="vertical" className="h-8" />
-                <ClearFormattingToolbarPlugin />
-                <Separator orientation="vertical" className="h-8" />
-                <FontColorToolbarPlugin />
-                <FontBackgroundToolbarPlugin />
-                <Separator orientation="vertical" className="h-8" />
-                <ElementFormatToolbarPlugin />
-                <Separator orientation="vertical" className="h-8" />
-                <BlockInsertPlugin>
-                  <InsertHorizontalRule />
-                  <InsertPageBreak />
-                  <InsertImage />
-                  <InsertInlineImage />
-                  <InsertCollapsibleContainer />
-                  <InsertExcalidraw />
-                  <InsertTable />
-                  <InsertPoll />
-                  <InsertColumnsLayout />
-                  <InsertEmbeds />
-                </BlockInsertPlugin>
-              </>
-            )}
+          <div className="vertical-align-middle sticky top-0 z-10 h-16 flex items-center justify-center overflow-auto border-b px-4">
+            <div className="flex gap-2 flex-wrap justify-center">
+              <HistoryToolbarPlugin />
+              <Separator orientation="vertical" className="h-8" />
+              <BlockFormatDropDown>
+                <FormatParagraph />
+                <FormatHeading levels={["h1", "h2", "h3"]} />
+                <FormatNumberedList />
+                <FormatBulletedList />
+                <FormatCheckList />
+                <FormatCodeBlock />
+                <FormatQuote />
+              </BlockFormatDropDown>
+              {blockType === "code" ? (
+                <CodeLanguageToolbarPlugin />
+              ) : (
+                <>
+                  <FontFamilyToolbarPlugin />
+                  <FontSizeToolbarPlugin />
+                  <Separator orientation="vertical" className="h-8" />
+                  <FontFormatToolbarPlugin format="bold" />
+                  <FontFormatToolbarPlugin format="italic" />
+                  <FontFormatToolbarPlugin format="underline" />
+                  <FontFormatToolbarPlugin format="strikethrough" />
+                  <SubSuperToolbarPlugin />
+                  <LinkToolbarPlugin />
+                  <Separator orientation="vertical" className="h-8" />
+                  <ClearFormattingToolbarPlugin />
+                  <Separator orientation="vertical" className="h-8" />
+                  <FontColorToolbarPlugin />
+                  <FontBackgroundToolbarPlugin />
+                  <Separator orientation="vertical" className="h-8" />
+                  <ElementFormatToolbarPlugin />
+                  <Separator orientation="vertical" className="h-8" />
+                  <BlockInsertPlugin>
+                    <InsertHorizontalRule />
+                    <InsertPageBreak />
+                    <InsertImage />
+                    <InsertInlineImage />
+                    <InsertCollapsibleContainer />
+                    <InsertExcalidraw />
+                    <InsertTable />
+                    <InsertPoll />
+                    <InsertColumnsLayout />
+                    <InsertEmbeds />
+                  </BlockInsertPlugin>
+                </>
+              )}
+            </div>
           </div>
         )}
       </ToolbarPlugin>
@@ -212,7 +213,6 @@ export function Plugins({}) {
         <ClickableLinkPlugin />
         <CheckListPlugin />
         <HorizontalRulePlugin />
-        <TablePlugin />
         <ListPlugin />
         <TabIndentationPlugin />
         <HashtagPlugin />
@@ -312,9 +312,6 @@ export function Plugins({}) {
             <MaxLengthPlugin maxLength={maxLength} />
             <CharacterLimitPlugin maxLength={maxLength} charset="UTF-16" />
           </div>
-          <div>
-            <CounterCharacterPlugin charset="UTF-16" />
-          </div>
           <div className="flex flex-1 justify-end">
             <SpeechToTextPlugin />
             <ShareContentPlugin />
@@ -344,6 +341,13 @@ export function Plugins({}) {
           </div>
         </div>
       </ActionsPlugin>
+      
+      {/* Character Counter centralizado no editor */}
+      <div className="flex justify-center mt-4 mb-2 bg-gray-50 p-2">
+        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-md text-sm">
+          <CounterCharacterPlugin charset="UTF-16" />
+        </div>
+      </div>
     </div>
   )
 }

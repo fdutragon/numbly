@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,10 +18,10 @@ interface ChatProps {
   onSendMessage?: (message: string) => void;
 }
 
-const Chat: React.FC<ChatProps> = ({ className, messages = [], onSendMessage }) => {
+function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
   const [inputValue, setInputValue] = useState('');
 
-  const mockMessages: ChatMessage[] = [
+  const mockMessages: ChatMessage[] = useMemo(() => [
     {
       id: '1',
       role: 'assistant',
@@ -40,23 +40,26 @@ const Chat: React.FC<ChatProps> = ({ className, messages = [], onSendMessage }) 
       content: 'Analisando a cláusula de rescisão... Sugiro adicionar mais detalhes sobre prazos e penalidades.',
       timestamp: new Date()
     }
-  ];
+  ], []);
 
-  const displayMessages = messages.length > 0 ? messages : mockMessages;
+  const displayMessages = useMemo(() => 
+    messages.length > 0 ? messages : mockMessages,
+    [messages, mockMessages]
+  );
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if (inputValue.trim() && onSendMessage) {
       onSendMessage(inputValue.trim());
       setInputValue('');
     }
-  };
+  }, [inputValue, onSendMessage]);
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleSend();
     }
-  };
+  }, [handleSend]);
 
   const getMessageIcon = (role: ChatMessage['role']) => {
     return role === 'user' ? (
@@ -69,13 +72,13 @@ const Chat: React.FC<ChatProps> = ({ className, messages = [], onSendMessage }) 
   return (
     <div 
       className={cn(
-        'flex flex-col h-full bg-card border-l border-border',
+        'flex flex-col h-full bg-card',
         className
       )}
       role="complementary"
       aria-label="Chat com IA"
     >
-      <div className="p-4 border-b border-border">
+      <div className="px-4 h-16 border-b border-border flex flex-col justify-center">
         <h2 className="text-sm font-semibold text-foreground">Chat IA</h2>
         <p className="text-xs text-muted-foreground mt-1">
           Assistente contextual
@@ -107,7 +110,16 @@ const Chat: React.FC<ChatProps> = ({ className, messages = [], onSendMessage }) 
                   {message.content}
                 </p>
                 <span className="text-xs text-muted-foreground mt-1 block">
-                  {message.timestamp.toLocaleTimeString()}
+                  {useMemo(() => {
+                    if (typeof window === 'undefined') {
+                      return '';
+                    }
+                    return new Date(message.timestamp).toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    });
+                  }, [message.timestamp])}
                 </span>
               </div>
             </div>
@@ -137,6 +149,9 @@ const Chat: React.FC<ChatProps> = ({ className, messages = [], onSendMessage }) 
       </div>
     </div>
   );
-};
+}
+
+const Chat = memo(ChatComponent);
+Chat.displayName = 'Chat';
 
 export default Chat;

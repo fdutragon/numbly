@@ -1,5 +1,6 @@
 "use client"
 
+import React, { memo } from "react"
 import {
   InitialConfigType,
   LexicalComposer,
@@ -13,6 +14,8 @@ import { editorTheme } from "@/components/editor/themes/editor-theme"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 import { nodes } from "./nodes"
+
+// Lazy load plugins para melhor performance
 import { Plugins } from "./plugins"
 
 const editorConfig: InitialConfigType = {
@@ -24,7 +27,7 @@ const editorConfig: InitialConfigType = {
   },
 }
 
-export function Editor({
+export const Editor = memo(function Editor({
   editorState,
   editorSerializedState,
   initialValue,
@@ -44,7 +47,7 @@ export function Editor({
     (initialValue ? JSON.stringify(initialValue) : undefined));
 
   return (
-    <div className={`bg-background overflow-hidden rounded-lg border shadow ${className || ''}`}>
+    <div className={`bg-background overflow-hidden ${className || ''}`}>
       <LexicalComposer
         initialConfig={{
           ...editorConfig,
@@ -70,4 +73,6 @@ export function Editor({
       </LexicalComposer>
     </div>
   )
-}
+})
+
+Editor.displayName = 'Editor'

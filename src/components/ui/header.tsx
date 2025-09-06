@@ -1,5 +1,5 @@
-import React from 'react';
-import { Download } from 'lucide-react';
+import React, { memo, useCallback } from 'react';
+import { Download, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -10,48 +10,41 @@ interface HeaderProps {
   onDownload?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ className, onDownload }) => {
-  const handleDownload = () => {
+function HeaderComponent({ className, onDownload }: HeaderProps) {
+  const handleDownload = useCallback(() => {
     if (onDownload) {
       onDownload();
+    } else {
+      // Mock download functionality
+      console.log('Downloading document...');
+      // Here you would implement the actual download logic
     }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleDownload();
-    }
-  };
+  }, [onDownload]);
 
   return (
-    <header 
-      className={cn(
-        'flex items-center justify-between px-6 py-4 bg-background border-b border-border',
-        className
-      )}
-      role="banner"
-    >
-      <div className="flex items-center">
+    <header className={cn('flex items-center justify-between px-6 h-16 border-b bg-background', className)}>
+      <div className="flex items-center gap-4">
         <Logo size="md" />
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-sm text-muted-foreground">Salvo automaticamente</span>
+        </div>
       </div>
       
       <div className="flex items-center gap-2">
-        <ThemeToggle />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDownload}
-          onKeyDown={handleKeyDown}
-          className="flex items-center gap-2 hover:bg-accent hover:text-accent-foreground transition-colors"
-          aria-label="Baixar documento"
-        >
-          <Download className="w-4 h-4" aria-hidden="true" />
-          Download
+        <Button variant="outline" size="sm" onClick={handleDownload}>
+          <Download className="w-4 h-4 mr-2" />
+          Exportar .docx
+        </Button>
+        <Button variant="ghost" size="sm">
+          <Settings className="w-4 h-4" />
         </Button>
       </div>
     </header>
   );
-};
+}
+
+const Header = memo(HeaderComponent);
+Header.displayName = 'Header';
 
 export default Header;

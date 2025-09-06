@@ -6,7 +6,7 @@ import {
   $patchStyleText,
 } from "@lexical/selection"
 import { $getSelection, $isRangeSelection, BaseSelection } from "lexical"
-import { TypeIcon } from "lucide-react"
+import { Type } from "lucide-react"
 
 import { useToolbarContext } from "@/components/editor/context/toolbar-context"
 import { useUpdateToolbarHandler } from "@/components/editor/editor-hooks/use-update-toolbar"
@@ -68,7 +68,7 @@ export function FontFamilyToolbarPlugin() {
       aria-label={buttonAriaLabel}
     >
       <SelectTrigger className="!h-8 w-min gap-1">
-        <TypeIcon className="size-4" />
+        <Type className="size-4" />
         <span style={{ fontFamily }}>{fontFamily}</span>
       </SelectTrigger>
       <SelectContent>
