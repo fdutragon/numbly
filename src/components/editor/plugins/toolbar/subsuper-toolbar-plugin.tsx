@@ -19,10 +19,10 @@ export function SubSuperToolbarPlugin() {
 
   const $updateToolbar = (selection: BaseSelection) => {
     if ($isRangeSelection(selection) || $isTableSelection(selection)) {
-      // @ts-ignore
-      setIsSubscript(selection.hasFormat("subscript"))
-      // @ts-ignore
-      setIsSuperscript(selection.hasFormat("superscript"))
+        // @ts-expect-error Lexical selection lacks type refinement
+        setIsSubscript(selection.hasFormat("subscript"))
+        // @ts-expect-error Lexical selection lacks type refinement
+        setIsSuperscript(selection.hasFormat("superscript"))
     }
   }
 

@@ -38,8 +38,8 @@ export function FontFormatToolbarPlugin({
 
   const $updateToolbar = (selection: BaseSelection) => {
     if ($isRangeSelection(selection) || $isTableSelection(selection)) {
-      // @ts-ignore
-      setIsSelected(selection.hasFormat(format as TextFormatType))
+        // @ts-expect-error Lexical selection lacks type refinement
+        setIsSelected(selection.hasFormat(format as TextFormatType))
     }
   }
 

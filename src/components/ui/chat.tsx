@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -109,18 +109,15 @@ function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
                 <p className="text-sm text-foreground leading-relaxed">
                   {message.content}
                 </p>
-                <span className="text-xs text-muted-foreground mt-1 block">
-                  {useMemo(() => {
-                    if (typeof window === 'undefined') {
-                      return '';
-                    }
-                    return new Date(message.timestamp).toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    });
-                  }, [message.timestamp])}
-                </span>
+                  <span className="text-xs text-muted-foreground mt-1 block">
+                    {typeof window === 'undefined'
+                      ? ''
+                      : new Date(message.timestamp).toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit'
+                        })}
+                  </span>
               </div>
             </div>
           ))}
