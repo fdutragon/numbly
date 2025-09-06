@@ -83,6 +83,10 @@ export function AutocompletePlugin(): JSX.Element | null {
   const query = useQuery()
 
   useEffect(() => {
+    if (!editor.hasNodes([AutocompleteNode])) {
+      throw new Error("AutocompletePlugin: AutocompleteNode not registered on editor")
+    }
+
     let autocompleteNodeKey: null | NodeKey = null
     let lastMatch: null | string = null
     let lastSuggestion: null | string = null
@@ -245,6 +249,7 @@ class AutocompleteServer {
 
   query = (searchText: string, context?: string): SearchPromise => {
     let isDismissed = false
+    const searchTextLength = searchText.length
 
     const dismiss = () => {
       isDismissed = true
@@ -255,7 +260,6 @@ class AutocompleteServer {
           return reject("Dismissed")
         }
         
-        const searchTextLength = searchText.length
         if (searchText === "" || searchTextLength < 4) {
           return resolve(null)
         }
@@ -273,15 +277,37 @@ class AutocompleteServer {
         })
 
         if (!response.ok) {
-           const errorData = await response.json().catch(() => ({}))
-           if (errorData.fallback) {
-             // API key not configured, use fallback
-             throw new Error('API_KEY_NOT_CONFIGURED')
-           }
-           throw new Error('Failed to fetch autocomplete suggestions')
-         }
-
-        const reader = response.body?.getReader()
+          console.warn('OpenAI API request failed:', response.status)
+          throw new Error('API_FALLBACK')
+        }
+        
+        // Check if response is streaming (text/plain) or JSON
+        const contentType = response.headers.get('content-type') || ''
+        
+        if (contentType.includes('application/json')) {
+          // Handle JSON response
+          const responseData = await response.json().catch(() => null)
+          
+          if (responseData && responseData.fallback) {
+            console.warn('OpenAI API unavailable, using dictionary fallback:', responseData?.error || 'Unknown error')
+            throw new Error('API_FALLBACK')
+          }
+          
+          // If we have a direct suggestion response (non-streaming)
+          if (responseData && responseData.suggestion !== undefined) {
+            return resolve(responseData.suggestion)
+          }
+          
+          // No suggestion in JSON response
+          return resolve(null)
+        }
+        
+        // Handle streaming response
+        if (!response.body || response.body.locked) {
+          throw new Error('Response body not available or already locked')
+        }
+        
+        const reader = response.body.getReader()
         if (!reader) {
           throw new Error('No response body')
         }
@@ -324,8 +350,8 @@ class AutocompleteServer {
 
         return resolve(null)
       } catch (error) {
-         if (error.message === 'API_KEY_NOT_CONFIGURED') {
-           console.warn('OpenAI API key not configured, using dictionary fallback')
+         if (error.message === 'API_FALLBACK' || error.message === 'API_KEY_NOT_CONFIGURED') {
+           console.warn('OpenAI API unavailable, using dictionary fallback')
          } else {
            console.error('Autocomplete error:', error)
          }

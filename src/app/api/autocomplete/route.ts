@@ -12,9 +12,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'OpenAI API key not configured. Please add your API key to .env.local file.',
+          suggestion: null,
           fallback: true
         }, 
-        { status: 400 }
+        { status: 200 }
       )
     }
 
@@ -83,9 +84,27 @@ Completion:`
     })
   } catch (error) {
     console.error('OpenAI API error:', error)
+    
+    // Check if it's an API key error
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'invalid_api_key') {
+      return NextResponse.json(
+        { 
+          error: 'Invalid OpenAI API key. Please check your configuration.',
+          suggestion: null,
+          fallback: true
+        },
+        { status: 200 }
+      )
+    }
+    
+    // For other errors, return a graceful fallback
     return NextResponse.json(
-      { error: 'Failed to generate autocomplete suggestion' },
-      { status: 500 }
+      { 
+        error: 'Autocomplete temporarily unavailable',
+        suggestion: null,
+        fallback: true
+      },
+      { status: 200 }
     )
   }
 }

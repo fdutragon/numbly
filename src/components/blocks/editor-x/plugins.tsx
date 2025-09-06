@@ -143,7 +143,7 @@ export function Plugins({}) {
     <div className="relative">
       <ToolbarPlugin>
         {({ blockType }) => (
-          <div className="vertical-align-middle sticky top-0 z-10 h-20 flex items-center justify-center overflow-hidden px-4 py-4 bg-background/80 backdrop-blur-sm rounded-lg mx-2 mt-1 mb-2 shadow-sm">
+          <div className="vertical-align-middle sticky top-0 z-10 h-20 flex items-center justify-center overflow-hidden px-4 py-4 mx-2 mt-1 mb-2">
             <div className="flex gap-2 flex-wrap justify-center">
               <HistoryToolbarPlugin />
               <Separator orientation="vertical" className="h-8" />
