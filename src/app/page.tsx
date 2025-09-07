@@ -14,7 +14,10 @@ const initialEditorState: SerializedEditorState | null = null;
 
 export default function Home() {
   const [editorState, setEditorState] = useState<SerializedEditorState | null>(initialEditorState);
+  const [isInitialLoaded, setIsInitialLoaded] = useState(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const LOCAL_STORAGE_KEY = 'document:editorState';
 
   const handleDownload = useCallback(() => {
     // Implementar lógica de download
@@ -26,7 +29,7 @@ export default function Home() {
     console.log('Mensagem enviada:', message);
   }, []);
 
-  // Implementar debounce para reduzir re-renders do editor
+  // Implementar debounce para reduzir re-renders do editor e persistir
   const handleEditorStateChange = useCallback((newState: SerializedEditorState | null) => {
     // Limpar timeout anterior se existir
     if (debounceTimeoutRef.current) {
@@ -34,14 +37,67 @@ export default function Home() {
     }
 
     // Definir novo timeout para debounce
-    debounceTimeoutRef.current = setTimeout(() => {
+    debounceTimeoutRef.current = setTimeout(async () => {
       setEditorState(newState);
+
+      // Persistência local
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newState));
+        }
+      } catch {}
+
+      // Persistência no servidor (stub em memória)
+      try {
+        await fetch('/api/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ document: newState }),
+        });
+      } catch {}
     }, 300); // 300ms de debounce
   }, []);
 
-  // Cleanup do timeout quando o componente for desmontado
+  // Carregar estado inicial do servidor/localStorage e cleanup do timeout
   useEffect(() => {
+    let cancelled = false;
+
+    const loadInitial = async () => {
+      try {
+        // Tentar carregar do servidor
+        const res = await fetch('/api/documents', { method: 'GET' });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data && data.document) {
+            setEditorState(data.document as SerializedEditorState);
+            setIsInitialLoaded(true);
+            return;
+          }
+        }
+      } catch {}
+
+      // Fallback: carregar do localStorage
+      try {
+        if (typeof window !== 'undefined') {
+          const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw) as SerializedEditorState;
+            if (!cancelled) {
+              setEditorState(parsed);
+            }
+          }
+        }
+      } catch {}
+
+      if (!cancelled) {
+        setIsInitialLoaded(true);
+      }
+    };
+
+    loadInitial();
+
     return () => {
+      cancelled = true;
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
@@ -94,11 +150,15 @@ export default function Home() {
               <div className="w-full max-w-5xl h-full relative">
                 {/* Sombra Interna Sutil */}
                 <div className="absolute inset-0 shadow-inner rounded-lg pointer-events-none"></div>
-                <Editor
-                  initialValue={editorState || undefined}
-                  onChange={handleEditorStateChange}
-                  className="h-full bg-transparent px-16 py-4 relative z-10"
-                />
+                {isInitialLoaded ? (
+                  <Editor
+                    initialValue={editorState || undefined}
+                    onChange={handleEditorStateChange}
+                    className="h-full bg-transparent px-16 py-4 relative z-10"
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">Carregando documento...</div>
+                )}
               </div>
             </div>
           </div>
