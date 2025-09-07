@@ -1,58 +1,60 @@
-import React, { useState, memo, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  memo,
+  useCallback,
+  useEffect,
+} from 'react';
 import { Send, Bot, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
+import { type ChatMsg } from '@/data/db';
+import { listChatMessages, addChatMessage } from '@/data/dao';
 interface ChatProps {
+  documentId: string;
   className?: string;
-  messages?: ChatMessage[];
-  onSendMessage?: (message: string) => void;
 }
 
-function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
+function ChatComponent({ documentId, className }: ChatProps) {
   const [inputValue, setInputValue] = useState('');
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
 
-  const mockMessages: ChatMessage[] = useMemo(() => [
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Olá! Sou sua IA contextual. Como posso ajudar com o documento?',
-      timestamp: new Date()
-    },
-    {
-      id: '2',
-      role: 'user',
-      content: 'Preciso melhorar a cláusula de rescisão',
-      timestamp: new Date()
-    },
-    {
-      id: '3',
-      role: 'assistant',
-      content: 'Analisando a cláusula de rescisão... Sugiro adicionar mais detalhes sobre prazos e penalidades.',
-      timestamp: new Date()
+  useEffect(() => {
+    async function load() {
+      const existing = await listChatMessages(documentId);
+      if (existing.length === 0) {
+        const greeting: ChatMsg = {
+          id: crypto.randomUUID(),
+          document_id: documentId,
+          role: 'assistant',
+          content:
+            'Olá! Sou sua IA contextual. Como posso ajudar com o documento?',
+          created_at: new Date().toISOString(),
+        };
+        setMessages([greeting]);
+        addChatMessage(greeting);
+      } else {
+        setMessages(existing);
+      }
     }
-  ], []);
-
-  const displayMessages = useMemo(() => 
-    messages.length > 0 ? messages : mockMessages,
-    [messages, mockMessages]
-  );
+    void load();
+  }, [documentId]);
 
   const handleSend = useCallback(() => {
-    if (inputValue.trim() && onSendMessage) {
-      onSendMessage(inputValue.trim());
-      setInputValue('');
-    }
-  }, [inputValue, onSendMessage]);
+    const content = inputValue.trim();
+    if (!content) return;
+    const message: ChatMsg = {
+      id: crypto.randomUUID(),
+      document_id: documentId,
+      role: 'user',
+      content,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, message]);
+    addChatMessage(message);
+    setInputValue('');
+  }, [inputValue, documentId]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -61,7 +63,7 @@ function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
     }
   }, [handleSend]);
 
-  const getMessageIcon = (role: ChatMessage['role']) => {
+  const getMessageIcon = (role: ChatMsg['role']) => {
     return role === 'user' ? (
       <User className="w-4 h-4" aria-hidden="true" />
     ) : (
@@ -87,7 +89,7 @@ function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
       
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {displayMessages.map((message) => (
+          {messages.map((message) => (
             <div
               key={message.id}
               className={cn(
@@ -112,10 +114,10 @@ function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
                   <span className="text-xs text-muted-foreground mt-1 block">
                     {typeof window === 'undefined'
                       ? ''
-                      : new Date(message.timestamp).toLocaleTimeString('pt-BR', {
+                      : new Date(message.created_at).toLocaleTimeString('pt-BR', {
                           hour: '2-digit',
                           minute: '2-digit',
-                          second: '2-digit'
+                          second: '2-digit',
                         })}
                   </span>
               </div>
