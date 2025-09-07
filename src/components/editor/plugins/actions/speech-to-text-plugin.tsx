@@ -55,8 +55,10 @@ function SpeechToTextPluginImpl() {
   const [isSpeechToText, setIsSpeechToText] = useState<boolean>(false)
   const [isClient, setIsClient] = useState<boolean>(false)
   const [supportsSpeechRecognition, setSupportsSpeechRecognition] = useState<boolean>(false)
-  const SpeechRecognition = useRef<any>(null)
-  const recognition = useRef<any>(null)
+  const SpeechRecognition = useRef<
+    typeof window.SpeechRecognition | typeof window.webkitSpeechRecognition | null
+  >(null)
+  const recognition = useRef<SpeechRecognition | null>(null)
   const report = useReport()
 
   // Garantir renderização apenas no cliente após hidratação
@@ -78,12 +80,14 @@ function SpeechToTextPluginImpl() {
     }
 
     if (isEnabled && recognition.current === null) {
-      recognition.current = new SpeechRecognition.current()
+      recognition.current = new (
+        SpeechRecognition.current as new () => SpeechRecognition
+      )()
       recognition.current.continuous = true
       recognition.current.interimResults = true
       recognition.current.addEventListener(
         "result",
-        (event: any) => {
+        (event: SpeechRecognitionEvent) => {
           const resultItem = event.results.item(event.resultIndex)
           const { transcript } = resultItem.item(0)
           report(transcript)

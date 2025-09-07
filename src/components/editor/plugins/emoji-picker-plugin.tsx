@@ -133,9 +133,9 @@ export function EmojiPickerPlugin() {
     [editor]
   )
 
-  return (
-    // @ts-ignore
-    <LexicalTypeaheadMenuPlugin<EmojiOption>
+    return (
+      // @ts-expect-error missing types from LexicalTypeaheadMenuPlugin
+      <LexicalTypeaheadMenuPlugin<EmojiOption>
       onQueryChange={setQueryString}
       onSelectOption={onSelectOption}
       triggerFn={checkForTriggerMatch}
