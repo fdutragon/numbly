@@ -110,16 +110,11 @@ function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
                   {message.content}
                 </p>
                 <span className="text-xs text-muted-foreground mt-1 block">
-                  {useMemo(() => {
-                    if (typeof window === 'undefined') {
-                      return '';
-                    }
-                    return new Date(message.timestamp).toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    });
-                  }, [message.timestamp])}
+                  {new Date(message.timestamp).toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
                 </span>
               </div>
             </div>
