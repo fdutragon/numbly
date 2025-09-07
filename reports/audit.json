@@ -1,0 +1,29 @@
+{
+  "requireImports": [
+    {"file": "scripts/auto-commit-groq.js", "lines": [4,5,7]}
+  ],
+  "missingHookDependencies": [
+    {"file": "src/components/editor/editor-hooks/use-update-toolbar.ts", "line": 16, "missing": ["activeEditor"]},
+    {"file": "src/components/editor/plugins/actions/markdown-toggle-plugin.tsx", "line": 50, "missing": ["transformers"]},
+    {"file": "src/components/editor/plugins/component-picker-menu-plugin.tsx", "line": 66, "missing": ["baseOptions", "dynamicOptionsFn"]},
+    {"file": "src/components/editor/plugins/toolbar/toolbar-plugin.tsx", "line": 33, "missing": ["activeEditor"]},
+    {"file": "src/components/editor/plugins/floating-link-editor-plugin.tsx", "line": 182, "missing": ["setIsLink"]}
+  ],
+  "invalidHookUsage": [
+    {"file": "src/components/ui/chat.tsx", "line": 113, "problem": "useMemo inside map callback"}
+  ],
+  "tsExpectErrorsNeeded": [
+    {"file": "src/components/editor/plugins/toolbar/subsuper-toolbar-plugin.tsx", "lines": [22,24]},
+    {"file": "src/components/editor/plugins/emoji-picker-plugin.tsx", "line": 137},
+    {"file": "src/components/editor/plugins/component-picker-menu-plugin.tsx", "line": 87},
+    {"file": "src/components/editor/plugins/toolbar/font-format-toolbar-plugin.tsx", "line": 41},
+    {"file": "src/components/editor/plugins/mentions-plugin.tsx", "line": 643},
+    {"file": "src/components/editor/shared/caret-from-point.ts", "lines": [17,19]},
+    {"file": "src/components/editor/utils/collapsible.ts", "line": 2}
+  ],
+  "nonOptimizedImages": [
+    {"file": "src/components/editor/editor-ui/image-component.tsx", "lines": [86,104]},
+    {"file": "src/components/editor/editor-ui/inline-image-component.tsx", "line": 82},
+    {"file": "src/components/editor/editor-ui/katex-renderer.tsx", "lines": [36,43]}
+  ]
+}

@@ -84,8 +84,8 @@ export function ComponentPickerMenuPlugin({
   return (
     <>
       {modal}
-      {/* @ts-ignore */}
-      <LexicalTypeaheadMenuPlugin<ComponentPickerOption>
+        {/* @ts-expect-error missing types from LexicalTypeaheadMenuPlugin */}
+        <LexicalTypeaheadMenuPlugin<ComponentPickerOption>
         onQueryChange={setQueryString}
         onSelectOption={onSelectOption}
         triggerFn={checkForTriggerMatch}

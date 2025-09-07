@@ -639,9 +639,9 @@ export function MentionsPlugin(): JSX.Element | null {
     [checkForSlashTriggerMatch, editor]
   )
 
-  return (
-    // @ts-ignore
-    <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
+    return (
+      // @ts-expect-error missing types from LexicalTypeaheadMenuPlugin
+      <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
       onQueryChange={setQueryString}
       onSelectOption={onSelectOption}
       triggerFn={checkForMentionMatch}

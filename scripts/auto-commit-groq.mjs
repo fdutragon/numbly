@@ -1,10 +1,11 @@
-// scripts/auto-commit-groq.js
+// scripts/auto-commit-groq.mjs
 // Faz commit automático usando mensagem gerada pela Groq API
 
-const { execSync } = require('child_process');
-const fetch = require('node:https').request ? require('node:https') : require('https');
+import { execSync } from 'node:child_process';
+import https from 'node:https';
+import dotenv from 'dotenv';
 
-require('dotenv').config();
+dotenv.config();
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -56,7 +57,7 @@ function fetchGroq(prompt) {
         'Authorization': `Bearer ${GROQ_API_KEY}`
       }
     };
-    const req = fetch.request(options, res => {
+    const req = https.request(options, res => {
       let body = '';
       res.on('data', chunk => body += chunk);
       res.on('end', () => {
@@ -92,7 +93,7 @@ function fetchGemini(prompt) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     };
-    const req = fetch.request(options, res => {
+    const req = https.request(options, res => {
       let body = '';
       res.on('data', chunk => body += chunk);
       res.on('end', () => {
