@@ -9,7 +9,7 @@ export function TablePickerPlugin() {
     icon: <TableIcon className="size-4" />,
     keywords: ["table", "grid", "spreadsheet", "rows", "columns"],
     onSelect: (_, editor, showModal) =>
-      showModal("Insert Table", (onClose) => (
+      showModal("Inserir Tabela", (onClose) => (
         <InsertTableDialog activeEditor={editor} onClose={onClose} />
       )),
   })

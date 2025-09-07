@@ -1,46 +1,72 @@
-import React, { memo, useCallback } from 'react';
-import { Download, Settings } from 'lucide-react';
+import React, { memo, useCallback, useState } from 'react';
+import { Download, Settings, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Logo from '@/components/ui/logo';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { cn } from '@/lib/utils';
+import CreateAccountModal from '@/components/ui/create-account-modal';
 
 interface HeaderProps {
   className?: string;
   onDownload?: () => void;
+  onSave?: () => void;
 }
 
-function HeaderComponent({ className, onDownload }: HeaderProps) {
+function HeaderComponent({ className, onDownload, onSave }: HeaderProps) {
+  const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
+  
   const handleDownload = useCallback(() => {
     if (onDownload) {
       onDownload();
     } else {
-      // Mock download functionality
       console.log('Downloading document...');
-      // Here you would implement the actual download logic
     }
   }, [onDownload]);
 
+  const handleSave = useCallback(() => {
+    // Mostrar modal de criação de conta ao invés de salvar diretamente
+    setShowCreateAccountModal(true);
+  }, []);
+  
+  const handleAccountCreated = useCallback(() => {
+    // Após criar conta, executar o salvamento
+    if (onSave) {
+      onSave();
+    } else {
+      console.log('Saving document after account creation...');
+    }
+  }, [onSave]);
+
   return (
-    <header className={cn('flex items-center justify-between px-6 h-16 border-b bg-background', className)}>
-      <div className="flex items-center gap-4">
-        <Logo size="md" />
+    <header className={cn('flex items-center justify-between px-3 h-12 border-b border-border/50 bg-background/95 backdrop-blur-sm', className)}>
+      {/* Logo e Título */}
+      <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-sm text-muted-foreground">Salvo automaticamente</span>
+          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
+            <span className="text-white text-xs font-semibold">N</span>
+          </div>
+          <span className="text-sm font-medium text-foreground">Nexus Editor</span>
         </div>
       </div>
       
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleDownload}>
-          <Download className="w-4 h-4 mr-2" />
-          Exportar .docx
+      {/* Ações Essenciais */}
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="sm" onClick={handleSave} className="h-8 px-3 text-xs">
+          <Save className="w-3.5 h-3.5 mr-1.5" />
+          Salvar
         </Button>
-        <ThemeToggle />
-        <Button variant="ghost" size="sm">
-          <Settings className="w-4 h-4" />
+        <Button variant="ghost" size="sm" onClick={handleDownload} className="h-8 px-3 text-xs">
+          <Download className="w-3.5 h-3.5 mr-1.5" />
+          Exportar
+        </Button>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Settings className="w-3.5 h-3.5" />
         </Button>
       </div>
+      
+      <CreateAccountModal 
+        open={showCreateAccountModal}
+        onOpenChange={setShowCreateAccountModal}
+        onAccountCreated={handleAccountCreated}
+      />
     </header>
   );
 }

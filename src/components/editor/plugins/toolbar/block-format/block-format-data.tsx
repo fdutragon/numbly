@@ -3,6 +3,7 @@ import {
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
+  Heading4Icon,
   ListIcon,
   ListOrderedIcon,
   ListTodoIcon,
@@ -16,19 +17,23 @@ export const blockTypeToBlockName: Record<
 > = {
   paragraph: {
     label: "Paragraph",
-    icon: <TextIcon className="size-4" />,
+    icon: <TextIcon className="size-4 text-gray-400" />,
   },
   h1: {
     label: "Heading 1",
-    icon: <Heading1Icon className="size-4" />,
+    icon: <Heading1Icon className="size-4 text-gray-400" />,
   },
   h2: {
     label: "Heading 2",
-    icon: <Heading2Icon className="size-4" />,
+    icon: <Heading2Icon className="size-4 text-gray-400" />,
   },
   h3: {
     label: "Heading 3",
-    icon: <Heading3Icon className="size-4" />,
+    icon: <Heading3Icon className="size-4 text-gray-400" />,
+  },
+  h4: {
+    label: "Heading 4",
+    icon: <Heading4Icon className="size-4 text-gray-400" />,
   },
   number: {
     label: "Numbered List",

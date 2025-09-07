@@ -62,7 +62,7 @@ export function FontFormatToolbarPlugin({
         )
       }}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-4 w-4 text-gray-600" />
     </Toggle>
   )
 }

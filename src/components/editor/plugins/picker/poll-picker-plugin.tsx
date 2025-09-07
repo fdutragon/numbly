@@ -8,7 +8,7 @@ export function PollPickerPlugin() {
     icon: <ListChecksIcon className="size-4" />,
     keywords: ["poll", "vote"],
     onSelect: (_, editor, showModal) =>
-      showModal("Insert Poll", (onClose) => (
+      showModal("Inserir Enquete", (onClose) => (
         <InsertPollDialog activeEditor={editor} onClose={onClose} />
       )),
   })

@@ -8,7 +8,7 @@ export function ColumnsLayoutPickerPlugin() {
     icon: <Columns3Icon className="size-4" />,
     keywords: ["columns", "layout", "grid"],
     onSelect: (_, editor, showModal) =>
-      showModal("Insert Columns Layout", (onClose) => (
+      showModal("Inserir Layout de Colunas", (onClose) => (
         <InsertLayoutDialog activeEditor={editor} onClose={onClose} />
       )),
   })

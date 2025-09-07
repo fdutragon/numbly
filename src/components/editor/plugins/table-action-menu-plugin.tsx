@@ -513,33 +513,33 @@ function TableActionMenu({
             </CommandItem>
             <CommandSeparator />
             <CommandItem onSelect={() => insertTableRowAtSelection(false)}>
-              Insert{" "}
+              Inserir{" "}
               {selectionCounts.rows === 1
-                ? "row"
-                : `${selectionCounts.rows} rows`}{" "}
-              above
+                ? "linha"
+                : `${selectionCounts.rows} linhas`}{" "}
+              acima
             </CommandItem>
             <CommandItem onSelect={() => insertTableRowAtSelection(true)}>
-              Insert{" "}
+              Inserir{" "}
               {selectionCounts.rows === 1
-                ? "row"
-                : `${selectionCounts.rows} rows`}{" "}
-              below
+                ? "linha"
+                : `${selectionCounts.rows} linhas`}{" "}
+              abaixo
             </CommandItem>
             <CommandSeparator />
             <CommandItem onSelect={() => insertTableColumnAtSelection(false)}>
-              Insert{" "}
+              Inserir{" "}
               {selectionCounts.columns === 1
-                ? "column"
-                : `${selectionCounts.columns} columns`}{" "}
-              left
+                ? "coluna"
+                : `${selectionCounts.columns} colunas`}{" "}
+              à esquerda
             </CommandItem>
             <CommandItem onSelect={() => insertTableColumnAtSelection(true)}>
-              Insert{" "}
+              Inserir{" "}
               {selectionCounts.columns === 1
-                ? "column"
-                : `${selectionCounts.columns} columns`}{" "}
-              right
+                ? "coluna"
+                : `${selectionCounts.columns} colunas`}{" "}
+              à direita
             </CommandItem>
             <CommandSeparator />
             <CommandItem onSelect={() => deleteTableColumnAtSelection()}>

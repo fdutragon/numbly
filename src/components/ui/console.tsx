@@ -1,9 +1,10 @@
-import React, { memo, useCallback, useMemo } from 'react';
-import { AlertCircle, CheckCircle, AlertTriangle, Info, RefreshCw } from 'lucide-react';
+import React, { memo, useCallback, useMemo, useState, useEffect } from 'react';
+import { AlertCircle, CheckCircle, AlertTriangle, Info, RefreshCw, BarChart3, TrendingUp, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface ValidationItem {
   id: string;
@@ -16,9 +17,27 @@ interface ValidationItem {
 interface ConsoleProps {
   className?: string;
   validations?: ValidationItem[];
+  showUnsavedWarning?: boolean;
 }
 
-function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
+function ConsoleComponent({ className, validations = [], showUnsavedWarning = true }: ConsoleProps) {
+  const [showUnsavedNotification, setShowUnsavedNotification] = useState(false);
+  
+  // Timer para mostrar notificação de 'não salvo' após 30 segundos
+  useEffect(() => {
+    if (!showUnsavedWarning) return;
+    
+    const timer = setTimeout(() => {
+      setShowUnsavedNotification(true);
+    }, 30000); // 30 segundos
+    
+    return () => clearTimeout(timer);
+  }, [showUnsavedWarning]);
+  
+  // Função para dispensar a notificação
+  const dismissUnsavedNotification = useCallback(() => {
+    setShowUnsavedNotification(false);
+  }, []);
   const mockValidations = useMemo(() => [
     {
       id: '1',
@@ -69,16 +88,16 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
     }
   }, []);
 
-  const getStatusColor = useCallback((type: ValidationItem['type']) => {
+  const getValidationBorderClass = useCallback((type: ValidationItem['type']) => {
     switch (type) {
       case 'error':
-        return 'border-l-destructive bg-destructive/5';
+        return 'border-l-red-500';
       case 'warning':
-        return 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20';
+        return 'border-l-yellow-500';
       case 'success':
-        return 'border-l-green-500 bg-green-50 dark:bg-green-950/20';
+        return 'border-l-green-500';
       case 'info':
-        return 'border-l-blue-500 bg-blue-50 dark:bg-blue-950/20';
+        return 'border-l-blue-500';
       default:
         return 'border-l-muted';
     }
@@ -86,75 +105,169 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
 
   const errorCount = useMemo(() => displayValidations.filter(v => v.type === 'error').length, [displayValidations]);
   const warningCount = useMemo(() => displayValidations.filter(v => v.type === 'warning').length, [displayValidations]);
+  const successCount = useMemo(() => displayValidations.filter(v => v.type === 'success').length, [displayValidations]);
+  const infoCount = useMemo(() => displayValidations.filter(v => v.type === 'info').length, [displayValidations]);
+
+  const overallStatus = useMemo(() => {
+    if (errorCount > 0) return 'error';
+    if (warningCount > 0) return 'warning';
+    return 'success';
+  }, [errorCount, warningCount]);
 
   return (
-    <div className={cn('flex flex-col h-full bg-background', className)}>
-      <div className="flex items-center justify-between p-4 pb-2">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Conformidade</h2>
-        <div className="flex items-center gap-1">
-          {errorCount > 0 && (
-            <div className="w-2 h-2 rounded-full bg-red-500"></div>
-          )}
-          {warningCount > 0 && (
-            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-          )}
-          {errorCount === 0 && warningCount === 0 && (
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-          )}
+    <div className={cn('flex flex-col h-full', className)}>
+      {/* Header limpo e centralizado */}
+      <div className="px-4 py-4 border-b border-border/30">
+        <div className="flex items-center justify-center mb-4">
+          <div className="text-center">
+            <h2 className="text-sm font-medium text-foreground">Console de Conformidade</h2>
+            <p className="text-xs text-muted-foreground mt-1">Análise em tempo real</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <div className={cn(
+                'w-2 h-2 rounded-full animate-pulse',
+                overallStatus === 'error' && 'bg-red-500',
+                overallStatus === 'warning' && 'bg-amber-500',
+                overallStatus === 'success' && 'bg-green-500'
+              )} />
+              {overallStatus === 'error' && 'Requer Atenção'}
+              {overallStatus === 'warning' && 'Revisar'}
+              {overallStatus === 'success' && 'Conforme'}
+            </div>
+          </div>
+          
+          {/* Estatísticas simplificadas */}
+          <div className="flex items-center justify-center gap-6">
+            <div className="flex items-center gap-1.5">
+              <AlertCircle className="w-3 h-3 text-red-500" />
+              <span className="text-xs font-medium text-foreground">{errorCount}</span>
+              <span className="text-xs text-muted-foreground">Erros</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="w-3 h-3 text-amber-500" />
+              <span className="text-xs font-medium text-foreground">{warningCount}</span>
+              <span className="text-xs text-muted-foreground">Avisos</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle className="w-3 h-3 text-green-500" />
+              <span className="text-xs font-medium text-foreground">{successCount}</span>
+              <span className="text-xs text-muted-foreground">OK</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Info className="w-3 h-3 text-blue-500" />
+              <span className="text-xs font-medium text-foreground">{infoCount}</span>
+              <span className="text-xs text-muted-foreground">Info</span>
+            </div>
+          </div>
         </div>
       </div>
       
-      <ScrollArea className="flex-1 px-4">
-        <div className="space-y-2">
+      {/* Notificação de não salvo */}
+      {showUnsavedNotification && (
+        <div className="mx-4 mt-4 p-3 border border-border/50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-orange-500" />
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Documento não salvo
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Suas alterações podem ser perdidas. Considere criar uma conta para salvar.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={dismissUnsavedNotification}
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            >
+              <AlertCircle className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* Cards de validação modernos */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-3">
           {displayValidations.map((validation) => (
-            <div
+            <Card
               key={validation.id}
               className={cn(
-                'group p-3 rounded-lg cursor-pointer transition-all duration-200 border shadow-sm bg-card/50 backdrop-blur-sm',
-                'hover:shadow-md hover:bg-card/80 hover:border-border/60',
-                validation.type === 'error' && 'border-red-200/60 hover:border-red-300/80 hover:bg-red-50/30 dark:border-red-800/40 dark:hover:border-red-700/60 dark:hover:bg-red-950/20',
-                validation.type === 'warning' && 'border-amber-200/60 hover:border-amber-300/80 hover:bg-amber-50/30 dark:border-amber-800/40 dark:hover:border-amber-700/60 dark:hover:bg-amber-950/20',
-                validation.type === 'success' && 'border-green-200/60 hover:border-green-300/80 hover:bg-green-50/30 dark:border-green-800/40 dark:hover:border-green-700/60 dark:hover:bg-green-950/20',
-                validation.type === 'info' && 'border-blue-200/60 hover:border-blue-300/80 hover:bg-blue-50/30 dark:border-blue-800/40 dark:hover:border-blue-700/60 dark:hover:bg-blue-950/20'
+                'group cursor-pointer transition-all duration-200 hover:shadow-md border-l-4',
+                getValidationBorderClass(validation.type)
               )}
               onClick={() => {
                 // TODO: Implementar navegação para linha específica
                 console.log(`Navegando para linha ${validation.line}`);
               }}
             >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex-shrink-0">
-                  {getIcon(validation.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground leading-relaxed font-medium">
-                    {validation.message}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs px-2 py-0.5 font-normal">
-                      {validation.clause}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground/50">•</span>
-                    <span className="text-xs text-muted-foreground font-mono">
-                      L{validation.line}
-                    </span>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2">
+                    {getIcon(validation.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground leading-relaxed font-medium mb-2 group-hover:text-foreground/90 transition-colors">
+                      {validation.message}
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs px-2 py-1 font-medium border border-border/50"
+                      >
+                        {validation.clause}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                        <span className="font-mono bg-muted/50 px-1.5 py-0.5 rounded text-[10px]">
+                          Linha {validation.line}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <TrendingUp className="w-3 h-3 text-muted-foreground" />
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </ScrollArea>
 
-      <div className="px-4 py-3 border-t border-border/50">
+      {/* Footer simplificado */}
+      <div className="border-t border-border/30 px-4 py-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground font-medium">
-            {displayValidations.length} {displayValidations.length === 1 ? 'item' : 'itens'}
-          </span>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs hover:bg-muted/50">
-            <RefreshCw className="w-3 h-3 mr-1" />
-            Revalidar
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-xs text-muted-foreground">
+                {displayValidations.length} {displayValidations.length === 1 ? 'validação' : 'validações'}
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground/70">
+              Última atualização: agora
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="text-xs text-muted-foreground">
+              {errorCount === 0 && warningCount === 0 ? 'Tudo OK' : `${errorCount + warningCount} pendências`}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 px-3 text-xs"
+            >
+              <RefreshCw className="w-3 h-3 mr-1.5" />
+              Revalidar
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { db, type ChatMsg, type Document } from './db';
-import { upsertDocument, addChatMessage, listChatMessages } from './dao';
+import { upsertDocument, addChatMessage, getChatMessages } from './dao';
 
 // Clear tables before each test
 beforeEach(async () => {
@@ -29,7 +29,7 @@ describe('dao', () => {
     addChatMessage(msg);
     // Wait for debounce flush
     await new Promise((r) => setTimeout(r, 600));
-    const msgs = await listChatMessages('doc1');
+    const msgs = await getChatMessages('doc1');
     expect(msgs).toHaveLength(1);
     expect(msgs[0].content).toBe('hi');
   });

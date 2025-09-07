@@ -79,7 +79,7 @@ export function LinkToolbarPlugin() {
       aria-label="Toggle link"
       onClick={insertLink}
     >
-      <LinkIcon className="h-4 w-4" />
+      <LinkIcon className="h-4 w-4 text-gray-600" />
     </Toggle>
   )
 }

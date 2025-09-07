@@ -38,22 +38,22 @@ const ELEMENT_FORMAT_OPTIONS: {
   }
 } = {
   left: {
-    icon: <AlignLeftIcon className="size-4" />,
+    icon: <AlignLeftIcon className="size-4 text-gray-600" />,
     iconRTL: "left-align",
     name: "Left Align",
   },
   center: {
-    icon: <AlignCenterIcon className="size-4" />,
+    icon: <AlignCenterIcon className="size-4 text-gray-600" />,
     iconRTL: "center-align",
     name: "Center Align",
   },
   right: {
-    icon: <AlignRightIcon className="size-4" />,
+    icon: <AlignRightIcon className="size-4 text-gray-600" />,
     iconRTL: "right-align",
     name: "Right Align",
   },
   justify: {
-    icon: <AlignJustifyIcon className="size-4" />,
+    icon: <AlignJustifyIcon className="size-4 text-gray-600" />,
     iconRTL: "justify-align",
     name: "Justify Align",
   },
@@ -140,7 +140,7 @@ export function ElementFormatToolbarPlugin() {
           variant={"outline"}
           size="sm"
         >
-          <IndentDecreaseIcon className="size-4" />
+          <IndentDecreaseIcon className="size-4 text-gray-600" />
         </ToggleGroupItem>
 
         <ToggleGroupItem
@@ -149,7 +149,7 @@ export function ElementFormatToolbarPlugin() {
           aria-label="Indent"
           size="sm"
         >
-          <IndentIncreaseIcon className="size-4" />
+          <IndentIncreaseIcon className="size-4 text-gray-600" />
         </ToggleGroupItem>
       </ToggleGroup>
     </>

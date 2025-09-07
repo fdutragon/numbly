@@ -53,8 +53,18 @@ function $search(selection: null | BaseSelection): [boolean, string] {
   if (!$isTextNode(node) || !node.isSimpleText() || !$isAtNodeEnd(anchor)) {
     return [false, ""]
   }
-  const word = []
+  
+  // Get full text content to count words
   const text = node.getTextContent()
+  const words = text.trim().split(/\s+/).filter(word => word.length > 0)
+  
+  // Only trigger autocomplete every 5 words
+  if (words.length < 5 || words.length % 5 !== 0) {
+    return [false, ""]
+  }
+  
+  // Get the current word being typed
+  const word = []
   let i = node.getTextContentSize()
   let c
   while (i-- && i >= 0 && (c = text[i]) !== " ") {
@@ -350,7 +360,8 @@ class AutocompleteServer {
 
         return resolve(null)
       } catch (error) {
-         if (error.message === 'API_FALLBACK' || error.message === 'API_KEY_NOT_CONFIGURED') {
+         const errorMessage = error instanceof Error ? error.message : String(error)
+         if (errorMessage === 'API_FALLBACK' || errorMessage === 'API_KEY_NOT_CONFIGURED') {
            console.warn('OpenAI API unavailable, using dictionary fallback')
          } else {
            console.error('Autocomplete error:', error)

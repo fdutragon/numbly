@@ -1,0 +1,88 @@
+/* Estilos específicos para contratos */
+
+/* H1 - Título do Contrato */
+.ContentEditable__root h1 {
+  @apply text-2xl font-bold text-center mb-6 mt-8 text-gray-900 uppercase tracking-wide;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+/* H2 - Partes do Contrato (CONTRATANTE, CONTRATADO) */
+.ContentEditable__root h2 {
+  @apply text-xl font-semibold mb-4 mt-6 text-gray-800 uppercase tracking-wide;
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+}
+
+/* H3 - Seções/Cláusulas */
+.ContentEditable__root h3 {
+  @apply text-lg font-semibold mb-3 mt-5 text-gray-800;
+  counter-increment: clause-counter;
+}
+
+.ContentEditable__root h3::before {
+  content: "CLÁUSULA " counter(clause-counter, upper-roman) " - ";
+  font-weight: bold;
+  color: #374151;
+}
+
+/* H4 - Subcláusulas */
+.ContentEditable__root h4 {
+  @apply text-base font-medium mb-2 mt-4 text-gray-700;
+  counter-increment: subclause-counter;
+}
+
+.ContentEditable__root h4::before {
+  content: counter(subclause-counter) ". ";
+  font-weight: bold;
+  color: #6b7280;
+}
+
+/* Parágrafo - Texto normal das cláusulas */
+.ContentEditable__root p {
+  @apply text-base leading-7 mb-4 text-gray-700 text-justify;
+  text-indent: 2rem;
+}
+
+/* Reset dos contadores */
+.ContentEditable__root {
+  counter-reset: clause-counter subclause-counter;
+}
+
+/* Reset do contador de subcláusulas a cada nova cláusula */
+.ContentEditable__root h3 {
+  counter-reset: subclause-counter;
+}
+
+/* Estilos para listas em contratos */
+.ContentEditable__root ul,
+.ContentEditable__root ol {
+  @apply mb-4 ml-8;
+}
+
+.ContentEditable__root li {
+  @apply mb-2 text-base leading-6 text-gray-700;
+}
+
+/* Estilos para citações em contratos */
+.ContentEditable__root blockquote {
+  @apply border-l-4 border-blue-500 pl-4 py-2 mb-4 bg-blue-50 italic text-gray-700;
+}
+
+/* Estilos para links em contratos */
+.ContentEditable__root a {
+  @apply text-blue-600 underline hover:text-blue-800;
+}
+
+/* Estilos para texto em negrito, itálico e sublinhado */
+.ContentEditable__root strong {
+  @apply font-semibold text-gray-900;
+}
+
+.ContentEditable__root em {
+  @apply italic;
+}
+
+.ContentEditable__root u {
+  @apply underline;
+}

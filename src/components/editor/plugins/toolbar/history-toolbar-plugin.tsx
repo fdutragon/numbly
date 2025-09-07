@@ -68,7 +68,7 @@ export function HistoryToolbarPlugin() {
         className="!h-8 !w-8"
         variant={"outline"}
       >
-        <UndoIcon className="size-4" />
+        <UndoIcon className="size-4 text-gray-400" />
       </Button>
       <Button
         disabled={!canRedo || !isEditable}
@@ -82,7 +82,7 @@ export function HistoryToolbarPlugin() {
         size="icon"
         className="!h-8 !w-8"
       >
-        <RedoIcon className="size-4" />
+        <RedoIcon className="size-4 text-gray-400" />
       </Button>
     </div>
   )

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { memo } from "react"
+import "@/styles/contract-styles.css"
 import {
   InitialConfigType,
   LexicalComposer,
