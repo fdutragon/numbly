@@ -1,9 +1,15 @@
 import { OpenAI } from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,15 +25,71 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { text, context } = await request.json()
+    const { text, context, userId, guestId, documentId, clauseId } = await request.json()
+    
+    // Verificar permissões de IA (paywall)
+    const userIdentifier = userId || guestId
+    if (userIdentifier) {
+      const { data: paywallStatus } = await supabase
+        .from('user_paywall_status')
+        .select('ai_edits_used, ai_edits_limit, has_premium')
+        .eq('user_id', userIdentifier)
+        .single()
+
+      const hasAIAccess = paywallStatus?.has_premium || 
+                         (paywallStatus?.ai_edits_used || 0) < (paywallStatus?.ai_edits_limit || 1)
+
+      if (!hasAIAccess) {
+        return NextResponse.json(
+          { 
+            error: 'AI limit reached',
+            needsUpgrade: true,
+            message: 'Você atingiu o limite de edições gratuitas de IA. Faça upgrade para continuar.',
+            suggestion: null,
+            fallback: true
+          },
+          { status: 402 }
+        )
+      }
+    }
 
     if (!text || text.trim().length === 0) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 })
     }
 
+    // Buscar contexto adicional do documento se fornecido
+    let documentContext = ''
+    if (documentId) {
+      const { data: document } = await supabase
+        .from('documents')
+        .select('title, type, metadata')
+        .eq('id', documentId)
+        .single()
+      
+      if (document) {
+        documentContext = `Documento: ${document.title} (${document.type || 'Contrato'})`
+      }
+    }
+
+    // Buscar contexto da cláusula se fornecida
+    let clauseContext = ''
+    if (clauseId) {
+      const { data: clause } = await supabase
+        .from('clauses')
+        .select('title, body')
+        .eq('id', clauseId)
+        .single()
+      
+      if (clause) {
+        clauseContext = `Cláusula: ${clause.title}`
+      }
+    }
+
+    const enhancedContext = [documentContext, clauseContext, context].filter(Boolean).join(' | ')
+
     const prompt = `Complete the following legal text in Portuguese (Brazilian legal context):
 
-Context: ${context || 'Legal document'}
+Context: ${enhancedContext || 'Legal document'}
 Text to complete: "${text}"
 
 Provide a natural continuation that:
@@ -35,6 +97,7 @@ Provide a natural continuation that:
 - Is contextually appropriate
 - Is concise (max 50 words)
 - Maintains formal legal tone
+- Uses proper legal terminology
 
 Completion:`
 
@@ -74,6 +137,26 @@ Completion:`
         }
       },
     })
+
+    // Incrementar contador de uso de IA para usuários não premium
+    if (userIdentifier) {
+      const { data: paywallStatus } = await supabase
+        .from('user_paywall_status')
+        .select('ai_edits_used, ai_edits_limit, has_premium')
+        .eq('user_id', userIdentifier)
+        .single()
+
+      if (!paywallStatus?.has_premium) {
+        await supabase
+          .from('user_paywall_status')
+          .upsert({
+            user_id: userIdentifier,
+            ai_edits_used: (paywallStatus?.ai_edits_used || 0) + 1,
+            ai_edits_limit: paywallStatus?.ai_edits_limit || 1,
+            last_ai_use: new Date().toISOString()
+          })
+      }
+    }
 
     return new Response(readable, {
       headers: {

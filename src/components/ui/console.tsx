@@ -1,60 +1,157 @@
-import React, { memo, useCallback, useMemo } from 'react';
-import { AlertCircle, CheckCircle, AlertTriangle, Info, RefreshCw } from 'lucide-react';
+import React, { memo, useCallback, useMemo, useEffect, useState } from 'react';
+import { AlertCircle, CheckCircle, AlertTriangle, Info, RefreshCw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-interface ValidationItem {
-  id: string;
-  type: 'success' | 'warning' | 'error' | 'info';
-  message: string;
-  clause?: string;
-  line?: number;
-}
+import { getClausesByDocument } from '@/data/dao';
+import type { ValidationResult, ValidationIssue } from '@/workers/validate';
+import { getVariables, setVariables } from '@/data/variables';
+import type { ContractVariables } from '@/data/variables';
 
 interface ConsoleProps {
   className?: string;
-  validations?: ValidationItem[];
+  documentId?: string;
 }
 
-function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
-  const mockValidations = useMemo(() => [
-    {
-      id: '1',
-      type: 'error' as const,
-      message: 'CPF inválido na cláusula 3.1',
-      clause: 'Dados do Contratante',
-      line: 15,
-    },
-    {
-      id: '2',
-      type: 'warning' as const,
-      message: 'Data de vencimento muito próxima',
-      clause: 'Prazo de Vigência',
-      line: 28,
-    },
-    {
-      id: '3',
-      type: 'success' as const,
-      message: 'Cláusula de rescisão conforme legislação',
-      clause: 'Rescisão Contratual',
-      line: 45,
-    },
-    {
-      id: '4',
-      type: 'info' as const,
-      message: 'Sugestão: adicionar cláusula de confidencialidade',
-      clause: 'Disposições Gerais',
-      line: 52,
-    },
-  ], []);
+function ConsoleComponent({ className, documentId }: ConsoleProps) {
+  const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
+  const [isValidating, setIsValidating] = useState(false);
+  const [worker, setWorker] = useState<Worker | null>(null);
+  const [vars, setVars] = useState<ContractVariables>({
+    partyAName: '',
+    partyAId: '',
+    partyBName: '',
+    partyBId: '',
+    contractValue: '',
+    city: '',
+    state: '',
+    startDate: '',
+    endDate: '',
+    address: '',
+  });
 
+  // Inicializar worker
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const newWorker = new Worker(new URL('../../workers/validate.ts', import.meta.url), {
+          type: 'module'
+        });
+        
+        newWorker.onmessage = (e) => {
+          const { results, error } = e.data;
+          
+          if (error) {
+            console.error('Worker validation error:', error);
+          } else if (results) {
+            setValidationResults(results);
+          }
+          
+          setIsValidating(false);
+        };
+        
+        setWorker(newWorker);
+        
+        return () => {
+          newWorker.terminate();
+        };
+      } catch (error) {
+        console.error('Failed to initialize validation worker:', error);
+      }
+    }
+  }, []);
+
+  // Executar validação quando documento mudar
+  useEffect(() => {
+    if (documentId) {
+      runValidation();
+    }
+  }, [documentId]);
+
+  // Carregar variáveis do contrato
+  useEffect(() => {
+    try {
+      setVars(getVariables());
+    } catch {}
+  }, []);
+
+  const updateVar = useCallback((key: keyof ContractVariables, value: string) => {
+    setVars(prev => {
+      const next = { ...prev, [key]: value } as ContractVariables;
+      setVariables({ [key]: value });
+      return next;
+    });
+  }, []);
+
+  const runValidation = useCallback(async () => {
+    if (!worker || !documentId) {
+      return;
+    }
+
+    try {
+      setIsValidating(true);
+      const clauses = await getClausesByDocument(documentId);
+      
+      const clausesToValidate = clauses.map(clause => ({
+        id: clause.id,
+        title: clause.title,
+        body: clause.body
+      }));
+
+      worker.postMessage({ clauses: clausesToValidate });
+    } catch (error) {
+      console.error('Error running validation:', error);
+      setIsValidating(false);
+    }
+  }, [worker, documentId]);
+
+  // Converter ValidationResult para formato de display
   const displayValidations = useMemo(() => {
-    return validations.length > 0 ? validations : mockValidations;
-  }, [validations, mockValidations]);
+    if (validationResults.length === 0) {
+      // Mock data para quando não há documento
+      return [
+        {
+          id: '1',
+          type: 'info' as const,
+          message: 'Nenhum documento carregado para validação',
+          clause: 'Sistema',
+        },
+      ];
+    }
 
-  const getIcon = useCallback((type: ValidationItem['type']) => {
+    const items: Array<{
+      id: string;
+      type: 'success' | 'warning' | 'error' | 'info';
+      message: string;
+      clause?: string;
+    }> = [];
+
+    validationResults.forEach((result) => {
+      if (result.issues.length === 0) {
+        items.push({
+          id: result.id + '_ok',
+          type: 'success',
+          message: `Cláusula validada com sucesso (Score: ${result.score}/100)`,
+          clause: result.id,
+        });
+      } else {
+        result.issues.forEach((issue, index) => {
+          items.push({
+            id: result.id + '_' + index,
+            type: issue.severity === 'high' ? 'error' : 
+                  issue.severity === 'medium' ? 'warning' : 'info',
+            message: issue.message + (issue.suggestion ? ` - ${issue.suggestion}` : ''),
+            clause: result.id,
+          });
+        });
+      }
+    });
+
+    return items;
+  }, [validationResults]);
+
+  const getIcon = useCallback((type: 'success' | 'warning' | 'error' | 'info') => {
     switch (type) {
       case 'error':
         return <AlertCircle className="w-4 h-4 text-red-500" />;
@@ -69,7 +166,7 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
     }
   }, []);
 
-  const getStatusColor = useCallback((type: ValidationItem['type']) => {
+  const getStatusColor = useCallback((type: 'success' | 'warning' | 'error' | 'info') => {
     switch (type) {
       case 'error':
         return 'border-l-destructive bg-destructive/5';
@@ -105,6 +202,25 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
       </div>
       
       <ScrollArea className="flex-1 px-4">
+        {/* Variáveis (topo) */}
+        <div className="space-y-3 py-2">
+          <h3 className="text-xs font-semibold text-muted-foreground tracking-wide">Variáveis do Contrato</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Parte A - Nome" value={vars.partyAName} onChange={e => updateVar('partyAName', e.target.value)} />
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Parte A - CPF/CNPJ" value={vars.partyAId} onChange={e => updateVar('partyAId', e.target.value)} />
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Parte B - Nome" value={vars.partyBName} onChange={e => updateVar('partyBName', e.target.value)} />
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Parte B - CPF/CNPJ" value={vars.partyBId} onChange={e => updateVar('partyBId', e.target.value)} />
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Valor (R$)" value={vars.contractValue} onChange={e => updateVar('contractValue', e.target.value)} />
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Cidade" value={vars.city} onChange={e => updateVar('city', e.target.value)} />
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Estado" value={vars.state} onChange={e => updateVar('state', e.target.value)} />
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Início (DD/MM/AAAA)" value={vars.startDate} onChange={e => updateVar('startDate', e.target.value)} />
+            <input className="h-8 rounded-md border bg-background px-2 text-xs" placeholder="Término (DD/MM/AAAA)" value={vars.endDate} onChange={e => updateVar('endDate', e.target.value)} />
+          </div>
+          <textarea className="min-h-16 rounded-md border bg-background px-2 py-1 text-xs" placeholder="Endereço completo" value={vars.address} onChange={e => updateVar('address', e.target.value)} />
+          <div className="h-px bg-border/60" />
+        </div>
+
+        {/* Alerts (abaixo) */}
         <div className="space-y-2">
           {displayValidations.map((validation) => (
             <div
@@ -118,8 +234,8 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
                 validation.type === 'info' && 'border-blue-200/60 hover:border-blue-300/80 hover:bg-blue-50/30 dark:border-blue-800/40 dark:hover:border-blue-700/60 dark:hover:bg-blue-950/20'
               )}
               onClick={() => {
-                // TODO: Implementar navegação para linha específica
-                console.log(`Navegando para linha ${validation.line}`);
+                // TODO: Implementar navegação para cláusula específica
+                console.log(`Navegando para cláusula ${validation.clause}`);
               }}
             >
               <div className="flex items-start gap-3">
@@ -134,10 +250,6 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
                     <Badge variant="secondary" className="text-xs px-2 py-0.5 font-normal">
                       {validation.clause}
                     </Badge>
-                    <span className="text-xs text-muted-foreground/50">•</span>
-                    <span className="text-xs text-muted-foreground font-mono">
-                      L{validation.line}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -151,9 +263,19 @@ function ConsoleComponent({ className, validations = [] }: ConsoleProps) {
           <span className="text-xs text-muted-foreground font-medium">
             {displayValidations.length} {displayValidations.length === 1 ? 'item' : 'itens'}
           </span>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs hover:bg-muted/50">
-            <RefreshCw className="w-3 h-3 mr-1" />
-            Revalidar
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2 text-xs hover:bg-muted/50"
+            onClick={runValidation}
+            disabled={isValidating || !documentId}
+          >
+            {isValidating ? (
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3 h-3 mr-1" />
+            )}
+            {isValidating ? 'Validando...' : 'Revalidar'}
           </Button>
         </div>
       </div>

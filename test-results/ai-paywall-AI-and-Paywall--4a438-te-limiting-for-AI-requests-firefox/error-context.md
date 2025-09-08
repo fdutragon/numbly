@@ -1,0 +1,61 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - img "Logo N" [ref=e5] [cursor=pointer]: "N"
+      - generic [ref=e8]: Salvo automaticamente
+    - generic [ref=e9]:
+      - button "Exportar .docx" [ref=e10]:
+        - img
+        - text: Exportar .docx
+      - button "Alternar tema" [disabled]:
+        - img
+      - button [ref=e11]:
+        - img
+  - generic [ref=e12]:
+    - generic [ref=e14]:
+      - heading "Conformidade" [level=2] [ref=e16]
+      - generic [ref=e24] [cursor=pointer]:
+        - img [ref=e26] [cursor=pointer]
+        - generic [ref=e30] [cursor=pointer]:
+          - paragraph [ref=e31] [cursor=pointer]: Nenhum documento carregado para validação
+          - generic [ref=e33] [cursor=pointer]: Sistema
+      - generic [ref=e35]:
+        - generic [ref=e36]: 1 item
+        - button "Revalidar" [disabled]:
+          - img
+          - text: Revalidar
+    - generic [ref=e37]:
+      - generic:
+        - generic:
+          - generic: "n"
+          - generic: "n"
+          - generic: "n"
+      - generic [ref=e41]: Carregando documento...
+    - complementary "Chat com IA" [ref=e43]:
+      - generic [ref=e44]:
+        - heading "Chat IA" [level=2] [ref=e45]
+        - paragraph [ref=e46]: Assistente contextual
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - img [ref=e53]
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Olá! Sou sua IA contextual. Como posso ajudar com o documento?
+            - generic [ref=e62]: 22:59:01
+        - generic [ref=e63]:
+          - img [ref=e65]
+          - generic [ref=e68]:
+            - paragraph [ref=e69]: Preciso melhorar a cláusula de rescisão
+            - generic [ref=e70]: 22:59:01
+        - generic [ref=e71]:
+          - img [ref=e73]
+          - generic [ref=e80]:
+            - paragraph [ref=e81]: Analisando a cláusula de rescisão... Sugiro adicionar mais detalhes sobre prazos e penalidades.
+            - generic [ref=e82]: 22:59:01
+      - generic [ref=e84]:
+        - textbox "Mensagem para IA" [ref=e85]
+        - button "Enviar mensagem" [disabled]:
+          - img
+```

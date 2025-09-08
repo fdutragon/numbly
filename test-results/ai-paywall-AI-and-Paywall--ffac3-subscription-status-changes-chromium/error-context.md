@@ -1,0 +1,168 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - img "Logo N" [ref=e5] [cursor=pointer]: "N"
+        - generic [ref=e8]: Salvo automaticamente
+      - generic [ref=e9]:
+        - button "Exportar .docx" [ref=e10]:
+          - img
+          - text: Exportar .docx
+        - button "Alternar tema (light)" [ref=e11]:
+          - img
+        - button [ref=e12]:
+          - img
+    - generic [ref=e13]:
+      - generic [ref=e15]:
+        - heading "Conformidade" [level=2] [ref=e17]
+        - generic [ref=e25] [cursor=pointer]:
+          - img [ref=e27] [cursor=pointer]
+          - generic [ref=e29] [cursor=pointer]:
+            - paragraph [ref=e30] [cursor=pointer]: Nenhum documento carregado para validação
+            - generic [ref=e32] [cursor=pointer]: Sistema
+        - generic [ref=e34]:
+          - generic [ref=e35]: 1 item
+          - button "Revalidar" [disabled]:
+            - img
+            - text: Revalidar
+      - generic [ref=e36]:
+        - generic:
+          - generic:
+            - generic: "n"
+            - generic: "n"
+            - generic: "n"
+        - generic [ref=e41]:
+          - generic [ref=e43]:
+            - generic [ref=e44]:
+              - button "Undo" [disabled]:
+                - img
+              - button "Redo" [disabled]:
+                - img
+            - combobox [ref=e45]:
+              - img
+              - generic [ref=e46]: Paragraph
+              - img
+            - combobox [ref=e47]:
+              - img
+              - generic [ref=e48]: Arial
+              - img
+            - generic [ref=e50]:
+              - button [ref=e51]:
+                - img
+              - textbox [ref=e52]: "16"
+              - button [ref=e53]:
+                - img
+            - button "Toggle bold" [ref=e54]:
+              - img
+            - button "Toggle bold" [ref=e55]:
+              - img
+            - button "Toggle bold" [ref=e56]:
+              - img
+            - button "Toggle bold" [ref=e57]:
+              - img
+            - group [ref=e58]:
+              - radio "Toggle subscript" [ref=e59]:
+                - img
+              - radio "Toggle superscript" [ref=e60]:
+                - img
+            - button "Toggle link" [ref=e61]:
+              - img
+            - button "Clear formatting" [ref=e62]:
+              - img
+            - button "text color" [ref=e63]:
+              - generic [ref=e64]:
+                - img
+            - button "text background color" [ref=e65]:
+              - generic [ref=e66]:
+                - img
+            - group [ref=e67]:
+              - radio "Left Align" [checked] [ref=e68]:
+                - img
+              - radio "Center Align" [ref=e69]:
+                - img
+              - radio "Right Align" [ref=e70]:
+                - img
+              - radio "Justify Align" [ref=e71]:
+                - img
+            - group [ref=e72]:
+              - radio "Outdent" [ref=e73]:
+                - img
+              - radio "Indent" [ref=e74]:
+                - img
+            - combobox [ref=e75]:
+              - img
+              - generic [ref=e76]: Insert
+              - img
+          - generic [ref=e79]:
+            - textbox [active] [ref=e80]:
+              - paragraph [ref=e81]:
+                - generic [ref=e82]: regergerger
+                - generic [ref=e84]: "Contexto: regergerger Texto a ser completado: \"regergerger\" Nos termos do artigo X do Código Civil, reiteramos que a parte requerente possui direito à reivindicação da propriedade nos termos da legislação vigente, conforme alegado na petição inicial. (TAB)"
+            - img [ref=e86]
+          - generic [ref=e93]:
+            - generic [ref=e94]:
+              - button "Configurar IA" [ref=e96]:
+                - img
+                - generic [ref=e97]: Configurar IA
+              - generic [ref=e98]: "489"
+            - generic [ref=e99]:
+              - button "Enable speech to text" [ref=e100]:
+                - img
+              - button "Share Playground link to current editor state" [ref=e101]:
+                - img
+              - button "Import editor state from JSON" [ref=e102]:
+                - img
+              - button "Export editor state to JSON" [ref=e103]:
+                - img
+              - button "Convert from markdown" [ref=e104]:
+                - img
+              - button "Lock read-only mode" [ref=e105]:
+                - img
+              - button [ref=e106]:
+                - img
+              - button [ref=e107]:
+                - img
+          - generic [ref=e110]:
+            - paragraph [ref=e111]: 11 characters
+            - text: "|"
+            - paragraph [ref=e112]: 1 words
+      - complementary "Chat com IA" [ref=e114]:
+        - generic [ref=e115]:
+          - heading "Chat IA" [level=2] [ref=e116]
+          - paragraph [ref=e117]: Assistente contextual
+        - generic [ref=e121]:
+          - generic [ref=e122]:
+            - img [ref=e124]
+            - generic [ref=e127]:
+              - paragraph [ref=e128]: Olá! Sou sua IA contextual. Como posso ajudar com o documento?
+              - generic [ref=e129]: 22:53:55
+          - generic [ref=e130]:
+            - img [ref=e132]
+            - generic [ref=e135]:
+              - paragraph [ref=e136]: Preciso melhorar a cláusula de rescisão
+              - generic [ref=e137]: 22:53:55
+          - generic [ref=e138]:
+            - img [ref=e140]
+            - generic [ref=e143]:
+              - paragraph [ref=e144]: Analisando a cláusula de rescisão... Sugiro adicionar mais detalhes sobre prazos e penalidades.
+              - generic [ref=e145]: 22:53:55
+        - generic [ref=e147]:
+          - textbox "Mensagem para IA" [ref=e148]
+          - button "Enviar mensagem" [disabled]:
+            - img
+  - generic [ref=e153] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e154] [cursor=pointer]:
+      - img [ref=e155] [cursor=pointer]
+    - generic [ref=e158] [cursor=pointer]:
+      - button "Open issues overlay" [ref=e159] [cursor=pointer]:
+        - generic [ref=e160] [cursor=pointer]:
+          - generic [ref=e161] [cursor=pointer]: "0"
+          - generic [ref=e162] [cursor=pointer]: "1"
+        - generic [ref=e163] [cursor=pointer]: Issue
+      - button "Collapse issues badge" [ref=e164] [cursor=pointer]:
+        - img [ref=e165] [cursor=pointer]
+  - alert [ref=e167]
+```

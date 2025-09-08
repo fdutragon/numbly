@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, memo, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,8 @@ interface ChatProps {
 
 function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
   const [inputValue, setInputValue] = useState('');
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const mockMessages: ChatMessage[] = useMemo(() => [
     {
@@ -46,6 +48,18 @@ function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
     messages.length > 0 ? messages : mockMessages,
     [messages, mockMessages]
   );
+
+  // Auto-scroll para a última mensagem
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  // Scroll automático quando novas mensagens chegam
+  useEffect(() => {
+    scrollToBottom();
+  }, [displayMessages, scrollToBottom]);
 
   const handleSend = useCallback(() => {
     if (inputValue.trim() && onSendMessage) {
@@ -85,8 +99,8 @@ function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
         </p>
       </div>
       
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+        <div className="space-y-4 pb-4">
           {displayMessages.map((message) => (
             <div
               key={message.id}
@@ -110,24 +124,21 @@ function ChatComponent({ className, messages = [], onSendMessage }: ChatProps) {
                   {message.content}
                 </p>
                 <span className="text-xs text-muted-foreground mt-1 block">
-                  {useMemo(() => {
-                    if (typeof window === 'undefined') {
-                      return '';
-                    }
-                    return new Date(message.timestamp).toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    });
-                  }, [message.timestamp])}
+                  {new Date(message.timestamp).toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
                 </span>
               </div>
             </div>
           ))}
+          {/* Elemento invisível para scroll automático */}
+          <div ref={messagesEndRef} className="h-1" />
         </div>
       </ScrollArea>
       
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border bg-card/95 backdrop-blur-sm">
         <div className="flex gap-2">
           <Input
             value={inputValue}

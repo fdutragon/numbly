@@ -1,0 +1,153 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - img "Logo N" [ref=e5] [cursor=pointer]: "N"
+        - generic [ref=e8]: Salvo automaticamente
+      - generic [ref=e9]:
+        - button "Exportar .docx" [ref=e10]:
+          - img
+          - text: Exportar .docx
+        - button "Alternar tema (light)" [ref=e11]:
+          - img
+        - button [ref=e12]:
+          - img
+    - generic [ref=e13]:
+      - generic [ref=e15]:
+        - heading "Conformidade" [level=2] [ref=e17]
+        - generic [ref=e25] [cursor=pointer]:
+          - img [ref=e27] [cursor=pointer]
+          - generic [ref=e31] [cursor=pointer]:
+            - paragraph [ref=e32] [cursor=pointer]: Nenhum documento carregado para validação
+            - generic [ref=e34] [cursor=pointer]: Sistema
+        - generic [ref=e36]:
+          - generic [ref=e37]: 1 item
+          - button "Revalidar" [disabled]:
+            - img
+            - text: Revalidar
+      - generic [ref=e38]:
+        - generic:
+          - generic:
+            - generic: "n"
+            - generic: "n"
+            - generic: "n"
+        - generic [ref=e43]:
+          - generic [ref=e45]:
+            - generic [ref=e46]:
+              - button "Undo" [ref=e47]:
+                - img
+              - button "Redo" [disabled]:
+                - img
+            - combobox [ref=e48]:
+              - img
+              - generic [ref=e49]: Paragraph
+              - img
+            - combobox [ref=e50]:
+              - img
+              - generic [ref=e51]: Arial
+              - img
+            - generic [ref=e53]:
+              - button [ref=e54]:
+                - img
+              - textbox [ref=e55]: "16"
+              - button [ref=e56]:
+                - img
+            - button "Toggle bold" [ref=e57]:
+              - img
+            - button "Toggle bold" [ref=e58]:
+              - img
+            - button "Toggle bold" [ref=e59]:
+              - img
+            - button "Toggle bold" [ref=e60]:
+              - img
+            - group [ref=e61]:
+              - radio "Toggle subscript" [ref=e62]:
+                - img
+              - radio "Toggle superscript" [ref=e63]:
+                - img
+            - button "Toggle link" [ref=e64]:
+              - img
+            - button "Clear formatting" [ref=e65]:
+              - img
+            - button "text color" [ref=e66]:
+              - generic [ref=e67]:
+                - img
+            - button "text background color" [ref=e68]:
+              - generic [ref=e69]:
+                - img
+            - group [ref=e70]:
+              - radio "Left Align" [ref=e71]:
+                - img
+              - radio "Center Align" [ref=e72]:
+                - img
+              - radio "Right Align" [ref=e73]:
+                - img
+              - radio "Justify Align" [ref=e74]:
+                - img
+            - group [ref=e75]:
+              - radio "Outdent" [ref=e76]:
+                - img
+              - radio "Indent" [ref=e77]:
+                - img
+            - combobox [ref=e78]:
+              - img
+              - generic [ref=e79]: Insert
+              - img
+          - generic [ref=e82]:
+            - textbox [active] [ref=e83]:
+              - paragraph [ref=e84]
+            - generic: Digite "/" para começar
+            - img [ref=e86]
+          - generic [ref=e93]:
+            - generic [ref=e94]:
+              - generic [ref=e95]: Verificando configuração...
+              - generic [ref=e97]: "500"
+            - generic [ref=e98]:
+              - button "Share Playground link to current editor state" [ref=e99]:
+                - img
+              - button "Import editor state from JSON" [ref=e100]:
+                - img
+              - button "Export editor state to JSON" [ref=e101]:
+                - img
+              - button "Convert from markdown" [ref=e102]:
+                - img
+              - button "Lock read-only mode" [ref=e103]:
+                - img
+              - button [ref=e104]:
+                - img
+              - button [ref=e105]:
+                - img
+          - generic [ref=e108]:
+            - paragraph [ref=e109]: 0 characters
+            - text: "|"
+            - paragraph [ref=e110]: 0 words
+      - complementary "Chat com IA" [ref=e112]:
+        - generic [ref=e113]:
+          - heading "Chat IA" [level=2] [ref=e114]
+          - paragraph [ref=e115]: Assistente contextual
+        - generic [ref=e119]:
+          - generic [ref=e120]:
+            - img [ref=e122]
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: Olá! Sou sua IA contextual. Como posso ajudar com o documento?
+              - generic [ref=e131]: 23:02:42
+          - generic [ref=e132]:
+            - img [ref=e134]
+            - generic [ref=e137]:
+              - paragraph [ref=e138]: Preciso melhorar a cláusula de rescisão
+              - generic [ref=e139]: 23:02:42
+          - generic [ref=e140]:
+            - img [ref=e142]
+            - generic [ref=e149]:
+              - paragraph [ref=e150]: Analisando a cláusula de rescisão... Sugiro adicionar mais detalhes sobre prazos e penalidades.
+              - generic [ref=e151]: 23:02:42
+        - generic [ref=e153]:
+          - textbox "Mensagem para IA" [ref=e154]
+          - button "Enviar mensagem" [disabled]:
+            - img
+  - alert [ref=e155]
+  - listbox "Typeahead menu"
+```

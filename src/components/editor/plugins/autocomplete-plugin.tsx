@@ -349,8 +349,8 @@ class AutocompleteServer {
         }
 
         return resolve(null)
-      } catch (error) {
-         if (error.message === 'API_FALLBACK' || error.message === 'API_KEY_NOT_CONFIGURED') {
+      } catch (error: any) {
+         if (error?.message === 'API_FALLBACK' || error?.message === 'API_KEY_NOT_CONFIGURED') {
            console.warn('OpenAI API unavailable, using dictionary fallback')
          } else {
            console.error('Autocomplete error:', error)

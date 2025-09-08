@@ -1,0 +1,165 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - img "Logo N" [ref=e5] [cursor=pointer]: "N"
+        - generic [ref=e8]: Salvo automaticamente
+      - generic [ref=e9]:
+        - button "Exportar .docx" [ref=e10]:
+          - img
+          - text: Exportar .docx
+        - button "Alternar tema (light)" [ref=e11]:
+          - img
+        - button [ref=e12]:
+          - img
+    - generic [ref=e13]:
+      - generic [ref=e15]:
+        - heading "Conformidade" [level=2] [ref=e17]
+        - generic [ref=e25] [cursor=pointer]:
+          - img [ref=e27] [cursor=pointer]
+          - generic [ref=e29] [cursor=pointer]:
+            - paragraph [ref=e30] [cursor=pointer]: Nenhum documento carregado para validação
+            - generic [ref=e32] [cursor=pointer]: Sistema
+        - generic [ref=e34]:
+          - generic [ref=e35]: 1 item
+          - button "Revalidar" [disabled]:
+            - img
+            - text: Revalidar
+      - generic [ref=e36]:
+        - generic:
+          - generic:
+            - generic: "n"
+            - generic: "n"
+            - generic: "n"
+        - generic [ref=e41]:
+          - generic [ref=e43]:
+            - generic [ref=e44]:
+              - button "Undo" [disabled]:
+                - img
+              - button "Redo" [disabled]:
+                - img
+            - combobox [ref=e45]:
+              - img
+              - generic [ref=e46]: Paragraph
+              - img
+            - combobox [ref=e47]:
+              - img
+              - generic [ref=e48]: Arial
+              - img
+            - generic [ref=e50]:
+              - button [ref=e51]:
+                - img
+              - textbox [ref=e52]: "16"
+              - button [ref=e53]:
+                - img
+            - button "Toggle bold" [ref=e54]:
+              - img
+            - button "Toggle bold" [ref=e55]:
+              - img
+            - button "Toggle bold" [ref=e56]:
+              - img
+            - button "Toggle bold" [ref=e57]:
+              - img
+            - group [ref=e58]:
+              - radio "Toggle subscript" [ref=e59]:
+                - img
+              - radio "Toggle superscript" [ref=e60]:
+                - img
+            - button "Toggle link" [ref=e61]:
+              - img
+            - button "Clear formatting" [ref=e62]:
+              - img
+            - button "text color" [ref=e63]:
+              - generic [ref=e64]:
+                - img
+            - button "text background color" [ref=e65]:
+              - generic [ref=e66]:
+                - img
+            - group [ref=e67]:
+              - radio "Left Align" [checked] [ref=e68]:
+                - img
+              - radio "Center Align" [ref=e69]:
+                - img
+              - radio "Right Align" [ref=e70]:
+                - img
+              - radio "Justify Align" [ref=e71]:
+                - img
+            - group [ref=e72]:
+              - radio "Outdent" [ref=e73]:
+                - img
+              - radio "Indent" [ref=e74]:
+                - img
+            - combobox [ref=e75]:
+              - img
+              - generic [ref=e76]: Insert
+              - img
+          - generic [ref=e79]:
+            - textbox [active] [ref=e80]:
+              - paragraph [ref=e81]:
+                - generic [ref=e82]: regergerger
+            - img [ref=e84]
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - generic [ref=e93]: Verificando configuração...
+              - generic [ref=e95]: "489"
+            - generic [ref=e96]:
+              - button "Enable speech to text" [ref=e97]:
+                - img
+              - button "Share Playground link to current editor state" [ref=e98]:
+                - img
+              - button "Import editor state from JSON" [ref=e99]:
+                - img
+              - button "Export editor state to JSON" [ref=e100]:
+                - img
+              - button "Convert from markdown" [ref=e101]:
+                - img
+              - button "Lock read-only mode" [ref=e102]:
+                - img
+              - button [ref=e103]:
+                - img
+              - button [ref=e104]:
+                - img
+          - generic [ref=e107]:
+            - paragraph [ref=e108]: 11 characters
+            - text: "|"
+            - paragraph [ref=e109]: 1 words
+      - complementary "Chat com IA" [ref=e111]:
+        - generic [ref=e112]:
+          - heading "Chat IA" [level=2] [ref=e113]
+          - paragraph [ref=e114]: Assistente contextual
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - img [ref=e121]
+            - generic [ref=e124]:
+              - paragraph [ref=e125]: Olá! Sou sua IA contextual. Como posso ajudar com o documento?
+              - generic [ref=e126]: 22:54:46
+          - generic [ref=e127]:
+            - img [ref=e129]
+            - generic [ref=e132]:
+              - paragraph [ref=e133]: Preciso melhorar a cláusula de rescisão
+              - generic [ref=e134]: 22:54:46
+          - generic [ref=e135]:
+            - img [ref=e137]
+            - generic [ref=e140]:
+              - paragraph [ref=e141]: Analisando a cláusula de rescisão... Sugiro adicionar mais detalhes sobre prazos e penalidades.
+              - generic [ref=e142]: 22:54:46
+        - generic [ref=e144]:
+          - textbox "Mensagem para IA" [ref=e145]
+          - button "Enviar mensagem" [disabled]:
+            - img
+  - generic [ref=e150] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e151] [cursor=pointer]:
+      - img [ref=e152] [cursor=pointer]
+    - generic [ref=e155] [cursor=pointer]:
+      - button "Open issues overlay" [ref=e156] [cursor=pointer]:
+        - generic [ref=e157] [cursor=pointer]:
+          - generic [ref=e158] [cursor=pointer]: "0"
+          - generic [ref=e159] [cursor=pointer]: "1"
+        - generic [ref=e160] [cursor=pointer]: Issue
+      - button "Collapse issues badge" [ref=e161] [cursor=pointer]:
+        - img [ref=e162] [cursor=pointer]
+  - alert [ref=e164]
+```

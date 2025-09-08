@@ -1,0 +1,74 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - img "Logo N" [ref=e5] [cursor=pointer]: "N"
+        - generic [ref=e8]: Salvo automaticamente
+      - generic [ref=e9]:
+        - button "Exportar .docx" [ref=e10]:
+          - img
+          - text: Exportar .docx
+        - button "Alternar tema (light)" [ref=e11]:
+          - img
+        - button [ref=e12]:
+          - img
+    - generic [ref=e13]:
+      - generic [ref=e15]:
+        - heading "Conformidade" [level=2] [ref=e17]
+        - generic [ref=e25] [cursor=pointer]:
+          - img [ref=e27] [cursor=pointer]
+          - generic [ref=e31] [cursor=pointer]:
+            - paragraph [ref=e32] [cursor=pointer]: Nenhum documento carregado para validação
+            - generic [ref=e34] [cursor=pointer]: Sistema
+        - generic [ref=e36]:
+          - generic [ref=e37]: 1 item
+          - button "Revalidar" [disabled]:
+            - img
+            - text: Revalidar
+      - generic [ref=e38]:
+        - generic:
+          - generic:
+            - generic: "n"
+            - generic: "n"
+            - generic: "n"
+        - generic [ref=e42]: Carregando documento...
+      - complementary "Chat com IA" [ref=e44]:
+        - generic [ref=e45]:
+          - heading "Chat IA" [level=2] [ref=e46]
+          - paragraph [ref=e47]: Assistente contextual
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - img [ref=e54]
+            - generic [ref=e61]:
+              - paragraph [ref=e62]: Olá! Sou sua IA contextual. Como posso ajudar com o documento?
+              - generic [ref=e63]: 23:00:56
+          - generic [ref=e64]:
+            - img [ref=e66]
+            - generic [ref=e69]:
+              - paragraph [ref=e70]: Preciso melhorar a cláusula de rescisão
+              - generic [ref=e71]: 23:00:56
+          - generic [ref=e72]:
+            - img [ref=e74]
+            - generic [ref=e81]:
+              - paragraph [ref=e82]: Analisando a cláusula de rescisão... Sugiro adicionar mais detalhes sobre prazos e penalidades.
+              - generic [ref=e83]: 23:00:56
+        - generic [ref=e85]:
+          - textbox "Mensagem para IA" [ref=e86]
+          - button "Enviar mensagem" [disabled]:
+            - img
+  - generic [ref=e91] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e92] [cursor=pointer]:
+      - img [ref=e93] [cursor=pointer]
+    - generic [ref=e97] [cursor=pointer]:
+      - button "Open issues overlay" [ref=e98] [cursor=pointer]:
+        - generic [ref=e99] [cursor=pointer]:
+          - generic [ref=e100] [cursor=pointer]: "0"
+          - generic [ref=e101] [cursor=pointer]: "1"
+        - generic [ref=e102] [cursor=pointer]: Issue
+      - button "Collapse issues badge" [ref=e103] [cursor=pointer]:
+        - img [ref=e104] [cursor=pointer]
+  - alert [ref=e106]
+```

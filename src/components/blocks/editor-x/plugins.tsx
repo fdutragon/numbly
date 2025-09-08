@@ -309,48 +309,11 @@ export function Plugins({}) {
         <ListMaxIndentLevelPlugin />
       </div>
       <ActionsPlugin>
-        <div className="clear-both flex items-center justify-between gap-2 overflow-auto border-t p-1">
-          <div className="flex flex-1 justify-start">
-            <OpenAIStatus />
-            <MaxLengthPlugin maxLength={maxLength} />
-            <CharacterLimitPlugin maxLength={maxLength} charset="UTF-16" />
-          </div>
-          <div className="flex flex-1 justify-end">
-            <SpeechToTextPlugin />
-            <ShareContentPlugin />
-            <ImportExportPlugin />
-            <MarkdownTogglePlugin
-              shouldPreserveNewLinesInMarkdown={true}
-              transformers={[
-                TABLE,
-                HR,
-                IMAGE,
-                EMOJI,
-                EQUATION,
-                TWEET,
-                CHECK_LIST,
-                ...ELEMENT_TRANSFORMERS,
-                ...MULTILINE_ELEMENT_TRANSFORMERS,
-                ...TEXT_FORMAT_TRANSFORMERS,
-                ...TEXT_MATCH_TRANSFORMERS,
-              ]}
-            />
-            <EditModeTogglePlugin />
-            <>
-              <ClearEditorActionPlugin />
-              <ClearEditorPlugin />
-            </>
-            <TreeViewPlugin />
-          </div>
+        <div className="sticky bottom-0 z-20 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-2 text-sm text-muted-foreground flex items-center justify-center">
+          <span data-testid="view-only-banner">Preview Only</span>
         </div>
       </ActionsPlugin>
       
-      {/* Character Counter centralizado no editor */}
-      <div className="flex justify-center mt-4 mb-2 bg-gray-50 p-2">
-        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-md text-sm">
-          <CounterCharacterPlugin charset="UTF-16" />
-        </div>
-      </div>
     </div>
   )
 }

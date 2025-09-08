@@ -1,0 +1,65 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [active]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - navigation [ref=e7]:
+            - button "previous" [disabled] [ref=e8]:
+              - img "previous" [ref=e9]
+            - generic [ref=e11]:
+              - generic [ref=e12]: 1/
+              - generic [ref=e13]: "2"
+            - button "next" [ref=e14] [cursor=pointer]:
+              - img "next" [ref=e15] [cursor=pointer]
+          - img
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - img [ref=e19]
+            - generic "Latest available version is detected (15.5.2)." [ref=e21]: Next.js 15.5.2
+            - generic [ref=e22]: Turbopack
+          - img
+      - dialog "Runtime Error" [ref=e24]:
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - generic [ref=e29]:
+              - generic [ref=e31]: Runtime Error
+              - generic [ref=e32]:
+                - button "Copy Error Info" [ref=e33] [cursor=pointer]:
+                  - img [ref=e34] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=e36]:
+                  - img [ref=e37]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e39]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e40]
+            - paragraph [ref=e52]: Failed to load chunk /_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c8c997ce._.js from module [turbopack]/browser/dev/hmr-client/hmr-client.ts [app-client] (ecmascript, async loader)
+          - generic [ref=e54]:
+            - paragraph [ref=e56]:
+              - text: Call Stack
+              - generic [ref=e57]: "1"
+            - generic [ref=e58]:
+              - generic [ref=e59]:
+                - text: <unknown>
+                - button "Sourcemapping failed. Click to log cause of error." [ref=e60] [cursor=pointer]:
+                  - img [ref=e61] [cursor=pointer]
+              - generic [ref=e63]: file:///D:/numbly/.next/static/chunks/turbopack-_cdba956c._.js (622:28)
+        - generic [ref=e64]:
+          - generic [ref=e65]: "1"
+          - generic [ref=e66]: "2"
+    - generic [ref=e71] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e72] [cursor=pointer]:
+        - img [ref=e73] [cursor=pointer]
+      - generic [ref=e78] [cursor=pointer]:
+        - button "Open issues overlay" [ref=e79] [cursor=pointer]:
+          - generic [ref=e80] [cursor=pointer]:
+            - generic [ref=e81] [cursor=pointer]: "1"
+            - generic [ref=e82] [cursor=pointer]: "2"
+          - generic [ref=e83] [cursor=pointer]:
+            - text: Issue
+            - generic [ref=e84] [cursor=pointer]: s
+        - button "Collapse issues badge" [ref=e85] [cursor=pointer]:
+          - img [ref=e86] [cursor=pointer]
+  - 'heading "Application error: a client-side exception has occurred while loading localhost (see the browser console for more information)." [level=2] [ref=e90]'
+```
